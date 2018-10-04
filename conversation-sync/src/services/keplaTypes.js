@@ -3,12 +3,22 @@ const recordTypeIds = {
 	conversation: '78d9db74-e0bd-4cd0-97f0-49b259509a47',
 };
 
+/**
+  * Get the ID of a record type
+  * @param {string} typeName conversation or person
+  * @returns {string} UUID of the type
+  */
 function getTypeId(typeName) {
 	const typeId = recordTypeIds[typeName];
 	if (!typeId) throw new Error(`Unknown typeName ${typeName}`);
 	return typeId;
 }
 
+/**
+  * Get the name of a record type
+  * @param {string} typeId UUID of the type
+  * @returns {string} Name of the type
+  */
 function getTypeName(typeId) {
 	const typeName = Object.keys(recordTypeIds).find(key => recordTypeIds[key] === typeId);
 	if (!typeName) throw new Error(`Unknown typeId ${typeId}`);
@@ -16,6 +26,14 @@ function getTypeName(typeId) {
 	return typeName;
 }
 
+/**
+  * Get a field by label
+  * typeId or typeName must be specified
+  * @param {string} options.typeName conversation or person
+  * @param {string} options.typeId The id of the conversation
+  * @param {string} options.label (required) The label of the field
+  * @returns {object} The field description object
+  */
 function getField({ label, typeId, typeName }) {
 	if (!recordTypeIds[typeName]) {
 		// eslint-disable-next-line no-param-reassign
@@ -27,6 +45,14 @@ function getField({ label, typeId, typeName }) {
 	return fields[typeName].find(f => f.label === label);
 }
 
+/**
+  * Get the ID of a field found by label
+  * typeId or typeName must be specified
+  * @param {string} options.typeName conversation or person
+  * @param {string} options.typeId The id of the conversation
+  * @param {string} options.label (required) The label of the field
+  * @returns {string} The unique id of the field that kepla expects used in records
+  */
 function getFieldId(opts) {
 	const field = getField(opts);
 	if (!field) throw new Error(`Field not found (${JSON.stringify(opts)})`);
@@ -34,6 +60,13 @@ function getFieldId(opts) {
 	return field.id;
 }
 
+/**
+  * Takes a recrod to be created/updated where the keys are field labels
+  * and maps those keys to their kepla field id
+  * @param {string} typeId The id of the conversation
+  * @param {object} data The record to be mapped
+  * @returns {object} Record containing the same values as data, but with keys mapped to field ids
+  */
 function keysToKeplaFieldIds(typeId, data) {
 	const result = {};
 	Object.keys(data).forEach((label) => {
