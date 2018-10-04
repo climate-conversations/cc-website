@@ -1,0 +1,39 @@
+{
+  "name": "conversation-sync",
+  "version": "1.0.0",
+  "description": "Conversation syncing tool for google sheets, kepla and airtables",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisjensen/conversation-sync.git"
+  },
+  "author": "Raisely <engineering@raisely.com> (https://github.com/raisely)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chrisjensen/conversation-sync/issues"
+  },
+  "homepage": "https://github.com/chrisjensen/conversation-sync#readme",
+  "dependencies": {
+    "@google-cloud/datastore": "^1.4.0",
+    "@google-cloud/pubsub": "^0.18.0",
+	"lodash": "^4.17.11",
+    "node-fetch": "^2.2.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "chai": "^4.1.2",
+    "chai-subset": "^1.6.0",
+    "eslint": "^4.16.0",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.6.0",
+    "google-datastore-emulator": "^2.0.0",
+    "google-pubsub-emulator": "^2.0.2",
+    "mocha": "^5.2.0",
+    "nock": "^10.0.0"
+  }
+}
