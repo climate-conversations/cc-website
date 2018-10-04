@@ -4,6 +4,7 @@ const kepla = require('../services/kepla');
 const dateKeys = ['dateofbirth', 'conversationdate'];
 
 class Sync {
+	// eslint-disable-next-line class-methods-use-this
 	async processGuest(payload) {
 		// Pull data out of datastore
 
@@ -13,7 +14,7 @@ class Sync {
 		const data = removeGsxFromKeys(payload);
 
 		// Convert dates fo iso
-		dateKeys.forEach(key => { data[key] = sheetsToIsoDate(data[key]) });
+		dateKeys.forEach((key) => { data[key] = sheetsToIsoDate(data[key]); });
 
 		// Sync Kepla
 		const keplaPromise = syncGuestToKepla(data)
