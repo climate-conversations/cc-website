@@ -85,9 +85,16 @@ async function upsertPerson(email, data, overwrite) {
 	return updateRecord(record, data, overwrite);
 }
 
-async function upsertConversation(options) {
+/**
+  * @param {object} data The data of the conversation to upsert
+  * @param {object} data.host (Required) The host record for the conversation
+  * @param {string} data.date (Required) ISO8601 date of the conversation (should be in UTC, but offset -8 hours for singapore time)
+  * @param {object} data.facilitator The facilitator for the conversation
+  * @param {object} data.status The status of the conversation
+  */
+async function upsertConversation(data) {
 	// eslint-disable-next-line
-	const { date, facilitator, host, status } = options;
+	const { date, facilitator, host, status } = data;
 
 	const typeId = types.getTypeId('conversation');
 	const dateField = types.getFieldId({ typeId, label: 'Date of Gathering' });
@@ -187,7 +194,6 @@ function mapToKeplaResidency(residency) {
 
 	return residency;
 }
-
 
 module.exports = {
 	findPersonByEmail,
