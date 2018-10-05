@@ -9,13 +9,13 @@ async function syncGuestToFtl(data) {
 	const host = await airtables.upsert('Hosts', { Email: data.hostemailaddress }, {
 		Email: data.hostemailaddress,
 		Name: data.hostname,
-		'Facilitator responsible': facilitator.id,
+		'Facilitator responsible': [facilitator.id],
 	});
 
-	const conversationId = `${data.conversationdate} ${facilitator.fields.id}`;
+	const conversationId = `${data.conversationdate} ${host.fields.id}`;
 	const conversation = await airtables.upsert('Conversations', { Name: conversationId }, {
-		Facilitator: facilitator.id,
-		Host: host.id,
+		Facilitator: { method: 'add', record: facilitator.id },
+		Host: [host.id],
 		Date: data.conversationdate,
 	});
 
@@ -38,7 +38,7 @@ async function syncGuestToFtl(data) {
 		'Timestamp': data.timestamp,
 		'Date of Conversation': data.conversationdate,
 		'Phone': data.participantmobile,
-		'Conversation': conversation.id,
+		'Conversation': [conversation.id],
 	}));
 	/* eslint-enable quote-props */
 
@@ -49,7 +49,9 @@ async function syncGuestToFtl(data) {
 			Status: 'Emerging',
 			Team: facilitator.fields.Team,
 			Phone: data.participantmobile,
-			Mentor: facilitator.id,
+			Mentor: [facilitator.id],
+			'Added On': data.conversationdate,
+			'Recruited At': [conversation.id],
 		}));
 	}
 
@@ -58,7 +60,9 @@ async function syncGuestToFtl(data) {
 			Email: data.participantemail,
 			Name: data.participantname,
 			Phone: data.participantmobile,
-			'Facilitator responsible': facilitator.id,
+			'Facilitator responsible': [facilitator.id],
+			'Recruited At': [conversation.id],
+			'Added On': data.conversationdate,
 		}));
 	}
 
