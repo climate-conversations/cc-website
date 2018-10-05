@@ -3,8 +3,12 @@ const { syncGuestToFtl } = require('./ftl');
 const { sheetsToIsoDate, dateKeys } = require('./helpers/dateHelpers');
 
 class Sync {
+	async receive(req, res) {
+
+	}
+
 	// eslint-disable-next-line class-methods-use-this
-	async processGuest(payload) {
+	async syncGuest(payload) {
 		// Pull data out of datastore
 
 		// FIXME validate essential keys in record (eg host, facil, guest email)
@@ -19,17 +23,11 @@ class Sync {
 		const keplaPromise = syncGuestToKepla(data)
 			.then(() => {
 				// Mark record kepla synced
-			})
-			.catch((err) => {
-				console.error(err);
 			});
 
 		const ftlPromise = syncGuestToFtl(data)
 			.then(() => {
 				// Mark record ftl synced
-			})
-			.catch((err) => {
-				console.error(err);
 			});
 
 		return Promise.all([keplaPromise, ftlPromise]);
