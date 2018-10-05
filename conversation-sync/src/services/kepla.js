@@ -26,7 +26,7 @@ async function keplaRequest(url, opts = {}) {
   * @param {object} payload The record to create, kepla field labels will be translated to field ids
   * @return {object} the new record
   */
-async function createRecord(typeName, payload) {
+async function create(typeName, payload) {
 	const typeId = types.getTypeId(typeName);
 
 	const url = `https://api.kepla.com/v1/types/${typeId}/records?update=true`;
@@ -43,7 +43,7 @@ async function createRecord(typeName, payload) {
   * in record will be sent as part of the update
   * @returns {object} The updated record
   */
-async function updateRecord(record, payload, overwrite) {
+async function update(record, payload, overwrite) {
 	const { typeId } = record;
 	const data = types.keysToKeplaFieldIds(typeId, payload);
 
@@ -51,6 +51,11 @@ async function updateRecord(record, payload, overwrite) {
 	const url = `https://api.kepla.com/v1/types/${typeId}/records/${record.id}`;
 
 	if (overwrite) {
+		const changedKeys = Object.keys(data).filter(key => (record[key] !== data[key]));
+		if (!changedKeys.length) {
+			console.debug(`kepla.updateRecord ${record.id}: All new values are the same as existing values, skipping`);
+			return record;
+		}
 		body = data;
 	} else {
 		// Find the keys in data that aren't already set in record if we're not overwriting
@@ -79,16 +84,17 @@ async function updateRecord(record, payload, overwrite) {
 async function upsertPerson(email, data, overwrite) {
 	const record = await findPersonByEmail(email);
 	if (!record) {
-		return createRecord('person', data);
+		return create('person', data);
 	}
 
-	return updateRecord(record, data, overwrite);
+	return update(record, data, overwrite);
 }
 
 /**
   * @param {object} data The data of the conversation to upsert
   * @param {object} data.host (Required) The host record for the conversation
-  * @param {string} data.date (Required) ISO8601 date of the conversation (should be in UTC, but offset -8 hours for singapore time)
+  * @param {string} data.date (Required) ISO8601 date of the conversation
+  * (should be in UTC, but offset -8 hours for singapore time)
   * @param {object} data.facilitator The facilitator for the conversation
   * @param {object} data.status The status of the conversation
   */
