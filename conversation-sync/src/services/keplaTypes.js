@@ -3,6 +3,8 @@ const recordTypeIds = {
 	conversation: '78d9db74-e0bd-4cd0-97f0-49b259509a47',
 };
 
+let fields;
+
 /**
   * Get the ID of a record type
   * @param {string} typeName conversation or person
@@ -81,7 +83,7 @@ function keysToKeplaFieldIds(typeId, data) {
 	return result;
 }
 
-const fields = {
+fields = {
 	/* eslint-disable */
 	person: [
 		{
