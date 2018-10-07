@@ -51,7 +51,15 @@ async function update(table, record, data, overwrite) {
 	} else {
 		// Find the keys in data that aren't already set in record if we're not overwriting
 		const keysToSet = Object.keys(data)
-			.filter(key => !(record.fields[key] && record.fields[key].length));
+			.filter((key) => {
+				// Is the key blank in the existing record and set in the data?
+				return (!(record.fields[key] && record.fields[key].length) && data[key]) ||
+
+				// OR is it an array that needs to be appended and doesn't already contain the value
+				(data[key] && (data[key].method === 'add') &&
+				Array.isArray(record.fields[key]) && !record.fields[key].includes(data[key].record));
+			});
+
 		if (!keysToSet.length) {
 			console.debug(`airtables.updateRecord ${record.id}: No unset keys to update and overwrite is false, skipping`);
 			return record;
@@ -59,24 +67,25 @@ async function update(table, record, data, overwrite) {
 
 		body = _.pick(data, keysToSet);
 	}
-
 	// Handle merging arrays of linked records
 	Object.keys(body).forEach((key) => {
-		const obj = _.isObject(data[key]);
-		if (obj) {
+		const obj = data[key];
+		if (_.isObject(obj)) {
 			// If it should be set, or there's no existing value, simply set it
 			if (obj.method === 'add') {
 				if (!(record.fields[key] && record.fields[key].length)) {
 					body[key] = [obj.record];
 				} else {
-					body[key] = record.fields[key].splice().push(obj.record);
+					body[key] = record.fields[key].slice()
+					body[key].push(obj.record);
 				}
 			}
 		}
 	});
 
+	console.debug(`airtables.update: Updating ${record.id}`);
 	const tableObject = base(table);
-	const updateFn = promisify(tableObject.create);
+	const updateFn = promisify(tableObject.update);
 	return updateFn.call(tableObject, record.id, body);
 }
 
@@ -85,10 +94,12 @@ async function upsert(table, search, data, overwrite) {
 	if (records.length > 1) throw new Error('More than one record matched search. Cannot upsert');
 
 	if (records.length) {
+		console.trace(`${JSON.stringify(search)} Record found, updating if necessary`)
 		const [record] = records;
 		return update(table, record, data, overwrite);
 	}
 
+	console.trace(`${JSON.stringify(search)} Record not found, creating`)
 	return create(table, data);
 }
 
