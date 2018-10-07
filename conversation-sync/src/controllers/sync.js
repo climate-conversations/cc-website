@@ -17,7 +17,8 @@ class Sync {
 		const data = removeGsxFromKeys(payload);
 
 		// Convert dates fo iso
-		dateKeys.forEach((key) => { data[key] = sheetsToIsoDate(data[key]); });
+		if (!data.conversationdate) throw new Error('Cannot process a conversation that does not have a date');
+		dateKeys.forEach((key) => { data[key] = data[key] ? sheetsToIsoDate(data[key]) : null; });
 
 		// Sync Kepla
 		const keplaPromise = syncGuestToKepla(data)
@@ -48,3 +49,5 @@ function removeGsxFromKeys(data) {
 
 	return newData;
 }
+
+module.exports = Sync;
