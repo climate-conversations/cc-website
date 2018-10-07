@@ -1,6 +1,11 @@
+console.log('configuring')
+require('dotenv').config();
+
 const { handler } = require('./helpers/middleware');
 const Sync = require('./controllers/sync');
 
-exports.receiveGuest = handler(Sync, true);
+const syncController = new Sync();
 
-exports.syncGuest = Sync.syncGuest;
+exports.receiveGuest = handler(syncController, true);
+
+exports.syncGuest = syncController.syncGuest;
