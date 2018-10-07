@@ -13,6 +13,8 @@ const data = {
 	timestamp: '2/18/2018 14:10:12',
 	conversationdate: '02/11/2018',
 	participantmobile: 91234567,
+	residentialstatus: 'Permanent Resident',
+	participantpostcode: '123456',
 };
 
 module.exports = data;
