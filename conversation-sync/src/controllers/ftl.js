@@ -22,8 +22,8 @@ async function syncGuestToFtl(data) {
 	const promises = [];
 
 	/* eslint-disable quote-props */
-	const guestId = `{Id}='${data.participantname} - ${data.conversationDate}'`;
-	promises.push(airtables.upsert('Guests', { id: guestId }, {
+	const guestId = `${data.participantname} - ${data.conversationdate}`;
+	promises.push(airtables.upsert('Guests', { Id: guestId }, {
 		'Facilitator Email Address': data.facilitatoremailaddress,
 		'Facilitator Name': data.facilitatorname,
 		'Host Email Address': data.hostemailaddress,
