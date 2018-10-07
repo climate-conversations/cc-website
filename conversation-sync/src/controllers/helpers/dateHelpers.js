@@ -1,4 +1,5 @@
 const TZC = require('timezonecomplete');
+const _ = require('lodash');
 
 const dateKeys = ['dateofbirth', 'conversationdate'];
 
@@ -10,6 +11,7 @@ const dateKeys = ['dateofbirth', 'conversationdate'];
   * @returns {string} The date in 'yyyy-mm-dd' format
   */
 function sheetsToIsoDate(dateStr) {
+	if (!_.isString(dateStr)) throw new Error(`${dateStr} must be a valid date`)
 	// Google sheets is incorrectly storing as US date format
 	// eslint-disable-next-line prefer-const
 	let [month, day, year] = dateStr.split('/');
@@ -34,7 +36,9 @@ function sheetsToIsoDate(dateStr) {
   * @returns {string} Date formatted in iso8601, utc time
   */
 function isoDateToKeplaDate(isoDate) {
-	return TZC.DateTime(isoDate).withZone(TZC.zone('Singapore/Singapore')).toUtcString();
+	// toUTCString will not add the Z, add it manually
+	// eslint-disable-next-line prefer-template
+	return (new TZC.DateTime(isoDate)).withZone(TZC.zone('Singapore')).toUtcString() + 'Z';
 }
 
 module.exports = {
