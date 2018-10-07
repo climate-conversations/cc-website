@@ -2,9 +2,9 @@
   "name": "conversation-sync",
   "version": "1.0.0",
   "description": "Conversation syncing tool for google sheets, kepla and airtables",
-  "main": "index.js",
+  "main": "src/router.js",
   "scripts": {
-    "test": "npm test"
+    "test": "mocha test/**/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
     "@google-cloud/datastore": "^1.4.0",
     "@google-cloud/pubsub": "^0.18.0",
     "airtable": "^0.5.6",
+    "dotenv": "^6.0.0",
     "lodash": "^4.17.11",
     "node-fetch": "^2.2.0",
     "timezonecomplete": "^5.6.2"
