@@ -39,7 +39,7 @@ function getTypeName(typeId) {
 function getField({ label, typeId, typeName }) {
 	if (!recordTypeIds[typeName]) {
 		// eslint-disable-next-line no-param-reassign
-		typeName = getTypeName(typeName);
+		typeName = getTypeName(typeId);
 	}
 
 	if (!typeName) throw new Error(`Could not find type (typeId: ${typeId}, typeName: ${typeName})`);
