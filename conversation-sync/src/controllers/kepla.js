@@ -6,7 +6,7 @@ async function syncGuestToKepla(data) {
 	// eslint-disable-next-line no-param-reassign
 	data = Object.assign({}, data);
 
-	dateKeys.forEach((key) => { data[key] = isoDateToKeplaDate(data[key]); });
+	dateKeys.forEach((key) => { data[key] = data[key] ? isoDateToKeplaDate(data[key]) : null; });
 	data.residentialstatus = kepla.mapToKeplaResidency(data.residentialstatus);
 
 	/* eslint-disable quote-props */
