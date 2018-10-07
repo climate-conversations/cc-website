@@ -11,6 +11,15 @@ const _ = require('lodash');
 async function keplaRequest(url, opts = {}) {
 	const authKey = process.env.KEPLA_KEY;
 
+	if (!url.startsWith('https://api.kepla.com')) {
+		if (!url.startsWith('/')) {
+			// eslint-disable-next-line no-param-reassign
+			url = `/${url}`;
+		}
+		// eslint-disable-next-line no-param-reassign
+		url = `https://api.kepla.com${url}`;
+	}
+
 	if (!opts.headers) opts.headers = {};
 	if (!opts.headers.Authorization) opts.headers.Authorization = `Bearer ${authKey}`;
 
@@ -59,7 +68,7 @@ async function update(record, payload, overwrite) {
 		body = data;
 	} else {
 		// Find the keys in data that aren't already set in record if we're not overwriting
-		const keysToSet = Object.keys(data).filter(key => !record[key]);
+		const keysToSet = Object.keys(data).filter(key => !record[key] && data[key]);
 		if (!keysToSet.length) {
 			console.debug(`kepla.updateRecord ${record.id}: No unset keys to update and overwrite is false, skipping`);
 			return record;
@@ -107,13 +116,13 @@ async function upsertConversation(data) {
 	const hostField = types.getFieldId({ typeId, label: 'Host' });
 	const facilitatorField = types.getFieldId({ typeId, label: 'Facilitator' });
 	const statusField = types.getFieldId({ typeId, label: 'Status' });
+	const countryField = types.getFieldId({ typeId, label: 'Country' })
 
-	const findUrl = `https://api.kepla.com/v1/types/${typeId}/search?q=${hostField}:${host.id}`;
+	const findUrl = `https://api.kepla.com/v1/types/${typeId}/search?q=${hostField}:${host.id}&limit=50`;
 	let saveUrl = `https://api.kepla.com/v1/types/${typeId}/records`;
 
 	const conversations = (await keplaRequest(findUrl)).records;
 	let conversation = conversations.find(conv => conv[dateField] === date);
-
 
 	if (conversation) {
 		if (status && (conversation[statusField] !== status)) {
@@ -127,6 +136,7 @@ async function upsertConversation(data) {
 			[hostField]: host.id,
 			[facilitatorField]: facilitator.id,
 			[statusField]: status,
+			[countryField]: 'Singapore',
 		};
 		conversation = await keplaRequest(saveUrl, { body, method: 'POST' });
 	}
@@ -140,7 +150,7 @@ async function upsertConversation(data) {
   */
 async function findPersonByEmail(email) {
 	// This code should search primary and secondary emails
-	const url = `https://api.kepla.com/v1/types/7c12b42d-26eb-43c7-a3d1-25045869cbf6/search?q=Hy5iBgCkb:${email}&limit=50&offset=0&filter=all&count=estimate`;
+	const url = `/v1/types/7c12b42d-26eb-43c7-a3d1-25045869cbf6/search?q=Hy5iBgCkb:${email}&limit=50&offset=0&filter=all&count=estimate`;
 
 	const result = await keplaRequest(url);
 	const people = result.records;
@@ -148,6 +158,25 @@ async function findPersonByEmail(email) {
 	const person = people[0];
 
 	return person;
+}
+
+/**
+  * @param {string} email address of the facilitator user in kepla
+  * @returns {object} Kepla user record with matching address
+  */
+async function findUser(email) {
+	const url = '/v1/users';
+
+	const users = await keplaRequest(url);
+
+	const emailMap = {
+		'chris@broadthought.co': 'chris@agency.sc',
+	};
+
+	let facilEmail = email;
+	if (emailMap[email]) facilEmail = emailMap[email];
+	const user = users.find(u => (u.email === facilEmail));
+	return user;
 }
 
 /**
@@ -171,9 +200,21 @@ async function assignUserToRecord(user, record) {
 		return null;
 	}
 
-	const url = `https://api.kepla.com/v1/types/${typeId}/records/${recordId}/users/${userId}`;
+	const url = `/v1/types/${typeId}/records/${recordId}/users/${userId}`;
 
 	return keplaRequest(url, { method: 'PUT' });
+}
+
+/**
+  * @param {object} record Record to add relationship too
+  * @param {object} record2 Other object related to record
+  * @param {string} relationshipType The type of relationship to add
+  */
+async function addRelationship(record, record2, relationshipType) {
+	if (relationshipType !== 'attendee') throw new Error('Relationship type lookup not implemented!');
+	const url = `/v1/relationships/${record.id}`;
+	const body = { related: record2.id, taxonomyId: 'a473d935-d644-46f1-9e0c-826d7795c9b3' };
+	return keplaRequest(url, { body, method: 'POST' });
 }
 
 /**
@@ -202,7 +243,9 @@ function mapToKeplaResidency(residency) {
 }
 
 module.exports = {
+	addRelationship,
 	findPersonByEmail,
+	findUser,
 	upsertPerson,
 	upsertConversation,
 	assignUserToRecord,
