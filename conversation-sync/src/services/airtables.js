@@ -10,13 +10,15 @@ Airtable.configure({
 const base = Airtable.base(process.env.AIRTABLES_BASE);
 
 async function find(table, search = {}) {
-	const queries = Object.keys(search).map(key => `{${key}}='${search[key]}'`);
+	const queries = Object.keys(search).map(key => `{${key}}="${search[key]}"`);
 
 	const opts = { maxRecords: 3 };
 
 	if (queries.length) {
 		opts.filterByFormula = (queries.length > 1) ? `AND(${queries.join(',')})` : queries[0];
 	}
+
+	console.debug(`airtables.find : Finding in table ${table}`);
 
 	const selectQuery = base(table).select(opts);
 	const firstPage = promisify(selectQuery.firstPage);
@@ -29,13 +31,14 @@ async function create(table, data) {
 	// Convert special objects denoting array merging
 	Object.keys(body).forEach((key) => {
 		const value = body[key];
-		if (_.isObject(value)) {
+		if (_.isObject(value) && !Array.isArray(value)) {
 			body[key] = [value.record];
 		}
 	});
 
+	console.debug(`airtables.create: Creating ${table} record ${body.Name || body.Date}`);
 	const createFn = promisify(tableObject.create);
-	return createFn.call(tableObject, data);
+	return createFn.call(tableObject, body);
 }
 
 async function update(table, record, data, overwrite) {
@@ -90,16 +93,26 @@ async function update(table, record, data, overwrite) {
 }
 
 async function upsert(table, search, data, overwrite) {
-	const records = await find(table, search);
-	if (records.length > 1) throw new Error('More than one record matched search. Cannot upsert');
+	if (!Array.isArray(search)) search = [search];
+	let records;
+	let searchIndex = 0;
+
+	do {
+		// eslint-disable-next-line no-await-in-loop
+		records = await find(table, search[searchIndex]);
+		searchIndex += 1;
+	} while ((records.length > 1) && (searchIndex < search.length));
+
+	if (records.length > 1) throw new Error(`More than one record matched search (${table}). Cannot upsert`);
+
 
 	if (records.length) {
-		console.trace(`${JSON.stringify(search)} Record found, updating if necessary`)
 		const [record] = records;
+		console.debug(`airtables.upsert: ${table} found (${record.fields.Name || record.fields.Id}), updating if necessary`)
 		return update(table, record, data, overwrite);
 	}
 
-	console.trace(`${JSON.stringify(search)} Record not found, creating`)
+	console.debug(`airtables.upsert: ${table} not found (${data.Name || data.Date}), creating`)
 	return create(table, data);
 }
 
