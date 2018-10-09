@@ -96,7 +96,19 @@ function nockAirtables() {
 		.query({ maxRecords: 3, filterByFormula: `{Email}='${guestData.participantemail}'` })
 		.reply(200, { records: [] })
 		.post(`/v0/${baseName}/Hosts/?`)
-		.reply(200, hostRecord);
+		.reply(200, hostRecord)
+
+		// Create conversation donations
+		.get(`/v0/${baseName}/Conversation%20Donations`)
+		.query({
+			maxRecords: 3,
+			filterByFormula: `{Conversation Name}='${conversationName}'`,
+		})
+		.reply(200, { records: [] })
+		.post(`/v0/${baseName}/Conversation%20Donations/?`, {
+			fields: { Conversation: [conversationId] }
+		})
+		.reply(200, {})
 }
 
 function nockKepla() {
@@ -149,6 +161,9 @@ function nockKepla() {
 		B1cBEJsGZ: 'Yes',
 		SkjIEkjfZ: 'Yes',
 		BkUvEyjMb: 'Yes',
+		meta: {
+			communications: { Hy5iBgCkb: true, rkchXl0yZ: true },
+		},
 	};
 	const completeGuestRecord = Object.assign({}, shortGuestRecord, moreGuestRecord);
 
@@ -177,43 +192,32 @@ function nockKepla() {
 
 	return keplaScope
 		// Find no host
-		.get(`/v1/types/${personType}/search`)
+		.post(`/v1/types/${personType}/records`, { Hy5iBgCkb: guestData.hostemailaddress })
 		.query({
-			limit: 50,
-			offset: 0,
-			filter: 'all',
-			count: 'estimate',
-			q: `Hy5iBgCkb:${guestData.hostemailaddress}`,
+			update: true,
 		})
-		.reply(200, { records: [] })
+		.reply(404, {
+			id: hostRecord.id,
+			typeId: personType,
+			Hy5iBgCkb: guestData.hostemailaddress,
+		})
 		// Create host
-		.post(`/v1/types/${personType}/records`, hostPost)
-		.query({
-			update: 'true',
-		})
+		.put(`/v1/types/${personType}/records/${hostRecord.id}`)
 		.reply(200, hostRecord)
 
 		// Find facilitator
-		.get(`/v1/types/${personType}/search`)
+		.post(`/v1/types/${personType}/records`, { Hy5iBgCkb: guestData.facilitatoremailaddress })
 		.query({
-			limit: 50,
-			offset: 0,
-			filter: 'all',
-			count: 'estimate',
-			q: `Hy5iBgCkb:${guestData.facilitatoremailaddress}`,
+			update: true,
 		})
-		.reply(200, { records: [facilRecord] })
+		.reply(200, facilRecord)
 
 		// Find guest
-		.get(`/v1/types/${personType}/search`)
+		.post(`/v1/types/${personType}/records`, { Hy5iBgCkb: guestData.participantemail })
 		.query({
-			limit: 50,
-			offset: 0,
-			filter: 'all',
-			count: 'estimate',
-			q: `Hy5iBgCkb:${guestData.participantemail}`,
+			update: true,
 		})
-		.reply(200, { records: [shortGuestRecord] })
+		.reply(200, shortGuestRecord)
 		// Update guest
 		.put(`/v1/types/${personType}/records/${shortGuestRecord.id}`, moreGuestRecord)
 		.reply(200, completeGuestRecord)
@@ -223,14 +227,22 @@ function nockKepla() {
 		.reply(200, [facilUser])
 
 		// Find conversation
-		.get(`/v1/types/${conversationType}/search`)
+		.get(`/v1/types/${conversationType}/records`)
 		.query({
+			order: 'desc',
+			orderBy: 'B1CZNl0Jb',
 			limit: 50,
-			q: `SyzUNxRJb:${hostRecord.id}`,
+			offset: 0,
 		})
 		.reply(200, { records: [conversationRecord] })
 
 		// User is already assigned to conversation, do nothing
+
+		// Refresh records for user assignment
+		.get(`/v1/types/${conversationType}/records/${conversationRecord.id}`)
+		.reply(200, conversationRecord)
+		.get(`/v1/types/${personType}/records/${completeGuestRecord.id}`)
+		.reply(200, completeGuestRecord)
 
 		// Assign user to guest
 		.put(`/v1/types/${personType}/records/${shortGuestRecord.id}/users/${facilUser.id}`)
