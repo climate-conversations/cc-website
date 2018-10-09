@@ -4,3 +4,4 @@ npm-debug.log
 appengine/lib
 dist/
 .env
+*-cred.json
