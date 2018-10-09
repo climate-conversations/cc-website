@@ -35,14 +35,47 @@ async function keplaRequest(url, opts = {}) {
   * @param {object} payload The record to create, kepla field labels will be translated to field ids
   * @return {object} the new record
   */
-async function create(typeName, payload) {
+async function create(typeName, payload, comms) {
 	const typeId = types.getTypeId(typeName);
 
 	const url = `https://api.kepla.com/v1/types/${typeId}/records?update=true`;
 
 	const body = types.keysToKeplaFieldIds(typeId, payload);
 
+	// If enabling communication, set contactable to true
+	if (comms) {
+		setComms(typeId, body, comms);
+	}
+
+	console.log(`KEPLA: Creating ${typeName}`);
 	return keplaRequest(url, { method: 'POST', body });
+}
+
+/**
+  * Enable comms to anyone that's signed up
+  * @param {string} typeId record type
+  * @param {object} body That's being saved / updated (has kepla keys)
+  * @param {string[]} fields Optional List of field lables to enable comms, if ommitted will check which comms fields are set
+  */
+function setComms(typeId, body, fields) {
+	const commsFields = ['Home/Work Phone', 'Email', 'Mobile Phone'];
+
+	const fieldsToSet = Array.isArray(fields) ? fields : Object.keys(body);
+
+	const activeFields = commsFields
+		.map(f => ({ label: f, id: types.getFieldId({ label: f, typeId }) }))
+		.filter(f => fieldsToSet.includes(f.label) || fieldsToSet.includes(f.id));
+
+	if (activeFields.length) {
+		body.meta = {
+			communications: {},
+		};
+
+		console.log(`Enabling comms by ${activeFields.map(f => f.label).join(',')}`);
+		activeFields.forEach((f) => {
+			body.meta.communications[f.id] = true;
+		});
+	}
 }
 
 /**
@@ -52,7 +85,7 @@ async function create(typeName, payload) {
   * in record will be sent as part of the update
   * @returns {object} The updated record
   */
-async function update(record, payload, overwrite) {
+async function update(record, payload, comms, overwrite) {
 	const { typeId } = record;
 	const data = types.keysToKeplaFieldIds(typeId, payload);
 
@@ -77,6 +110,13 @@ async function update(record, payload, overwrite) {
 		body = _.pick(data, keysToSet);
 	}
 
+	// If enabling communication, set contactable to true
+	if (comms) {
+		setComms(typeId, body, comms);
+	}
+
+	console.log(`KEPLA: Updating record ${record.id}`);
+
 	return keplaRequest(url, { method: 'PUT', body });
 }
 
@@ -90,13 +130,16 @@ async function update(record, payload, overwrite) {
   * that are not already set will be updated on the record
   * @returns {object} The upserted record
   */
-async function upsertPerson(email, data, overwrite) {
-	const record = await findPersonByEmail(email);
-	if (!record) {
-		return create('person', data);
-	}
+async function upsertPerson(email, data, comms, overwrite) {
+	// Kepla searching is not reliable
+	// Easiest way to accurately find by email is to upsert withonly email
+	// and then update any empty fields
 
-	return update(record, data, overwrite);
+	const record = await create('person', _.pick(data, 'Email'));
+
+	const updated = await update(record, data, comms, overwrite);
+
+	return updated;
 }
 
 /**
@@ -116,21 +159,37 @@ async function upsertConversation(data) {
 	const hostField = types.getFieldId({ typeId, label: 'Host' });
 	const facilitatorField = types.getFieldId({ typeId, label: 'Facilitator' });
 	const statusField = types.getFieldId({ typeId, label: 'Status' });
-	const countryField = types.getFieldId({ typeId, label: 'Country' })
+	const countryField = types.getFieldId({ typeId, label: 'Country' });
 
-	const findUrl = `https://api.kepla.com/v1/types/${typeId}/search?q=${hostField}:${host.id}&limit=50`;
+	const limit = 50;
+	let offset = 0;
+
+	const findUrl = `https://api.kepla.com/v1/types/${typeId}/records?order=desc&orderBy=${dateField}`;
 	let saveUrl = `https://api.kepla.com/v1/types/${typeId}/records`;
 
-	const conversations = (await keplaRequest(findUrl)).records;
-	let conversation = conversations.find(conv => conv[dateField] === date);
+	console.log(`KEPLA: Finding conversation on ${date}, by host ${host.id}`);
+
+	let conversation;
+	let conversations;
+	do {
+		// eslint-disable-next-line no-await-in-loop
+		conversations = (await keplaRequest(`${findUrl}&limit=${limit}&offset=${offset}`)).records;
+		conversation = conversations
+			.find(conv => ((conv[dateField] === date) && (conv[hostField] === host.id)));
+		offset += limit;
+	} while ((!conversation) && (conversations.length));
 
 	if (conversation) {
+		console.log(`KEPLA: Conversation found`);
+
 		if (status && (conversation[statusField] !== status)) {
+			console.log(`KEPLA: Marking conversation ${status} (${conversation.id})`);
 			saveUrl += conversation.id;
 			const body = { [statusField]: status };
 			conversation = await keplaRequest(saveUrl, { body, method: 'PUT' });
 		}
 	} else {
+		console.log('KEPLA: Creating conversation');
 		const body = {
 			[dateField]: date,
 			[hostField]: host.id,
@@ -143,21 +202,10 @@ async function upsertConversation(data) {
 	return conversation;
 }
 
-/**
-  * Find a person by email in kepla
-  * @param {string} email the email of the person to find
-  * @returns {object} The record from kepla or undefined
-  */
-async function findPersonByEmail(email) {
-	// This code should search primary and secondary emails
-	const url = `/v1/types/7c12b42d-26eb-43c7-a3d1-25045869cbf6/search?q=Hy5iBgCkb:${email}&limit=50&offset=0&filter=all&count=estimate`;
+async function getRecord(record) {
+	const url = `/v1/types/${record.typeId}/records/${record.id}`;
 
-	const result = await keplaRequest(url);
-	const people = result.records;
-
-	const person = people[0];
-
-	return person;
+	return keplaRequest(url);
 }
 
 /**
@@ -166,6 +214,8 @@ async function findPersonByEmail(email) {
   */
 async function findUser(email) {
 	const url = '/v1/users';
+
+	console.log('KEPLA: Finding user');
 
 	const users = await keplaRequest(url);
 
@@ -185,8 +235,6 @@ async function findUser(email) {
   * @param {object} record Kepla record (person/conversation)
   */
 async function assignUserToRecord(user, record) {
-	// FIXME check if user is already in record users and skip
-
 	const recordId = record.id;
 	const userId = user.id;
 	const { typeId } = record;
@@ -196,9 +244,11 @@ async function assignUserToRecord(user, record) {
 	const assigned = record.users.find(u => u.id === user.id);
 
 	if (assigned) {
-		console.trace(`${user.name} already assigned to ${typeName} ${recordId}, skipping`);
+		console.debug(`${user.name} already assigned to ${typeName} ${recordId}, skipping`);
 		return null;
 	}
+
+	console.log(`KEPLA: Assigning user ${user.name} to ${typeName} ${recordId}`);
 
 	const url = `/v1/types/${typeId}/records/${recordId}/users/${userId}`;
 
@@ -212,6 +262,7 @@ async function assignUserToRecord(user, record) {
   */
 async function addRelationship(record, record2, relationshipType) {
 	if (relationshipType !== 'attendee') throw new Error('Relationship type lookup not implemented!');
+	console.log(`KEPLA: Assigning guest ${record2.id} to conversation ${record.id}`);
 	const url = `/v1/relationships/${record.id}`;
 	const body = { related: record2.id, taxonomyId: 'a473d935-d644-46f1-9e0c-826d7795c9b3' };
 	return keplaRequest(url, { body, method: 'POST' });
@@ -244,8 +295,8 @@ function mapToKeplaResidency(residency) {
 
 module.exports = {
 	addRelationship,
-	findPersonByEmail,
 	findUser,
+	getRecord,
 	upsertPerson,
 	upsertConversation,
 	assignUserToRecord,

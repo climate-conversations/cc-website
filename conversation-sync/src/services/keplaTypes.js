@@ -28,6 +28,13 @@ function getTypeName(typeId) {
 	return typeName;
 }
 
+function getDescriptorField(record) {
+	const dateField = getField({ typeName: 'conversation', label: 'Date of Gathering' });
+	const nameField = getField({ typeName: 'person', label: 'Full Name' });
+
+	return record[nameField.id] || record[dateField.id];
+}
+
 /**
   * Get a field by label
   * typeId or typeName must be specified
@@ -903,6 +910,7 @@ fields = {
 
 module.exports = {
 	fields,
+	getDescriptorField,
 	getField,
 	getFieldId,
 	getTypeId,
