@@ -16,7 +16,7 @@ class GuestController extends AirblastController {
 		validate(payloadSchema, data);
 
 		// Convert dates to iso
-		if (!data.conversationdate) throw new Error('Cannot process a conversation that does not have a date');
+		if (!data.conversationdate) throw new this.AppError(400, 'invalid', 'Cannot process a conversation that does not have a date');
 		dateKeys.forEach((key) => {
 			data[key] = data[key] ? sheetsToIsoDate(data[key]) : null;
 		});

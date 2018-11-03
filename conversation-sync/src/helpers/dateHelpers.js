@@ -11,7 +11,7 @@ const dateKeys = ['dateofbirth', 'conversationdate'];
   * @returns {string} The date in 'yyyy-mm-dd' format
   */
 function sheetsToIsoDate(dateStr) {
-	if (!_.isString(dateStr)) throw new Error(`${dateStr} must be a valid date`)
+	if (!_.isString(dateStr)) throw new Error(`${dateStr} must be a valid date`);
 	// Google sheets is incorrectly storing as US date format
 	// eslint-disable-next-line prefer-const
 	let [month, day, year] = dateStr.split('/');
