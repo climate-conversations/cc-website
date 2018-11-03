@@ -1,11 +1,23 @@
-console.log('configuring')
-require('dotenv').config();
+const Airblast = require('Airblast');
 
-const { handler } = require('./helpers/middleware');
-const Sync = require('./controllers/sync');
+const Controllers = require('./controllers');
 
-const syncController = new Sync();
+const config = {
+	datastore: {},
+	pubsub: {},
+	// Authenticate can also be a function
+	authenticate: process.env.AUTH_TOKEN,
+	// eslint-disable-next-line no-console
+	log: console.log,
+};
 
-exports.receiveGuest = handler(syncController, true);
+const controllers = Controllers(config);
 
-exports.syncGuest = syncController.syncGuest;
+module.exports = Airblast.routes(controllers);
+
+// Deploy functions would be
+const deploy = [
+	`gcloud functions deploy ${controller.name} --trigger-http`,
+	`gcloud functions deploy ${controller.name}Retry --trigger-http`,
+	`gcloud functions deploy ${controller.name}Process --trigger-resource ${controller.topic} --trigger-event google.pubsub.topic.publish`,
+];
