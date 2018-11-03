@@ -1,6 +1,6 @@
-const Airblast = require('Airblast');
+const { Airblast } = require('airblast');
 
-const Controllers = require('./controllers');
+const Controllers = require('../src/controllers');
 
 const config = {
 	datastore: {},
@@ -14,10 +14,3 @@ const config = {
 const controllers = Controllers(config);
 
 module.exports = Airblast.routes(controllers);
-
-// Deploy functions would be
-const deploy = [
-	`gcloud functions deploy ${controller.name} --trigger-http`,
-	`gcloud functions deploy ${controller.name}Retry --trigger-http`,
-	`gcloud functions deploy ${controller.name}Process --trigger-resource ${controller.topic} --trigger-event google.pubsub.topic.publish`,
-];
