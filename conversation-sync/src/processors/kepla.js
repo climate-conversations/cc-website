@@ -1,5 +1,5 @@
 const kepla = require('../services/kepla');
-const { isoDateToKeplaDate, dateKeys } = require('./helpers/dateHelpers');
+const { isoDateToKeplaDate, dateKeys } = require('../helpers/dateHelpers');
 
 async function syncGuestToKepla(data) {
 	// Clone the data
@@ -14,7 +14,7 @@ async function syncGuestToKepla(data) {
 		return null;
 	}
 
-	console.log(`KEPLA: Upserting ${data.hostname} (host), ${data.facilitatorname} (facil), ${data.participantname} (guest)`)
+	console.log(`KEPLA: Upserting ${data.hostname} (host), ${data.facilitatorname} (facil), ${data.participantname} (guest)`);
 	/* eslint-disable quote-props */
 	// eslint-disable-next-line prefer-const
 	let [host, facilitator, guest, facilUser] = await Promise.all([
