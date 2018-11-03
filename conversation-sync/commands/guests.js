@@ -5,7 +5,7 @@ const Sync = require('./src/controllers/sync')
 const sync = new Sync();
 
 async function run() {
-	const rows = await sheets.fetchRows(152).catch(console.error);
+	const rows = await sheets.fetchRows(22).catch(console.error);
 	let completed = 0;
 
 	try {
