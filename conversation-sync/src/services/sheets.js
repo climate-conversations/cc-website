@@ -9,6 +9,7 @@ function instancePromisify(obj, fnName) {
 async function setAuth(document, credentialsPath) {
 	const fullPath = path.join(process.cwd(), credentialsPath);
 
+	// eslint-disable-next-line global-require, import/no-dynamic-require
 	const creds = require(fullPath);
 
 	return instancePromisify(document, 'useServiceAccountAuth')(creds);

@@ -55,7 +55,8 @@ async function create(typeName, payload, comms) {
   * Enable comms to anyone that's signed up
   * @param {string} typeId record type
   * @param {object} body That's being saved / updated (has kepla keys)
-  * @param {string[]} fields Optional List of field lables to enable comms, if ommitted will check which comms fields are set
+  * @param {string[]} fields Optional List of field lables to enable comms,
+  *  if ommitted will check which comms fields are set
   */
 function setComms(typeId, body, fields) {
 	const commsFields = ['Home/Work Phone', 'Email', 'Mobile Phone'];
