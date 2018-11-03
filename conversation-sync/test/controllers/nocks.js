@@ -106,9 +106,9 @@ function nockAirtables() {
 		})
 		.reply(200, { records: [] })
 		.post(`/v0/${baseName}/Conversation%20Donations/?`, {
-			fields: { Conversation: [conversationId] }
+			fields: { Conversation: [conversationId] },
 		})
-		.reply(200, {})
+		.reply(200, {});
 }
 
 function nockKepla() {
