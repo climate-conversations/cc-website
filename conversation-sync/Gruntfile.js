@@ -13,7 +13,7 @@ const GOOGLE_DEFAULTS = {
 
 const googleConfig = Object.assign(GOOGLE_DEFAULTS, gcloud);
 
-const functionDeployArgs = _.flatten(_.map(googleConfig).map((key, val) =>
+const functionDeployArgs = _.flatten(_.map(googleConfig, (val, key) =>
 	[`--${_.kebabCase(key)}`, val]));
 
 module.exports = (grunt) => {
@@ -24,10 +24,14 @@ module.exports = (grunt) => {
 
 		const done = this.async();
 
-		const promises = routes.map(deployRoute);
+		const promises = [deployRoute(routes[0])];
+		// const promises = routes.forEach(deployRoute);
+
+		console.log('May take up to two minutes ...');
 
 		Promise.all(promises).then(() => done()).catch(done);
 	});
+
 	grunt.initConfig({
 		airblast: {
 			deploy: {},
@@ -41,14 +45,14 @@ async function deployRoute(route) {
 	let description;
 
 	if (route.type === 'http') {
-		args.push('functions', 'deploy', route.path);
+		args.push('alpha', 'functions', 'deploy', route.path);
 		args.push(...functionDeployArgs);
 		args.push('--trigger-http');
 		description = `HTTP function ${route.path}`;
 	} else if (route.type === 'pubsub') {
-		args.push('functions', 'deploy', route.path, '--trigger-resource');
+		args.push('alpha', 'functions', 'deploy', route.path, '--trigger-resource', route.topic);
 		args.push(...functionDeployArgs);
-		args.push(route.topic, '--trigger-event', 'google.pubsub.topic.publish');
+		args.push('--trigger-event', 'google.pubsub.topic.publish');
 		description = `pubsub function ${route.path} on topic ${route.topic}`;
 	} else {
 		throw new Error(`Unknown route type ${route.type}`);
@@ -62,25 +66,33 @@ async function deployRoute(route) {
 		console.log('Deploy command failed:');
 		console.log(`  ${command} ${args.join(' ')}`);
 		console.log('Output:');
-		console.log(err.allout);
+		console.log(err.output.allout);
 		throw err;
 	}
 }
 
 async function spawnChild(command, args, opts) {
-	const stderr = [];
-	const stdout = [];
-	const allout = [];
+	const output = {
+		stderr: [],
+		stdout: [],
+		allout: [],
+	};
+
+	const log = (line, type) => {
+		output[type].push(line);
+		output.allout.push(line);
+		console.log(line);
+	};
+
 	return new Promise((resolve, reject) => {
 		const child = childProcess.spawn(command, args, opts);
 		readline.createInterface({
 			input: child.stdout,
-		}).on('line', (line) => { stdout.push(line); allout.push(line); });
+		}).on('line', line => log(line, 'stdout'));
 		readline.createInterface({
 			input: child.stderr,
-		}).on('line', (line) => { stderr.push(line); allout.push(line); });
+		}).on('line', line => log(line, 'stderr'));
 		child.on('exit', (code) => {
-			const output = { stderr, stdout, allout };
 			if (code !== 0) {
 				const err = new Error(`${command} exited with code ${code}`);
 				err.output = output;

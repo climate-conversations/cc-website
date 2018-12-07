@@ -1,6 +1,8 @@
 const airtables = require('../services/airtables');
 
 async function syncGuestToFtl(data) {
+	airtables.init();
+
 	console.log(`Airtables: upserting facilitator ${data.facilitatorname}`);
 	const facilitator = await airtables.upsert('Facilitators', { Email: data.facilitatoremailaddress }, {
 		Email: data.facilitatoremailaddress,

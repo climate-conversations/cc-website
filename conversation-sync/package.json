@@ -2,7 +2,7 @@
   "name": "conversation-sync",
   "version": "1.0.0",
   "description": "Conversation syncing tool for google sheets, kepla and airtables",
-  "main": "src/router.js",
+  "main": "server.js",
   "scripts": {
     "test": "mocha test/**/*.test.js"
   },

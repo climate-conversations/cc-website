@@ -1,4 +1,4 @@
-const { Airblast } = require('airblast');
+const Airblast = require('airblast');
 
 const Controllers = require('../src/controllers');
 

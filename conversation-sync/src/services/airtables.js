@@ -2,12 +2,18 @@ const { promisify } = require('util');
 const Airtable = require('airtable');
 const _ = require('lodash');
 
-Airtable.configure({
-	endpointUrl: 'https://api.airtable.com',
-	apiKey: process.env.AIRTABLES_KEY,
-});
+let base;
 
-const base = Airtable.base(process.env.AIRTABLES_BASE);
+function init() {
+	if (!base) {
+		Airtable.configure({
+			endpointUrl: 'https://api.airtable.com',
+			apiKey: process.env.AIRTABLES_KEY,
+		});
+
+		base = Airtable.base(process.env.AIRTABLES_BASE);
+	}
+}
 
 async function find(table, search = {}) {
 	const queries = Object.keys(search).map(key => `{${key}}="${search[key]}"`);
@@ -117,6 +123,7 @@ async function upsert(table, search, data, overwrite) {
 }
 
 module.exports = {
+	init,
 	create,
 	find,
 	update,

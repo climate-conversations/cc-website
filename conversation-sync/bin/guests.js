@@ -1,11 +1,12 @@
 require('dotenv').config();
-const sheets = require('./src/controllers/sheets');
-const Sync = require('./src/controllers/sync')
+const sheets = require('../src/services/sheets');
 
-const sync = new Sync();
+const { syncGuestToKepla } = require('../src/processors/kepla');
+const { syncGuestToFtl } = require('../src/processors/ftl');
+const { sheetsToIsoDate, dateKeys } = require('../src/helpers/dateHelpers');
 
 async function run() {
-	const rows = await sheets.fetchRows(22).catch(console.error);
+	const rows = await sheets.fetchRows(427 - 362).catch(console.error);
 	let completed = 0;
 
 	try {
@@ -14,12 +15,54 @@ async function run() {
 
 			console.log(`*** Syncing ${row.hostname}'s guest ${row.participantname} (from conversation on ${row.conversationdate})`);
 			// eslint-disable-next-line no-await-in-loop
-			await sync.syncGuest(row);
+			await syncGuest(row);
 			completed += 1;
 		}
 	} finally {
 		console.log(`** ${completed} of ${rows.length} synced **`);
 	}
+}
+
+async function syncGuest(payload) {
+	// Pull data out of datastore
+
+	// FIXME validate essential keys in record (eg host, facil, guest email)
+
+	// remove gsx$ from payload keys
+	const data = removeGsxFromKeys(payload);
+
+	// Convert dates fo iso
+	if (!data.conversationdate) throw new Error('Cannot process a conversation that does not have a date');
+	dateKeys.forEach((key) => { data[key] = data[key] ? sheetsToIsoDate(data[key]) : null; });
+
+	// Sync Kepla
+	const keplaPromise = syncGuestToKepla(data)
+		.then(() => {
+			// Mark record kepla synced
+		});
+
+	const ftlPromise = syncGuestToFtl(data)
+		.then(() => {
+			// Mark record ftl synced
+		});
+
+	return Promise.all([keplaPromise, ftlPromise]);
+}
+
+
+/**
+  * Remove gsx$ from google sheet data keys
+  * @param {object} data Original data from google sheets
+  * @return {object} Same object with keys renamed to remove gsx$
+  */
+function removeGsxFromKeys(data) {
+	const newData = {};
+	Object.keys(data).forEach((k) => {
+		const newKey = k.split('gsx$').join('');
+		newData[newKey] = data[k];
+	});
+
+	return newData;
 }
 
 run().catch(console.error);
