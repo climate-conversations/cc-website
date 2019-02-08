@@ -1,5 +1,5 @@
-require('./config');
-const routes = require('./config/routes');
+// require('./config');
+// const routes = require('./config/routes');
 
 console.log('Environment:')
 Object.keys(process.env).forEach(key => console.log(`${key} ${process.env[key]}`));
