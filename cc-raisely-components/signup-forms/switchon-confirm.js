@@ -11,7 +11,7 @@
 
 // eslint-disable-next-line no-unused-expressions
 (RaiselyComponents, React) => {
-	const { Form } = RaiselyComponents;
+	const { Form, api } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
 
 	const defaults = {
@@ -31,12 +31,32 @@
 		}
 
 		componentDidMount() {
-			// If they've already confirmed, do the redirect
+			loadProfile();
+		}
+
+		async loadProfile() {
+			const { profile } = this.props.global.user;
+			if (!profile) return;
+
+			const result = await api.profiles.getAll({
+				id: profile.uuid,
+				query: { private: 1 },
+			});
+
+			const fullProfile = result.body().data().data;
+			const formValues = this.props.getFormValues({
+				fields: fullProfile,
+			});
+
+			return this.setState({ values: formValues, profile: fullProfile }, this.checkAlreadyConfirmed);
+		}
+
+		checkAlreadyConfirmed: () => {
 			if (this.alreadyConfirmed()) {
 				this.doRedirect();
 			}
 
-			const { profile } = this.props.global.current;
+			profile.private.firstConfirmAttempt = new Date().toISOString();
 
 			if (profile) {
 				// On mount, save that the user loaded the confirmation page
@@ -44,9 +64,7 @@
 					this.props.api.profiles.update({
 						id: profile.uuid,
 						data: {
-							private: {
-								firstConfirmAttempt: new Date().toISOString(),
-							},
+							private: profile.private,
 						},
 					});
 				}
@@ -54,9 +72,9 @@
 		}
 
 		alreadyConfirmed() {
-			const { profile } = this.props.global.user;
+			const { profile } = this.state;
 
-			return profile && profile.public && ['confirmed', ''].includes(profile.public.switchOnStatus);
+			return profile && profile.public && profile.public.confirmedAt;
 		}
 
 		doRedirect() {
@@ -70,7 +88,13 @@
 			try {
 				const data = this.props.processFormData(formData);
 
+				const { profile } = this.props.global.user;
+
+				data.private = profile.private;
+				data.public = profile.public;
+
 				data.private.confirmedAt = new Date().toISOString();
+				data.public.switchOnConfirmed = 'yes';
 				data.public.switchOnStatus = 'confirmed';
 
 				const request = await this.props.api.profiles.update({
@@ -117,6 +141,11 @@
 			// Show only selected fields
 			const fields = global.customFields.profile
 				.filter(f => fieldsToShow.includes(f.id));
+
+			fields.forEach((f) => {
+				// eslint-disable-next-line no-param-reassign
+				if (f.rules) delete f.rules;
+			});
 
 			if (this.alreadyConfirmed()) {
 				return (

@@ -8,9 +8,6 @@
 	const { CustomFieldsProvider } = RaiselyComponents.Modules;
 	const {
 		MultiForm,
-		DonationForm,
-		ProfilePreviewByUuid,
-		ProfileSelect,
 	} = RaiselyComponents.Molecules;
 
 	// define inline configuration
@@ -29,6 +26,137 @@
 		paymentButton: 'Complete my Registration',
 		feeType: 'Donation',
 	};
+
+	// Show only a subset of fields on the form
+	const allUserFields = ['firstName', 'first_name', 'lastName', 'last_name', 'email', 'phoneNumber', 'postcode'];
+	const baseUserFields = ['firstName', 'first_name', 'lastName', 'last_name', 'email', 'phoneNumber'];
+
+	const validSwitchTypes = ['self', 'friend'];
+
+	/**
+	  * Helper function to decode the uri query
+	  */
+	function getQuery() {
+		let match;
+		const pl = /\+/g; // Regex for replacing addition symbol with a space
+		const search = /([^&=]+)=?([^&]*)/g;
+		const decode = (s) => { return decodeURIComponent(s.replace(pl, ' ')); };
+		const query = window.location.search.substring(1);
+
+		const urlParams = {};
+
+		// eslint-disable-next-line
+		while (match = search.exec(query)) urlParams[decode(match[1])] = decode(match[2]);
+		return urlParams;
+	}
+
+	// eslint-disable-next-line no-unused-vars
+	function noop() {}
+
+	function calculateImpact(campaign, dwellingSize, pax, months) {
+		const dwellings = campaign.public.householdAverages;
+		const monthlyKWH = (dwellings[dwellingSize] || dwellings.hdb3) * pax;
+		const totalKWH = monthlyKWH * months;
+
+		const trees = campaign.public.comparisons.treeFieldsPerKWH * totalKWH;
+
+		// FIXME calculate this
+		const spMonthly = 50;
+		const greenMonthlyMin = 48;
+		const greenMonthlyMax = 49;
+
+		return {
+			monthlyKWH,
+			trees,
+			totalKWH,
+			minSaving: (spMonthly - greenMonthlyMax) * months,
+			maxSaving: (spMonthly - greenMonthlyMin) * months,
+			maxNewBill: greenMonthlyMax * months,
+		};
+	}
+
+	function formatNumbers(impacts) {
+		const decimalPlaces = {
+			trees: 2,
+			minSaving: 0,
+			maxSaving: 0,
+			maxNewBill: 0,
+			totalKWH: 0,
+		};
+
+		const result = {};
+		Object.keys(impacts).forEach((key) => {
+			result[key] = impacts[key].toLocaleString(undefined, {
+				maximumFractionDigits: decimalPlaces[key] || 0,
+			});
+		});
+		return result;
+	}
+
+	/**
+	  * @Returns true if:
+	  * Postcode is present and the first 2 digits are a number
+	  * Todays date is before May 1st
+	  * The postcode starts with 01 - 33
+	  */
+	function marketAvailable(postcode) {
+		const allOpen = new Date('2019-05-01');
+		const todaysDate = new Date();
+
+		// Have they specified a postcode, and is it before the full market
+		// is open. If so, check if their postcode is open
+		if (postcode && (todaysDate < allOpen)) {
+			const start = parseInt(postcode.substr(0, 2), 10);
+
+			return (start && start > 33);
+		}
+
+		return true;
+	}
+
+	function ensureSet(profile, defaults) {
+		['public', 'private'].forEach((scope) => {
+			if (defaults[scope]) {
+				Object.keys(defaults[scope]).forEach((key) => {
+					// eslint-disable-next-line no-param-reassign
+					if (!profile[scope][key]) profile[scope][key] = defaults[scope][key];
+				});
+			}
+		});
+
+		console.log('Finalised profile', profile)
+	}
+
+	/**
+	  * Helper to select custo fields by id
+	  */
+	function selectFields(fields, fieldIds) {
+		return fields.filter(f => fieldIds.includes(f.id));
+	}
+
+	class SwitchForm extends React.Component {
+		nextStep = () => this.props.updateStep(this.props.step + 1);
+		// eslint-disable-next-line no-use-before-define
+		complete = () => this.props.updateStep(this.props.steps.indexOf(CompleteForm));
+
+		changeFocus = (switchType) => {
+			// eslint-disable-next-line no-use-before-define
+			const nextStep = () => this.props.updateStep(this.props.steps.indexOf(ImpactForm));
+			this.props.updateValues({ switchType }, nextStep);
+		}
+
+		switchFriend = () => {
+			this.changeFocus('friend');
+		}
+
+		switchSelf = () => {
+			this.changeFocus('self');
+		}
+
+		isSelf = () => this.props.values.switchType === 'self';
+		isFriend = () => this.props.values.switchType !== 'self';
+		loggedIn = () => !!this.props.global.user;
+	}
 
 	class FacebookLogin extends React.Component {
 		facebookLogin = (e) => {
@@ -67,7 +195,143 @@
 		}
 	}
 
-	class UserForm extends React.Component {
+	function ButtonBar(props) {
+		// eslint-disable-next-line object-curly-newline
+		const { values, switchFriend, switchSelf, global } = props;
+
+		// If they've confirmed, then switch self is no longer an option
+		// so no need to show this
+		if (global.user && global.user.profile &&
+			global.user.profile.public && global.user.profile.public.confirmedAt) {
+			return '';
+		}
+
+		const selected = 'primary';
+		const unselected = 'cta';
+
+		return (
+			<div className="button-bar">
+				<Button
+					theme={values.switchType === 'self' ? selected : unselected}
+					onClick={switchSelf}
+				>
+					Switch Yourself
+				</Button>
+				<Button
+					theme={values.switchType === 'self' ? unselected : selected}
+					onClick={switchFriend}
+				>
+					Switch Friends
+				</Button>
+			</div>
+		);
+	}
+
+	class ImpactForm extends SwitchForm {
+		onChange = (profile) => {
+			this.props.updateValues({ profile });
+		}
+
+		next = async () => {
+			let { nextStep } = this;
+
+			// If the user already exists, and we're switching friends
+			// then there's nothing to see on the users form, so skip it
+			if (this.loggedIn() && this.isFriend()) {
+				nextStep = this.complete;
+			}
+
+			// NOTE: No need to set values as they will have been done above
+			// by the onChange handler
+			this.props.updateValues({}, nextStep);
+		}
+
+		render() {
+			const { global, values } = this.props;
+			const { campaign } = global;
+
+			const dwellingSize = values.profile.private.dwellingSize || 'hdb3';
+			const people = this.isFriend() ? values.profile.public.switchOnGoal || 5 : 1;
+
+			const {
+				trees,
+				minSaving,
+				maxSaving,
+				maxNewBill,
+				totalKWH,
+			} = formatNumbers(calculateImpact(global.campaign, dwellingSize, people, 12));
+
+			let noun = 'your';
+			let profileFields;
+
+			if (this.isSelf()) {
+				profileFields = ['dwellingSize'];
+				noun = "your friend's";
+			} else {
+				profileFields = campaign.public.goalFields;
+			}
+
+			return (
+				<React.Fragment>
+					<h3 className="signup-form__account--heading">Look what you could do...</h3>
+					<ButtonBar {...{
+						...this.props,
+						switchSelf: this.switchSelf,
+						switchFriend: this.switchFriend,
+					}} />
+					<CustomFieldsProvider global={global} name="profile">
+						{fields => (
+							<div className="signup-form__account">
+								<Form
+									unlocked
+									fields={selectFields(fields, profileFields)}
+									values={values.profile}
+									onChange={this.onChange}
+									buttons={noop}
+								/>
+							</div>
+						)}
+					</CustomFieldsProvider>
+					<div className="goal-calculator">
+						<p><strong>FIXME these numbers are placeholders</strong></p>
+						<p>
+							<span className="signup-icon" role="img" aria-hidden="true">⚡</span>
+							Swiching {noun} electricity would add up to <span className="impact">{totalKWH}</span> kWh of electricity
+							per year being purchased from green energy retailers.
+						</p>
+						<p>
+							<span className="signup-icon" role="img" aria-hidden="true">🌳</span>
+							{"That's"} rougly the equivalent of planting <span className="impact">{trees}</span> football fields
+							of rainforest.
+						</p>
+						{this.isSelf() ? (
+							<p>
+								<span className="signup-icon" role="img" aria-hidden="true">🙌</span>
+								Based on the average electricity utility bill, you could
+								save between ${minSaving} and ${maxSaving} per year on your bill*,
+								and up to $<span className="impact">{maxNewBill}</span> per year would flow towards retailers that
+								are investing in an energy system of the future.
+							</p>
+						) : ''}
+					</div>
+					<Button
+						onClick={this.next}>
+						Next &gt;
+					</Button>
+					<div>
+						<p className="fineprint">
+							* This is not financial advice. Pricing may vary for different customers
+							based on usage, and with changes to available plans and offers by retailers.
+							You and your friends should check the costs of any choices before making a
+							decision to switch.
+						</p>
+					</div>
+				</React.Fragment>
+			);
+		}
+	}
+
+	class UserForm extends SwitchForm {
 		state = {
 			alreadyExists: false,
 			email: '',
@@ -86,114 +350,59 @@
 			return existsRes.body().data().data.status !== 'OK';
 		}
 
-		// eslint-disable-next-line class-methods-use-this
-		generateProfile(user) {
-			const name = `${user.firstName || user.first_name || ''} ${user.lastName || user.last_name || ''}`.trim();
-			const path = `${user.firstName || user.first_name || ''}-${user.lastName || user.last_name || ''}`
-				.replace(/\s/g, '-')
-				.toLowerCase();
-
-			const dwellingSize = user.private ? user.private.dwellingSize : user.public.dwellingSize;
-			const { monthlyKWH } = this.calculateImpact(this.props.global.campaign, dwellingSize, 1, 12);
-
-			return {
-				name,
-				path,
-				private: {
-					dwellingSize,
-					monthlyKWH,
-				},
-			};
-		}
-
 		next = async (user) => {
 			const profileAlreadyExists = await this.checkIfProfileExists(user.email);
 
 			if (profileAlreadyExists) {
-				this.setState({ alreadyExists: true, email: user.email });
+				// If they've already registered, then we have their details and
+				// can safely redirect to /retailers
+				if (this.isSelf()) {
+					this.props.history.push('/retailers');
+				} else {
+					// Otherwise prompt them to login to go to their dashboard
+					this.setState({ alreadyExists: true, email: user.email });
+				}
+
 				return;
 			}
 
-			const nextStep = () => this.props.updateStep(this.props.step + 1);
-			const profile = this.generateProfile(user);
-
-			this.props.updateValues({ user, profile }, nextStep);
-		}
-
-		// eslint-disable-next-line class-methods-use-this
-		calculateImpact(campaign, dwellingSize, pax, months) {
-			const dwellings = campaign.public.householdAverages;
-			const monthlyKWH = (dwellings[dwellingSize] || dwellings.hdb3) * pax;
-			const totalKWH = monthlyKWH * months;
-
-			const trees = campaign.public.comparisons.treeFieldsPerKWH * totalKWH;
-
-			// FIXME calculate this
-			const spMonthly = 50;
-			const greenMonthlyMin = 48;
-			const greenMonthlyMax = 49;
-
-			return {
-				monthlyKWH,
-				trees,
-				totalKWH,
-				minSaving: (spMonthly - greenMonthlyMax) * months,
-				maxSaving: (spMonthly - greenMonthlyMin) * months,
-				maxNewBill: greenMonthlyMax * months,
-			};
+			this.props.updateValues({ user }, this.nextStep);
 		}
 
 		render() {
-			const { global } = this.props;
+			const { global, values } = this.props;
 
 			const { fbSDK } = this.props.integrations;
 
 			if (this.state.alreadyExists) {
 				return (
 					<div className="signup-form__exists">
-						<p><strong>It looks like {'you\'re'} already signed up with {this.state.email}.</strong>
-							You can login to proceed, or go ahead and choose your green energy retailer.
+						<p><strong>It looks like {'you\'re'} already registered with us with {this.state.email}.</strong></p>
+						<p>
+							You need to login to go to your dashboard and set a goal.
 						</p>
-						<Button
-							theme="primary"
-							href="/retailers"
-						>
-							Choose Retailer
-						</Button>
-						<Button
-							theme="primary"
-							href="/login"
-						>
-							Log In
-						</Button>
-						<Button
-							theme="primary"
-							href="/reset"
-						>
-							Reset my Password
-						</Button>
+						<p>
+							<Button
+								theme="cta"
+								href="/login"
+							>
+								Log In
+							</Button>
+							<Button
+								theme="cta"
+								href="/reset"
+							>
+								Reset my Password
+							</Button>
+						</p>
 					</div>
 				);
 			}
 
-			// Show only a subset of fields on the form
-			const userFields = ['firstName', 'first_name', 'lastName', 'last_name', 'email', 'phoneNumber'];
+			let userFields = this.isSelf() ? allUserFields : baseUserFields;
+			if (this.loggedIn()) userFields = ['postcode'];
 
-			const dwellingField = this.props.global.campaign.config.customFields.profile.find(f => f.id === 'dwellingSize');
-
-			function selectFields(fields) {
-				return fields.filter(f => userFields.includes(f.id)).concat([dwellingField]);
-			}
-
-			const dwellingSize = 'hdb3';
-
-			const {
-				trees,
-				minSaving,
-				maxSaving,
-				maxNewBill,
-				totalKWH,
-			} = this.calculateImpact(global.campaign, dwellingSize, 1, 12);
+			const goal = values.profile.public.switchOnGoal;
 
 			return (
 				<React.Fragment>
@@ -201,52 +410,70 @@
 						{fields => (
 							<div className="signup-form__account">
 								<h3 className="signup-form__account--heading">{config.accountTitle}</h3>
-								{config.enableFacebook && global.campaign.config.site.facebook.active && (
-									<FacebookLogin fbSDK={fbSDK} next={this.next} />
-								)}
+								<div className="signup-description">
+									<p>
+										Great! {"Let's"} create your profile.
+									</p>
+									{this.isSelf() ? (
+										<p>
+											Your profile will inspire other people to take the
+											same action for our future.
+										</p>
+									) : (
+										<p>
+											Your profile is where {"you'll"} direct your friends
+											to help you reach your goal of switching {goal}
+											people over and will have links to help them (and
+											you).
+										</p>
+									)}
+									{(!this.loggedIn()) && config.enableFacebook &&
+										global.campaign.config.site.facebook.active && (
+										<FacebookLogin fbSDK={fbSDK} next={this.next} />
+									)}
+									{this.loggedIn() && (
+										<p>
+											Almost there! If you provide your postcode, we can check
+											if green energy is available in your area (optional)
+										</p>
+									)}
+								</div>
 								<Form
 									unlocked
-									fields={selectFields(fields)}
+									fields={selectFields(fields, userFields)}
 									values={this.props.values.user}
 									actionText={config.accountButton}
 									action={this.next} />
 							</div>
 						)}
 					</CustomFieldsProvider>
-					<div className="goal-calculator">
-						<p><strong>FIXME these numbers are placeholders</strong></p>
-						<p>
-							<span className="signup-icon">⚡</span>
-							Swiching your electricity would add up to {totalKWH} kWh of electricity
-							per year being purchased from green energy retailers.
-						</p>
-						<p>
-							<span className="signup-icon">🌳</span>
-							{"That's"} rougly the equivalent of planting {trees} football fields
-							of rainforest.
-						</p>
-						<p>
-							<span className="signup-icon">🙌</span>
-							Based on the average electricity utility bill, you could
-							save between ${minSaving} and ${maxSaving} per year on your bill*,
-							and up to ${maxNewBill} per year would flow towards retailers that
-							are investing in an energy system of the future.
-						</p>
-						<p className="fineprint">
-							* This is not financial advice. Pricing may vary for different customers
-							based on usage, and with changes to available plans and offers by retailers.
-							You and your friends should check the costs of any choices before making a
-							decision to switch.
-						</p>
-					</div>
 				</React.Fragment>
 			);
-
-			// FIXME add calculator at the bottom
 		}
 	}
 
-	class CompleteForm extends React.Component {
+	class OpenMarketNotAvailable extends SwitchForm {
+		render() {
+			return (
+				<React.Fragment>
+					<p>Sorry, your area cannot switch to green energy <em>yet</em>.</p>
+					<p>Your area will be available from 1st May 2019.</p>
+					<p>{'We\'ll'} send you an email to remind you when you can switch.</p>
+					<p>
+						{'Don\'t'} despair though! You can still make a big impact by switching your
+						friends over now...
+					</p>
+					<Button
+						onClick={this.switchFriend}
+					>
+						Switch friends
+					</Button>
+				</React.Fragment>
+			);
+		}
+	}
+
+	class CompleteForm extends SwitchForm {
 		constructor(props) {
 			super(props);
 
@@ -254,46 +481,144 @@
 				loading: true,
 				message: null,
 			};
-
-			this.submitData = this.submitData.bind(this);
 		}
 
 		componentDidMount() {
 			this.submitData();
 		}
 
-		async submitData() {
-			const {
-				updateStep, step, updateValues, actions,
-			} = this.props;
+		// eslint-disable-next-line class-methods-use-this
+		prepareProfile(user, profile) {
+			const name = `${user.firstName || user.first_name || ''} ${user.lastName || user.last_name || ''}`.trim();
+			const path = `${user.firstName || user.first_name || ''}-${user.lastName || user.last_name || ''}`
+				.replace(/\s/g, '-')
+				.toLowerCase();
 
-			try {
-				const res = await api.campaigns.register({
-					id: this.props.global.campaign.uuid,
-					data: { data: this.props.values },
-				});
+			const dwellingSize = profile.private ? profile.private.dwellingSize : profile.public.dwellingSize;
+			const { monthlyKWH } = calculateImpact(this.props.global.campaign, dwellingSize, 1, 12);
 
-				const { token, message } = res.body().data();
-				console.log(message);
+			Object.assign(profile, {
+				name,
+				path,
+			}, profile);
 
-				// Log the user in
-				if (token) {
-					// log user in
-					const user = await api.users.setTokenGetUser(token);
+			// eslint-disable-next-line no-param-reassign
+			profile.public.monthlyKWH = monthlyKWH;
 
-					// add user to global state
-					actions.addUser(user.body().data().data);
-
-					// get profiles
-					const profiles = await api.users.meWithProfiles();
-
-					// add profile to user
-					actions.addUserProfile(findMostRelevantProfile(profiles
-						.body().data().data, this.props.global.campaign.uuid));
+			if (this.isSelf()) {
+				// If it's not available in their area, then don't mark them
+				// as having started a switch
+				if (marketAvailable(user.postcode)) {
+					// eslint-disable-next-line no-param-reassign
+					profile.public.switchStartedAt = new Date().toISOString();
 				}
 
-				// redirect to retailers page always (they don't have to be logged in to do this step)
-				this.props.history.push('/retailers');
+				ensureSet(profile, {
+					private: { dwellingSize: 'hdb3' },
+				});
+			} else {
+				// eslint-disable-next-line no-param-reassign
+				profile.public.challengeStartedAt = new Date().toISOString();
+				// eslint-disable-next-line no-param-reassign
+				profile.switchOnHasGoal = 'yes';
+				ensureSet(profile, {
+					private: { friendDwellingSize: 'hdb3' },
+					private: { switchOnGoal: 5 },
+				});
+			}
+
+			if (this.isFriend()) {
+				// eslint-disable-next-line no-param-reassign
+				profile.public.switchOnShow = true;
+			}
+
+			return profile;
+		}
+
+		updateProfile = async (user, profile) => {
+			const { integrations } = this.props;
+
+			const request = await this.props.api.profiles.update({
+				id: this.props.global.user.profile.uuid,
+				data: { data: profile },
+			});
+			this.props.actions.addUserProfile(request.body().data().data);
+			this.props.actions.addMessage('Profile updated succesfully');
+			integrations.broadcast('profile.updated', { user: this.props.global.user, profile: request.body().data().data });
+
+			if (user) {
+				await this.props.api.users.update({
+					id: this.props.global.user.uuid,
+					data: { data: user },
+				});
+			}
+		}
+
+		registerProfile = async (user, profile) => {
+			const { actions } = this.props;
+
+			const res = await api.campaigns.register({
+				id: this.props.global.campaign.uuid,
+				data: { data: { user, profile } },
+			});
+
+			const { token, message } = res.body().data();
+			console.log(message);
+
+			// Log the user in
+			if (token) {
+				// log user in
+				const newUser = await api.users.setTokenGetUser(token);
+
+				// add user to global state
+				actions.addUser(newUser.body().data().data);
+
+				// get profiles
+				const profiles = await api.users.meWithProfiles();
+
+				// add profile to user
+				actions.addUserProfile(findMostRelevantProfile(profiles
+					.body().data().data, this.props.global.campaign.uuid));
+			}
+
+			return token;
+		}
+
+		submitData = async () => {
+			const {
+				updateStep, step, updateValues,
+			} = this.props;
+
+			const { profile, user } = this.props.values;
+
+			this.prepareProfile(user, profile);
+
+			const loggedIn = !!this.props.global.user;
+
+			console.log('About to create/update', profile, user);
+
+			try {
+				let hasToken = loggedIn;
+
+				if (loggedIn) {
+					// Only update user if we need to set a postcode
+					const updateUser = this.isSelf() && user.postcode;
+					await this.updateProfile(updateUser ? user : null, profile);
+				} else {
+					hasToken = await this.registerProfile(user, profile);
+				}
+
+				const { postcode } = this.props.values.user;
+
+				if (this.isSelf() && !marketAvailable(postcode)) {
+					updateValues({}, () => updateStep(this.props.steps.indexOf(OpenMarketNotAvailable)));
+				} else if (hasToken || this.isSelf()) {
+					const nextPath = this.isSelf() ? '/retailers' : '/dashboard';
+
+					this.props.history.push(nextPath);
+				} else {
+					updateValues({ mustLogIn: true });
+				}
 			} catch (e) {
 				const next = () => updateStep(step - 1);
 				updateValues({
@@ -310,8 +635,18 @@
 			if (this.state.loading) {
 				return (
 					<div className="signup-form__loading">
-						<Spinner />
 						<p>One moment...</p>
+						<Spinner />
+					</div>
+				);
+			}
+
+			if (this.state.mustLogIn) {
+				return (
+					<div className="signup-form__complete">
+						<p>{'You\'ve'} already set up a profile with that email address.</p>
+						<p>{'You\'ll'} need to login to see your progress.</p>
+						<p>{'We\'ve'} sent you an email with a link to login.</p>
 					</div>
 				);
 			}
@@ -330,26 +665,59 @@
 		constructor(props) {
 			super(props);
 
+			const { global } = props;
+
 			const initState = {
 				user: {},
 				profile: {
 					goal: 1,
 					currency: props.global.campaign.currency,
-					// FIXME where do I fetch this from?
-					parentUuid: null,
-				},
-				teamProfile: null,
-				donation: null,
-				settings: {
-					searchGroup: false,
-					feeFixed: 28,
-					feePercent: 0.0385,
+					public: {
+					},
+					private: {
+						dwellingSize: 'hdb3',
+					},
 				},
 				error: null,
+				switchType: this.selectSwitchType(),
 			};
 
-			const steps = this.buildSteps(initState);
+			// Take parent hint
+			const parentUuid = getQuery().groupUuid;
+			if (parentUuid) {
+				console.log('Group to join indicated: ', parentUuid);
+				initState.profile.parentUuid = parentUuid;
+			}
 
+			if (global.user) {
+				allUserFields.forEach((field) => { initState.user[field] = global.user[field]; });
+				if (global.user.profile) {
+					const privateFields = ['dwellingSize', 'friendDwellingSize'];
+					const publicFields = ['switchOnGoal'];
+
+					if (global.user.profile.private) {
+						privateFields.forEach((field) => {
+							if (global.user.profile.private[field]) {
+								initState.profile.private[field] = global.user.profile.private[field];
+							}
+						});
+					}
+					if (global.user.profile.public) {
+						publicFields.forEach((field) => {
+							if (global.user.profile.public[field]) {
+								initState.profile.public[field] = global.user.profile.public[field];
+							}
+						});
+					}
+				}
+			}
+
+			initState.profile.private.friendDwellingSize = initState.profile.private.friendDwellingSize ||
+				initState.profile.private.dwellingSize;
+
+			const steps = this.buildSteps(initState, props);
+
+			console.log('initial state: ', initState);
 			this.state = Object.assign(initState, { steps });
 		}
 
@@ -357,7 +725,7 @@
 			handleState, // handles state object or state update function
 			afterUpdateCallback // callback after updated
 		) => {
-			console.log('Update called', handleState)
+			console.log('Update called', handleState);
 
 			// handle state update function
 			if (typeof handleState === 'function') {
@@ -378,12 +746,50 @@
 				toUpdate[updateKey] = { ...oldState[updateKey], ...handleState[updateKey] };
 			});
 
+			if (handleState.switchType) toUpdate.switchType = handleState.switchType;
+
 			return this.setState(toUpdate, afterUpdateCallback);
 		}
 
-		buildSteps = (initState) => {
-			const steps = [UserForm];
-			steps.push(CompleteForm);
+		selectSwitchType() {
+			const query = getQuery();
+
+			const { user } = this.props.global;
+
+			if (user && user.profile) {
+				if (user.profile.confirmedAt) {
+					console.log('Initial switch: locked to friend (profile confirmed already)');
+					return 'friend';
+				}
+			}
+
+			if (validSwitchTypes.includes(query.switch)) {
+				console.log(`Initial switch set by query: ${query.switch}`);
+				return query.switch;
+			}
+
+			console.log('Initial switch: default to self');
+
+			return 'self';
+		}
+
+		// eslint-disable-next-line class-methods-use-this
+		buildSteps(initState) {
+			const query = getQuery();
+
+			const steps = [];
+
+			if (query.switch) {
+				// eslint-disable-next-line no-param-reassign
+				initState.switchType = query.switch;
+			}
+
+			steps.push(
+				ImpactForm,
+				UserForm,
+				CompleteForm,
+				OpenMarketNotAvailable
+			);
 			return steps;
 		}
 
