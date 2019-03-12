@@ -12,12 +12,16 @@
   * @field {text} showTotal 0 or 1
   * @field {text} totalText  '%n people switched',
   * @field {text} goalText 'Goal: %n',
+  * @field {text} profile campaign,page,user
   */
 
 // eslint-disable-next-line no-unused-expressions
 (RaiselyComponents, React) => {
 	const validSizes = ['small', 'medium', 'large'];
 	const validStyles = ['standard', 'hollow', 'rounded'];
+	const validProfiles = ['page', 'campaign', 'user'];
+
+	const { api } = RaiselyComponents;
 
 	const defaults = {
 		size: 'medium',
@@ -52,14 +56,18 @@
 		totalText,
 		goalText,
 		isPreview,
+		total,
 	}) {
 		// When we're editing pages, make the progress non-zero so that
 		// we can see what the progress bar looks like
 		const defaultProgress = isPreview ? 3 : 0;
 
+		// eslint-disable-next-line no-param-reassign
+		if (!profile) profile = {};
+
 		// Select the exercise totals to display
-		const displayAmount = profile.exerciseTotal || defaultProgress;
-		const displayGoal = profile.public && profile.public.switchOnGoal || 10;
+		const displayAmount = total || defaultProgress;
+		const displayGoal = (profile.public && profile.public.switchOnGoal) || 10;
 
 		const barSize = validSizes.includes(size) ? size : 'medium';
 		const barStyle = validStyles.includes(style) ? style : 'standard';
@@ -98,44 +106,116 @@
 		);
 	}
 
-	return (props) => {
-		const values = props.getValues();
+	return class SwitchOnProgress extends React.Component {
+		state = {
+			switched: 0,
+		}
 
-		Object.keys(values)
-			.forEach((key) => { if (values[key] === null) values[key] = defaults[key]; });
-		// eslint-disable-next-line eqeqeq
-		values.showTotal = values.showTotal == '1';
-		// eslint-disable-next-line eqeqeq
-		values.showGoal = values.showGoal == '1';
+		onComponentDidMount() {
+			this.fetchPeopleSwitched();
+		}
 
-		const {
-			size,
-			showTotal, // 0 or 1
-			showGoal, // 0 or 1
-			statPosition, // top, middle or bottom
-			style,
-			goalText,
-			totalText,
-		} = values;
+		displayType() {
+			const values = this.props.getValues();
+			const { profile } = values;
 
-		// Are we actually on the public website or the editor
-		const isMock = props.global.campaign.mock;
+			return (validProfiles.includes(profile)) ? profile : 'campaign';
+		}
 
-		const profile = props.global.current.profile ||
-			props.global.campaign.profile;
+		selectProfile() {
+			const select = this.displayType();
 
-		return (
-			<ProgressBar
-				size={size}
-				style={style}
-				profile={profile}
-				statPosition={statPosition}
-				showTotal={showTotal}
-				showGoal={showGoal}
-				goalText={goalText}
-				totalText={totalText}
-				isPreview={isMock}
-			/>
-		);
+			if (select === 'page') {
+				const { profile } = this.props.global.current;
+
+				return profile;
+			}
+
+			if (select === 'user') {
+				const { profile } = this.props.global.user;
+
+				return profile;
+			}
+
+			return this.props.global.campaign.profile;
+		}
+
+		async fetchPeopleSwitched() {
+			const displayType = this.displayType();
+
+			const hasFetched = this.state.switched;
+
+			if (hasFetched) return;
+
+			const profile = this.selectProfile();
+
+			let result;
+
+			// Group page = all descendents of the group (individual)
+			// Individual page = all the children of the profile (individual)
+			// Campaign = all individual profiles
+			const query = {
+				type: 'INDIVIDUAL',
+				'public.switchOnConfirmed': 'yes',
+			};
+
+			if (displayType === 'campaign') {
+				result = await api.profiles.getAll({
+					query,
+				});
+			} else {
+				result = await api.profiles.members.getAll({
+					id: profile.uuid,
+					query,
+				});
+			}
+
+			const switched = result.body().data().pagination.total;
+
+			// bind the payload result to this component
+			this.setState({ switched });
+		}
+
+		render() {
+			const { props } = this;
+			const values = this.props.getValues();
+
+			Object.keys(values)
+				.forEach((key) => { if (values[key] === null) values[key] = defaults[key]; });
+			// eslint-disable-next-line eqeqeq
+			values.showTotal = values.showTotal == '1';
+			// eslint-disable-next-line eqeqeq
+			values.showGoal = values.showGoal == '1';
+
+			const {
+				size,
+				showTotal, // 0 or 1
+				showGoal, // 0 or 1
+				statPosition, // top, middle or bottom
+				style,
+				goalText,
+				totalText,
+			} = values;
+
+			// Are we actually on the public website or the editor
+			const isMock = props.global.campaign.mock;
+
+			const profile = this.selectProfile();
+console.log("Profile", profile)
+			return (
+				<ProgressBar
+					size={size}
+					style={style}
+					profile={profile}
+					statPosition={statPosition}
+					showTotal={showTotal}
+					showGoal={showGoal}
+					goalText={goalText}
+					totalText={totalText}
+					isPreview={isMock}
+					total={this.state.switched}
+				/>
+			);
+		}
 	};
 };
