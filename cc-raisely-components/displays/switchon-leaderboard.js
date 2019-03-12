@@ -5,6 +5,8 @@
   *
   * Define the following fields for the custom component
   *
+  * @field {text} show groups,individuals,team
+  * @field {text} rank 0 or 1
   * @field {text} header The header text
   * @field {text} headerTag h1,h2,h3,h4,h5,h6s
   * @field {text} size small, medium or large
@@ -124,8 +126,7 @@
 
 		const image = profile.photoUrl || fallbackImage;
 
-		const style = { backgroundImage: image };
-		console.log('style is: ', style);
+		const style = { backgroundImage: `url(${image})` };
 
 		return (
 			<div className="profile-image">
@@ -146,31 +147,36 @@
 			style,
 			goalText,
 			totalText,
-			header,
-			headerTag,
 			profile,
 			mock,
+			rank,
 		} = props;
 
 		const goal = profile && profile.public && profile.public.switchOnGoal;
 
+		const headerText = (rank ? `${rank}. ` : '') + profile.name;
+
+		const action = () => this.props.history.push(`/${profile.path}`);
+
 		return (
-			<li>
-				<ProfileImage
-					profile={profile}
-				/>
-				<h1>{profile.name}</h1>
-				<ProgressBar
-					size={size}
-					statPosition={statPosition}
-					showTotal={showTotal}
-					showGoal={showGoal}
-					goalText={goalText}
-					totalText={totalText}
-					isPreview={mock}
-					goal={goal}
-					value={profile.total}
-				/>
+			<li onclick={action}>
+				<a href={`/${profile.path}`} >
+					<ProfileImage
+						profile={profile}
+					/>
+					<h1>{headerText}</h1>
+					<ProgressBar
+						size={size}
+						statPosition={statPosition}
+						showTotal={showTotal}
+						showGoal={showGoal}
+						goalText={goalText}
+						totalText={totalText}
+						isPreview={mock}
+						goal={goal}
+						value={profile.total}
+					/>
+				</a>
 			</li>
 
 		);
@@ -192,12 +198,25 @@
 
 		fetchModels = async () => {
 			const { profile } = this.props.global.current;
-			if (!profile) return;
 
-			const result = await api.profiles.getAll({
-				id: profile.uuid,
-				// query: ,
-			});
+			let result;
+
+			if (profile) {
+				result = await api.profiles.members.getAll({
+					id: profile.uuid,
+				});
+			} else {
+				const values = this.props.getValues();
+
+				const query = {
+					type: (values.show && values.show.startsWith('group')) ?
+						'GROUP' : 'INDIVIDUAL',
+				};
+
+				result = await api.profiles.getAll({
+					query,
+				});
+			}
 
 			const profiles = result.body().data().data;
 
@@ -225,6 +244,7 @@
 				totalText,
 				header,
 				headerTag,
+				rank,
 			} = values;
 
 			if (!this.state.profiles) {
@@ -237,11 +257,26 @@
 			// Are we actually on the public website or the editor
 			const { mock } = this.props.global.campaign;
 
+			// Show a mock item if we're in the editor and profiles returns nothing
+			// or the elemnt will disappear
+			if (mock && !this.state.profiles.length) {
+				this.state.profiles = [
+					{
+						name: 'Team member',
+					},
+				];
+			}
+
+			const parentProfile = this.props.global.current.profile ||
+				this.props.global.campaign.profile;
+
+			const headerText = header && header.replace(/\{name\}/g, parentProfile.name);
+
 			return (
 				<div className="leaderboard">
-					<HeaderTag>{header}</HeaderTag>
+					{header && this.state.profiles.length ? <HeaderTag>{headerText}</HeaderTag> : ''}
 					<ol>
-						{this.state.profiles.map(profile => (
+						{this.state.profiles.map((profile, index) => (
 							<ProfileTile
 								profile={profile}
 								size={size}
@@ -252,6 +287,7 @@
 								goalText={goalText}
 								totalText={totalText}
 								mock={mock}
+								rank={(rank == '1') ? index + 1 : false}
 							/>
 						))}
 					</ol>
