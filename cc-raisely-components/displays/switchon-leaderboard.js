@@ -5,7 +5,9 @@
   *
   * Define the following fields for the custom component
   *
-  * @field {text} show groups,individuals,team
+  * @field {text} profileType individual, group
+  * @field {text} profileFrom campaign,page
+  * @field {text} list members,all
   * @field {text} rank 0 or 1
   * @field {text} header The header text
   * @field {text} headerTag h1,h2,h3,h4,h5,h6s
@@ -197,19 +199,32 @@
 		}
 
 		fetchModels = async () => {
-			const { profile } = this.props.global.current;
+			// Don't duplicate fetches
+			if (this.state.fetching) return;
+
+			const values = this.props.getValues();
+			const { profileType, profileFrom, list } = values;
+
+			let profile;
+			if (profileFrom === 'campaign') {
+				({ profile } = this.props.global.campaign);
+			} else {
+				({ profile } = this.props.global.current);
+			}
+
+			if (!profile) return;
+
+			this.setState({ fetching: true });
 
 			let result;
 
-			if (profile) {
+			if (list === 'members') {
 				result = await api.profiles.members.getAll({
 					id: profile.uuid,
 				});
 			} else {
-				const values = this.props.getValues();
-
 				const query = {
-					type: (values.show && values.show.startsWith('group')) ?
+					type: (profileType && profileType.startsWith('group')) ?
 						'GROUP' : 'INDIVIDUAL',
 				};
 
@@ -248,8 +263,9 @@
 			} = values;
 
 			if (!this.state.profiles) {
+				this.fetchModels();
 				return (
-					<p>Loading Profiles ...</p>
+					<p>Loading leader board ...</p>
 				);
 			}
 
