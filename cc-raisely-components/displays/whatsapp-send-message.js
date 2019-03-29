@@ -5,6 +5,7 @@
   * @field {text} message2
   * @field {text} message3
   * @field {text} message4
+  * @field {text} domain - shortened domain to use for links
   */
 
 
@@ -81,9 +82,12 @@
 
 		const {
 			buttonTheme,
+			domain
 		} = values;
 
-		const baseUrl = `${window.location.protocol}//${window.location.host}/`;
+
+
+		const baseUrl = `${window.location.protocol}//${domain || window.location.host}/`;
 		let linkUrl = baseUrl;
 
 		if (props.global.user && props.global.user.profile) {
