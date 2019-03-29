@@ -77,7 +77,7 @@
 
 	function formatNumbers(impacts) {
 		const decimalPlaces = {
-			trees: 2,
+			trees: 0,
 			minSaving: 0,
 			maxSaving: 0,
 			maxNewBill: 0,
@@ -199,13 +199,6 @@
 		// eslint-disable-next-line object-curly-newline
 		const { values, switchFriend, switchSelf, global } = props;
 
-		// If they've confirmed, then switch self is no longer an option
-		// so no need to show this
-		if (global.user && global.user.profile &&
-			global.user.profile.public && global.user.profile.public.confirmedAt) {
-			return '';
-		}
-
 		const selected = 'primary';
 		const unselected = 'cta';
 
@@ -250,7 +243,8 @@
 			const { global, values } = this.props;
 			const { campaign } = global;
 
-			const dwellingSize = values.profile.private.dwellingSize || 'hdb3';
+			const dwellingSize = (this.isSelf() ? values.profile.private.dwellingSize :
+				values.profile.private.friendDwellingSize) || 'hdb3';
 			const people = this.isFriend() ? values.profile.public.switchOnGoal || 5 : 1;
 
 			const {
@@ -265,20 +259,24 @@
 			let profileFields;
 
 			if (this.isSelf()) {
-				profileFields = ['dwellingSize'];
+				profileFields = ['dwellingSize', 'switchOnMessage'];
 				noun = "your friend's";
 			} else {
 				profileFields = campaign.public.goalFields;
 			}
 
+			const hideChoice = values.profile.public.switchOnConfirmed;
+
 			return (
 				<React.Fragment>
 					<h3 className="signup-form__account--heading">Look what you could do...</h3>
-					<ButtonBar {...{
-						...this.props,
-						switchSelf: this.switchSelf,
-						switchFriend: this.switchFriend,
-					}} />
+					{hideChoice ? '' : (
+						<ButtonBar {...{
+							...this.props,
+							switchSelf: this.switchSelf,
+							switchFriend: this.switchFriend,
+						}} />
+					)}
 					<CustomFieldsProvider global={global} name="profile">
 						{fields => (
 							<div className="signup-form__account">
@@ -293,7 +291,6 @@
 						)}
 					</CustomFieldsProvider>
 					<div className="goal-calculator">
-						<p><strong>FIXME these numbers are placeholders</strong></p>
 						<p>
 							<span className="signup-icon" role="img" aria-hidden="true">⚡</span>
 							Swiching {noun} electricity would add up to <span className="impact">{totalKWH}</span> kWh of electricity
@@ -301,10 +298,10 @@
 						</p>
 						<p>
 							<span className="signup-icon" role="img" aria-hidden="true">🌳</span>
-							{"That's"} rougly the equivalent of planting <span className="impact">{trees}</span> football fields
-							of rainforest.
+							{"That's"} rougly the equivalent of preserving <span className="impact">{trees}</span> football fields
+							of forest.
 						</p>
-						{this.isSelf() ? (
+						{this.isSelf() && false ? (
 							<p>
 								<span className="signup-icon" role="img" aria-hidden="true">🙌</span>
 								Based on the average electricity utility bill, you could
@@ -494,7 +491,8 @@
 				.replace(/\s/g, '-')
 				.toLowerCase();
 
-			const dwellingSize = profile.private ? profile.private.dwellingSize : profile.public.dwellingSize;
+			const dwellingSize = profile.private ? profile.private.dwellingSize :
+				profile.public.dwellingSize;
 			const { monthlyKWH } = calculateImpact(this.props.global.campaign, dwellingSize, 1, 12);
 
 			Object.assign(profile, {
@@ -503,7 +501,7 @@
 			}, profile);
 
 			// eslint-disable-next-line no-param-reassign
-			profile.public.monthlyKWH = monthlyKWH;
+			profile.private.monthlyKWH = monthlyKWH;
 
 			if (this.isSelf()) {
 				// If it's not available in their area, then don't mark them
@@ -520,10 +518,10 @@
 				// eslint-disable-next-line no-param-reassign
 				profile.public.challengeStartedAt = new Date().toISOString();
 				// eslint-disable-next-line no-param-reassign
-				profile.switchOnHasGoal = 'yes';
+				profile.public.switchOnHasGoal = 'yes';
 				ensureSet(profile, {
 					private: { friendDwellingSize: 'hdb3' },
-					private: { switchOnGoal: 5 },
+					public: { switchOnGoal: 5 },
 				});
 			}
 
@@ -538,9 +536,14 @@
 		updateProfile = async (user, profile) => {
 			const { integrations } = this.props;
 
+			const profileData = {
+				public: profile.public,
+				private: profile.private,
+			};
+
 			const request = await this.props.api.profiles.update({
 				id: this.props.global.user.profile.uuid,
-				data: { data: profile },
+				data: { data: profileData },
 			});
 			this.props.actions.addUserProfile(request.body().data().data);
 			this.props.actions.addMessage('Profile updated succesfully');
@@ -556,6 +559,14 @@
 
 		registerProfile = async (user, profile) => {
 			const { actions } = this.props;
+
+			// Take parent hint
+			const parentUuid = getQuery().groupUuid;
+			if (parentUuid) {
+				console.log('Group to join indicated: ', parentUuid);
+				// eslint-disable-next-line no-param-reassign
+				profile.parentUuid = parentUuid;
+			}
 
 			const res = await api.campaigns.register({
 				id: this.props.global.campaign.uuid,
@@ -607,6 +618,8 @@
 				} else {
 					hasToken = await this.registerProfile(user, profile);
 				}
+
+				updateValues({ loading: 'saving' });
 
 				const { postcode } = this.props.values.user;
 
@@ -662,14 +675,47 @@
 	 * Core Signup Form molecule
 	 */
 	return class SignupForm extends React.Component {
-		constructor(props) {
-			super(props);
+		state = {};
 
-			const { global } = props;
+		componentDidMount() {
+			this.loadPrivate();
+		}
+
+		async loadPrivate() {
+			let privateProfile;
+
+			if (['saving', 'complete', 'fetching'].includes(this.state.loading)) return;
+
+			if (this.props.global.user) {
+				this.setState({ loading: 'fetching' });
+				const { profile } = this.props.global.user;
+				try {
+					const result = await api.profiles.get({
+						id: profile.uuid,
+						query: { private: 1 },
+					});
+					this.setState({ loading: 'complete' });
+					privateProfile = result.body().data().data;
+				} catch (error) {
+					console.log(error);
+					this.setState({ error });
+					return;
+				}
+			} else if (this.state.loading === 'initial') {
+				return;
+			} else {
+				this.setState({ loading: 'initial' });
+			}
+
+			this.initialise(privateProfile);
+		}
+
+		initialise(privateProfile) {
+			const { props } = this;
 
 			const initState = {
 				user: {},
-				profile: {
+				profile: Object.assign({
 					goal: 1,
 					currency: props.global.campaign.currency,
 					public: {
@@ -677,48 +723,19 @@
 					private: {
 						dwellingSize: 'hdb3',
 					},
-				},
+				}, privateProfile),
 				error: null,
 				switchType: this.selectSwitchType(),
+				loaded: true,
 			};
-
-			// Take parent hint
-			const parentUuid = getQuery().groupUuid;
-			if (parentUuid) {
-				console.log('Group to join indicated: ', parentUuid);
-				initState.profile.parentUuid = parentUuid;
-			}
-
-			if (global.user) {
-				allUserFields.forEach((field) => { initState.user[field] = global.user[field]; });
-				if (global.user.profile) {
-					const privateFields = ['dwellingSize', 'friendDwellingSize'];
-					const publicFields = ['switchOnGoal'];
-
-					if (global.user.profile.private) {
-						privateFields.forEach((field) => {
-							if (global.user.profile.private[field]) {
-								initState.profile.private[field] = global.user.profile.private[field];
-							}
-						});
-					}
-					if (global.user.profile.public) {
-						publicFields.forEach((field) => {
-							if (global.user.profile.public[field]) {
-								initState.profile.public[field] = global.user.profile.public[field];
-							}
-						});
-					}
-				}
-			}
 
 			initState.profile.private.friendDwellingSize = initState.profile.private.friendDwellingSize ||
 				initState.profile.private.dwellingSize;
 
-			const steps = this.buildSteps(initState, props);
+			initState.steps = this.buildSteps(initState, props);
 
 			console.log('initial state: ', initState);
-			this.state = Object.assign(initState, { steps });
+			this.setState(initState);
 		}
 
 		updateValues = (
@@ -738,7 +755,7 @@
 			// changes that are passed through handleState
 			const toUpdate = {};
 
-			['user', 'profile', 'teamProfile', 'donation', 'settings', 'error'].forEach((updateKey) => {
+			['user', 'profile', 'teamProfile', 'donation', 'settings', 'error', 'loading'].forEach((updateKey) => {
 				// only apply certain values to setState if they actually changes
 				if (!handleState[updateKey]) return;
 
@@ -794,6 +811,20 @@
 		}
 
 		render() {
+			if (!this.state.loaded || this.state.loaded === 'fetching') {
+				if (this.state.error) {
+					return (
+						<p>{this.state.error.message}</p>
+					);
+				}
+
+				return (
+					<p>Loading ...</p>
+				);
+			}
+
+			this.loadPrivate();
+
 			return (
 				<MultiForm {...{
 					name: 'signup-form',
