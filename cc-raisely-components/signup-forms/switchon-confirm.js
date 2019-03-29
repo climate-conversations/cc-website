@@ -31,14 +31,15 @@
 		}
 
 		componentDidMount() {
-			loadProfile();
+			this.loadProfile();
 		}
 
 		async loadProfile() {
 			const { profile } = this.props.global.user;
 			if (!profile) return;
+			console.log('loading profile...');
 
-			const result = await api.profiles.getAll({
+			const result = await api.profiles.get({
 				id: profile.uuid,
 				query: { private: 1 },
 			});
@@ -47,14 +48,16 @@
 			const formValues = this.props.getFormValues({
 				fields: fullProfile,
 			});
-
-			return this.setState({ values: formValues, profile: fullProfile }, this.checkAlreadyConfirmed);
+			console.log(`Profile loaded: `, fullProfile);
+			this.setState({ values: formValues, profile: fullProfile }, this.checkAlreadyConfirmed);
 		}
 
-		checkAlreadyConfirmed: () => {
+		checkAlreadyConfirmed = () => {
 			if (this.alreadyConfirmed()) {
 				this.doRedirect();
 			}
+
+			const { profile } = this.state;
 
 			profile.private.firstConfirmAttempt = new Date().toISOString();
 
@@ -88,7 +91,8 @@
 			try {
 				const data = this.props.processFormData(formData);
 
-				const { profile } = this.props.global.user;
+				const { profile } = this.state;
+				if (!profile) throw new Error('Failed to load your profile');
 
 				data.private = profile.private;
 				data.public = profile.public;
@@ -99,7 +103,7 @@
 
 				const request = await this.props.api.profiles.update({
 					id: this.props.global.user.profile.uuid,
-					data,
+					data: { data },
 				});
 				this.props.actions.addUserProfile(request.body().data().data);
 				this.props.actions.addMessage('Profile updated succesfully');
@@ -110,12 +114,12 @@
 					date: new Date().toISOString(),
 					userUuid: this.props.global.user.uuid,
 					profileUuid: this.props.global.user.profile.uuid,
-					distance: this.props.global.user.profile.public.monthlyKWh,
+					distance: profile.private.monthlyKWH,
 					activity: 'OTHER',
 				};
 
 				await this.props.api.exercise.create({
-					data: activityLog,
+					data: { data: activityLog },
 				});
 
 				this.doRedirect();
@@ -157,17 +161,27 @@
 
 			if (!this.props.global.user) {
 				return (
-					<div>
-						<h5>Oops!</h5>
-						<p>
-							This is embarrassing, but we {"can't"} remember who you are
-							in order to confirm your switch.
-						</p>
-						<p>Try clicking a link from an email {"we've"} sent you.</p>
-						<Button
-							href="/reset">
-							Send me a new link!
-						</Button>
+					<div className="confirm-form">
+						<div className="confirm-form__body">
+
+							<h4>Have we met before?</h4>
+							<p>
+								{"We're"} not sure if {"you've"} already signed up.
+								If you did, try clicking on a link in an email we sent you.
+								If not, you can sign up now and get started right away!
+							</p>
+							<div className="buttons">
+								<Button
+									href="/reset">
+									Send me a new link!
+								</Button>
+								<Button
+									theme="cta"
+									href="/signup">
+									I want to sign up
+								</Button>
+							</div>
+						</div>
 					</div>
 				);
 			}
@@ -180,6 +194,7 @@
 						global={global}
 						actionText={values.buttonLabel}
 						action={this.action}
+						className="confirm-form__body"
 					/>
 				</div>
 			);
