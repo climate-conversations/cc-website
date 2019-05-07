@@ -36,7 +36,10 @@
 
 		async loadProfile() {
 			const { profile } = this.props.global.user;
-			if (!profile) return;
+			if (!profile) {
+				console.log('User has not profile, not loading');
+				return;
+			}
 			console.log('loading profile...');
 
 			const result = await api.profiles.get({
@@ -181,6 +184,27 @@
 									I want to sign up
 								</Button>
 							</div>
+						</div>
+					</div>
+				);
+			}
+
+			if (!this.props.global.user.profile) {
+				return (
+					<div className="confirm-form">
+						<div className="confirm-form__body">
+
+							<h4>Oops!</h4>
+							<p>
+								{"We're"} sorry, something weird has happened and we
+								need some help to fix it.
+							</p>
+							<p>
+								Please email <strong>switchon@climateconversations.sg</strong> and tell them:
+							</p>
+							<p>
+								<em>{'"'}My user account is missing {"it's"} challenger profile{'"'}</em>
+							</p>
 						</div>
 					</div>
 				);

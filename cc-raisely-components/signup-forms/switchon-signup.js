@@ -531,7 +531,7 @@
 		// eslint-disable-next-line class-methods-use-this
 		prepareProfile(user, profile) {
 			const name = `${user.firstName || user.first_name || ''} ${user.lastName || user.last_name || ''}`.trim();
-			const path = `${user.firstName || user.first_name || ''}-${user.lastName || user.last_name || ''}`
+			const path = `${user.firstName || user.first_name || ''}-${user.lastName || user.last_name || ''}-${new Date().getTime()}`
 				.replace(/\s/g, '-')
 				.toLowerCase();
 
@@ -946,6 +946,24 @@
 		}
 
 		render() {
+			if (this.props.global.user && !this.props.global.user.profile) {
+				return (
+					<div className="primary-background">
+						<h4>Oops!</h4>
+						<p>
+							{"We're"} sorry, something weird has happened and we
+							need some help to fix it.
+						</p>
+						<p>
+							Please email <strong>switchon@climateconversations.sg</strong> and tell them:
+						</p>
+						<p>
+							<em>{'"'}My user account is missing {"it's"} challenger profile{'"'}</em>
+						</p>
+					</div>
+				);
+			}
+
 			if (!this.state.loaded || this.state.loaded === 'fetching') {
 				if (this.state.error) {
 					return (
