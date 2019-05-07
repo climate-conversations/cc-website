@@ -569,8 +569,10 @@
 				});
 			}
 
-			// eslint-disable-next-line no-param-reassign
-			profile.private.switchOnAlreadySwitched = user.private.switchOnAlreadySwitched;
+			if (user.private && user.private.switchOnAlreadySwitched) {
+				// eslint-disable-next-line no-param-reassign
+				profile.private.switchOnAlreadySwitched = user.private.switchOnAlreadySwitched;
+			}
 
 			if (this.isFriend()) {
 				// eslint-disable-next-line no-param-reassign
