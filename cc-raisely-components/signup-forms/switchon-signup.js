@@ -8,7 +8,16 @@
 	const { CustomFieldsProvider } = RaiselyComponents.Modules;
 	const {
 		MultiForm,
+		ProfilePreviewByUuid,
+		ProfileSelect,
 	} = RaiselyComponents.Molecules;
+
+	const nextPageForChallenge = '/dashboard';
+	const nextPageForSwitch = '/retailers';
+	const skipToConfirm = '/confirm';
+
+	const chooseNextPageForSwitch = profile => (profile.private.switchOnAlreadySwitched === 'yes' ?
+		skipToConfirm : nextPageForSwitch);
 
 	// define inline configuration
 	const config = {
@@ -16,7 +25,7 @@
 		enableFacebook: true,
 		accountTitle: 'Switch On!',
 		challengeTitle: 'Your Challenge',
-		profileTitle: 'Your Fundraising Page',
+		profileTitle: 'You are supporting',
 		teamTitle: 'Your Team Page',
 		paymentDonationTitle: 'Kickstart your Fundraising',
 		paymentRegistrationTitle: 'Pay the Registration Fee',
@@ -28,7 +37,7 @@
 	};
 
 	// Show only a subset of fields on the form
-	const allUserFields = ['firstName', 'first_name', 'lastName', 'last_name', 'email', 'phoneNumber', 'postcode'];
+	const allUserFields = ['firstName', 'first_name', 'lastName', 'last_name', 'email', 'phoneNumber', 'postcode', 'switchOnAlreadySwitched'];
 	const baseUserFields = ['firstName', 'first_name', 'lastName', 'last_name', 'email', 'phoneNumber'];
 
 	const validSwitchTypes = ['self', 'friend'];
@@ -124,14 +133,44 @@
 			}
 		});
 
-		console.log('Finalised profile', profile)
+		console.log('Finalised profile', profile);
 	}
 
 	/**
 	  * Helper to select custo fields by id
 	  */
 	function selectFields(fields, fieldIds) {
-		return fields.filter(f => fieldIds.includes(f.id));
+		const allFields = fields.concat({
+			label: 'Have you switched to green electricity already?',
+			id: 'switchOnAlreadySwitched',
+			type: 'select',
+			private: true,
+			active: true,
+			core: false,
+			locked: false,
+			help: '',
+			validation: '',
+			default: 'no',
+			options: [
+				{
+					label: 'Yes',
+					value: 'yes',
+				},
+				{
+					label: 'No',
+					value: 'no',
+				},
+			],
+			description: '',
+			visible: true,
+			required: null,
+			sortOrder: 4,
+			rules: {
+				match: 'all',
+				conditions: [],
+			},
+		});
+		return allFields.filter(f => fieldIds.includes(f.id));
 	}
 
 	class SwitchForm extends React.Component {
@@ -336,6 +375,9 @@
 
 		componentDidMount() {
 			this.props.actions.loadIntegration('fbSDK', this.props.global);
+			if (this.loggedIn() && !this.isSelf) {
+				this.props.history.push(nextPageForChallenge);
+			}
 		}
 
 		checkIfProfileExists = async (email) => {
@@ -354,7 +396,7 @@
 				// If they've already registered, then we have their details and
 				// can safely redirect to /retailers
 				if (this.isSelf()) {
-					this.props.history.push('/retailers');
+					this.props.history.push(chooseNextPageForSwitch(user));
 				} else {
 					// Otherwise prompt them to login to go to their dashboard
 					this.setState({ alreadyExists: true, email: user.email });
@@ -397,7 +439,7 @@
 			}
 
 			let userFields = this.isSelf() ? allUserFields : baseUserFields;
-			if (this.loggedIn()) userFields = ['postcode'];
+			if (this.loggedIn()) userFields = ['postcode', 'switchOnAlreadySwitched'];
 
 			const goal = values.profile.public.switchOnGoal;
 
@@ -408,10 +450,11 @@
 							<div className="signup-form__account">
 								<h3 className="signup-form__account--heading">{config.accountTitle}</h3>
 								<div className="signup-description">
-									<p>
-										Great! {"Let's"} create your profile.
-									</p>
-									{this.isSelf() ? (
+									{this.loggedIn() && (
+										<p>
+											Great! {"Let's"} create your profile.
+										</p>) &&
+									(this.isSelf() ? (
 										<p>
 											Your profile will inspire other people to take the
 											same action for our future.
@@ -423,7 +466,8 @@
 											people over and will have links to help them (and
 											you).
 										</p>
-									)}
+									))}
+
 									{(!this.loggedIn()) && config.enableFacebook &&
 										global.campaign.config.site.facebook.active && (
 										<FacebookLogin fbSDK={fbSDK} next={this.next} />
@@ -525,6 +569,9 @@
 				});
 			}
 
+			// eslint-disable-next-line no-param-reassign
+			profile.private.switchOnAlreadySwitched = user.private.switchOnAlreadySwitched;
+
 			if (this.isFriend()) {
 				// eslint-disable-next-line no-param-reassign
 				profile.public.switchOnShow = true;
@@ -560,14 +607,6 @@
 		registerProfile = async (user, profile) => {
 			const { actions } = this.props;
 
-			// Take parent hint
-			const parentUuid = getQuery().groupUuid;
-			if (parentUuid) {
-				console.log('Group to join indicated: ', parentUuid);
-				// eslint-disable-next-line no-param-reassign
-				profile.parentUuid = parentUuid;
-			}
-
 			const res = await api.campaigns.register({
 				id: this.props.global.campaign.uuid,
 				data: { data: { user, profile } },
@@ -600,6 +639,8 @@
 				updateStep, step, updateValues,
 			} = this.props;
 
+			let redirecting = false;
+
 			const { profile, user } = this.props.values;
 
 			this.prepareProfile(user, profile);
@@ -626,13 +667,15 @@
 				if (this.isSelf() && !marketAvailable(postcode)) {
 					updateValues({}, () => updateStep(this.props.steps.indexOf(OpenMarketNotAvailable)));
 				} else if (hasToken || this.isSelf()) {
-					const nextPath = this.isSelf() ? '/retailers' : '/dashboard';
+					const nextPath = this.isSelf() ? chooseNextPageForSwitch(profile) : nextPageForChallenge;
 
+					redirecting = true;
 					this.props.history.push(nextPath);
 				} else {
 					updateValues({ mustLogIn: true });
 				}
 			} catch (e) {
+				if (redirecting) return;
 				const next = () => updateStep(step - 1);
 				updateValues({
 					error: {
@@ -672,6 +715,82 @@
 	}
 
 	/**
+	 * Team profile form
+	 *
+	 */
+	const TeamProfileForm = ({
+		updateStep, step, updateValues, global, values,
+	}) => {
+		const next = () => {
+			updateValues({}, () => updateStep(step + 1));
+		};
+
+		const showGroupSearch = () => {
+			updateValues({ settings: { searchGroup: true } });
+		};
+
+		const JoinGroup = () => {
+			if (values.profile.parentUuid) {
+				return (
+					<React.Fragment>
+						<ProfilePreviewByUuid
+							api={api}
+							buttonLabel="Support another person or team"
+							uuid={values.profile.parentUuid}
+							cancel={() => updateValues({
+								profile: { parentUuid: null },
+								settings: { searchGroup: true },
+							})}
+						/>
+						<Button
+							onClick={next}>
+							Next
+						</Button>
+					</React.Fragment>
+				);
+			}
+			if (!values.settings.searchGroup) {
+				return (
+					<div>
+						<p>Are you here to support a friend or a team?</p>
+						<div className="buttons">
+							<Button
+								onClick={showGroupSearch}>
+								Yes
+							</Button>
+							<Button
+								onClick={next}
+								theme="cta">
+								No
+							</Button>
+						</div>
+					</div>
+				);
+			}
+			return (
+				<div className="signup-form__profile-select">
+					<ProfileSelect
+						api={api}
+						global={global}
+						profileType="ANY"
+						update={value => updateValues({ profile: { parentUuid: value } })}
+					/>
+					<Button className="signup-form__profile-select__back" onClick={next}>
+						I just want to Switch
+					</Button>
+				</div>
+			);
+		};
+
+		return (
+			<div className="signup-form__profile">
+				<h3>{config.profileTitle}</h3>
+				<JoinGroup />
+			</div>
+		);
+	};
+
+	/**
 	 * Core Signup Form molecule
 	 */
 	return class SignupForm extends React.Component {
@@ -686,7 +805,9 @@
 
 			if (['saving', 'complete', 'fetching'].includes(this.state.loading)) return;
 
-			if (this.props.global.user) {
+			const { mock } = this.props.global.campaign;
+
+			if (!mock && this.props.global.user) {
 				this.setState({ loading: 'fetching' });
 				const { profile } = this.props.global.user;
 				try {
@@ -697,7 +818,9 @@
 					this.setState({ loading: 'complete' });
 					privateProfile = result.body().data().data;
 				} catch (error) {
+					// eslint-disable-next-line no-console
 					console.log(error);
+
 					this.setState({ error });
 					return;
 				}
@@ -727,7 +850,18 @@
 				error: null,
 				switchType: this.selectSwitchType(),
 				loaded: true,
+				settings: {
+					searchGroup: false,
+				},
 			};
+
+			// Take parent hint
+			const parentUuid = getQuery().groupUuid;
+			if (parentUuid) {
+				console.log('Group to join indicated: ', parentUuid);
+				// eslint-disable-next-line no-param-reassign
+				initState.profile.parentUuid = parentUuid;
+			}
 
 			initState.profile.private.friendDwellingSize = initState.profile.private.friendDwellingSize ||
 				initState.profile.private.dwellingSize;
@@ -803,6 +937,7 @@
 
 			steps.push(
 				ImpactForm,
+				TeamProfileForm,
 				UserForm,
 				CompleteForm,
 				OpenMarketNotAvailable
