@@ -1,0 +1,27 @@
+{
+    "fields": {
+        "html": {
+            "id": "html",
+            "type": "textarea",
+            "label": "html",
+            "value": ""
+        },
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "profile": {
+            "id": "profile",
+            "type": "text",
+            "label": "campaign,page,user profile",
+            "value": ""
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 6
+        }
+    },
+    "uuid": "d20d4650-426b-11e9-930c-775f722046a4"
+}

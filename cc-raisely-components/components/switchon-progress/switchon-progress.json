@@ -1,0 +1,70 @@
+{
+    "fields": {
+        "size": {
+            "id": "size",
+            "type": "text",
+            "label": "small,medium,large",
+            "value": "medium"
+        },
+        "style": {
+            "id": "style",
+            "type": "text",
+            "label": "standard,hollow,rounded",
+            "value": "rounded",
+            "defaultValue": ""
+        },
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "profile": {
+            "id": "profile",
+            "type": "text",
+            "label": "Profile: campaign,page,user",
+            "value": "campaign",
+            "defaultValue": ""
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 20
+        },
+        "goalText": {
+            "id": "goalText",
+            "type": "text",
+            "label": "Goal Text",
+            "value": "Goal: %n",
+            "defaultValue": ""
+        },
+        "showGoal": {
+            "id": "showGoal",
+            "type": "text",
+            "label": "show Goal",
+            "value": "1",
+            "defaultValue": ""
+        },
+        "showTotal": {
+            "id": "showTotal",
+            "type": "text",
+            "label": "showTotal",
+            "value": "1",
+            "defaultValue": ""
+        },
+        "totalText": {
+            "id": "totalText",
+            "type": "text",
+            "label": "Total text",
+            "value": "%n people switched",
+            "defaultValue": ""
+        },
+        "statPosition": {
+            "id": "statPosition",
+            "type": "text",
+            "label": "top,middle,bottom",
+            "value": "top",
+            "defaultValue": ""
+        }
+    },
+    "uuid": "51a23f90-4390-11e9-930c-775f722046a4"
+}

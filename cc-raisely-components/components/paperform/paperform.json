@@ -1,0 +1,21 @@
+{
+    "fields": {
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "formId": {
+            "id": "formId",
+            "type": "text",
+            "label": "form id",
+            "value": ""
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 2
+        }
+    },
+    "uuid": "dd5be390-3cfd-11e9-b6d5-89a084b38052"
+}

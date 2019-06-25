@@ -1,0 +1,34 @@
+{
+    "fields": {
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "fields": {
+            "id": "fields",
+            "type": "text",
+            "label": "fields",
+            "value": "confirmationImage,switchOnRetailer"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 48
+        },
+        "redirect": {
+            "id": "redirect",
+            "type": "text",
+            "label": "Redirect",
+            "value": "/share",
+            "defaultValue": ""
+        },
+        "buttonLabel": {
+            "id": "buttonLabel",
+            "type": "text",
+            "label": "Button Label",
+            "value": "Confirm"
+        }
+    },
+    "uuid": "c89f0d50-377c-11e9-9608-979d9d2ccb99"
+}

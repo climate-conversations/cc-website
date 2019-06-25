@@ -1,0 +1,51 @@
+{
+    "fields": {
+        "list": {
+            "id": "list",
+            "type": "text",
+            "label": "members,all",
+            "defaultValue": ""
+        },
+        "rank": {
+            "id": "rank",
+            "type": "text",
+            "label": "rank",
+            "value": "1"
+        },
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "header": {
+            "id": "header",
+            "type": "text",
+            "label": "header",
+            "defaultValue": ""
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 52
+        },
+        "headerTag": {
+            "id": "headerTag",
+            "type": "text",
+            "label": "Header tag",
+            "defaultValue": ""
+        },
+        "profileFrom": {
+            "id": "profileFrom",
+            "type": "text",
+            "label": "campaign,page",
+            "value": ""
+        },
+        "profileType": {
+            "id": "profileType",
+            "type": "text",
+            "label": "groups,individuals",
+            "value": ""
+        }
+    },
+    "uuid": "02738e40-3a46-11e9-9eba-4df7dd8e77a0"
+}

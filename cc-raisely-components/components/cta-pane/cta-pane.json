@@ -1,0 +1,61 @@
+{
+    "fields": {
+        "text": {
+            "id": "text",
+            "type": "textarea",
+            "label": "Text",
+            "value": "You should act because ...",
+            "defaultValue": ""
+        },
+        "align": {
+            "id": "align",
+            "type": "text",
+            "label": "Button & Head align",
+            "value": "center",
+            "defaultValue": ""
+        },
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "header": {
+            "id": "header",
+            "type": "text",
+            "label": "Heading",
+            "value": "Act Now!"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 18
+        },
+        "buttonUrl": {
+            "id": "buttonUrl",
+            "type": "text",
+            "label": "Button URL",
+            "value": "/signup",
+            "defaultValue": ""
+        },
+        "headerTag": {
+            "id": "headerTag",
+            "type": "text",
+            "label": "Header Tag",
+            "value": "h3"
+        },
+        "buttonLabel": {
+            "id": "buttonLabel",
+            "type": "text",
+            "label": "Button Label",
+            "value": "Click Here",
+            "defaultValue": ""
+        },
+        "buttonTheme": {
+            "id": "buttonTheme",
+            "type": "text",
+            "label": "primary,secondary,inverse,cta",
+            "value": "primary"
+        }
+    },
+    "uuid": "3c608480-3651-11e9-b749-5929b1408da0"
+}

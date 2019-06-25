@@ -1,0 +1,63 @@
+{
+    "fields": {
+        "size": {
+            "id": "size",
+            "type": "text",
+            "label": "small, medium or large",
+            "value": "medium"
+        },
+        "style": {
+            "id": "style",
+            "type": "text",
+            "label": "standard, hollow, rounded",
+            "value": "standard",
+            "defaultValue": ""
+        },
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 17
+        },
+        "goalText": {
+            "id": "goalText",
+            "type": "text",
+            "label": "Goal Text",
+            "value": "Goal: %n",
+            "defaultValue": ""
+        },
+        "showGoal": {
+            "id": "showGoal",
+            "type": "text",
+            "label": "Show Goal?",
+            "value": "1",
+            "defaultValue": ""
+        },
+        "showTotal": {
+            "id": "showTotal",
+            "type": "text",
+            "label": "Show total?",
+            "value": "1",
+            "defaultValue": ""
+        },
+        "totalText": {
+            "id": "totalText",
+            "type": "text",
+            "label": "Total Text",
+            "value": "%n people switched",
+            "defaultValue": ""
+        },
+        "statPosition": {
+            "id": "statPosition",
+            "type": "text",
+            "label": "top, middle or bottom",
+            "value": "top",
+            "defaultValue": ""
+        }
+    },
+    "uuid": "2519a730-35e2-11e9-beef-cb7f77b11864"
+}

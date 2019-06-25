@@ -1,0 +1,37 @@
+{
+    "fields": {
+        "text": {
+            "id": "text",
+            "type": "text",
+            "label": "text",
+            "value": "{firstName}, do the thing!"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 1
+        },
+        "alwaysShow": {
+            "id": "alwaysShow",
+            "type": "text",
+            "label": "Always display",
+            "value": "no",
+            "defaultValue": ""
+        },
+        "buttonLink": {
+            "id": "buttonLink",
+            "type": "text",
+            "label": "Button Link",
+            "value": "/go",
+            "defaultValue": ""
+        },
+        "buttonLabel": {
+            "id": "buttonLabel",
+            "type": "text",
+            "label": "Button Label",
+            "value": "Do It!",
+            "defaultValue": ""
+        }
+    },
+    "uuid": "11907960-4a54-11e9-86ff-35eebb42ab50"
+}

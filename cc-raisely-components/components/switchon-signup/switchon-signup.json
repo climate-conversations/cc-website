@@ -1,0 +1,15 @@
+{
+    "fields": {
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 103
+        }
+    },
+    "uuid": "67e77910-3782-11e9-9608-979d9d2ccb99"
+}

@@ -1,0 +1,53 @@
+{
+    "fields": {
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "domain": {
+            "id": "domain",
+            "type": "text",
+            "label": "Domain",
+            "value": ""
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 4
+        },
+        "message1": {
+            "id": "message1",
+            "type": "text",
+            "label": "Message 1",
+            "value": "First message",
+            "defaultValue": ""
+        },
+        "message2": {
+            "id": "message2",
+            "type": "text",
+            "label": "Message 2",
+            "defaultValue": ""
+        },
+        "message3": {
+            "id": "message3",
+            "type": "text",
+            "label": "Message 3",
+            "value": "",
+            "defaultValue": ""
+        },
+        "message4": {
+            "id": "message4",
+            "type": "text",
+            "label": "Message 4",
+            "defaultValue": ""
+        },
+        "buttonTheme": {
+            "id": "buttonTheme",
+            "type": "text",
+            "label": "button theme",
+            "value": ""
+        }
+    },
+    "uuid": "64e382d0-4241-11e9-930c-775f722046a4"
+}
