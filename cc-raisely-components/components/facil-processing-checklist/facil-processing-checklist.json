@@ -1,0 +1,10 @@
+{
+    "fields": {
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 3
+        }
+    },
+    "uuid": "47576d10-9405-11e9-bab4-67a906c4e17f"
+}
