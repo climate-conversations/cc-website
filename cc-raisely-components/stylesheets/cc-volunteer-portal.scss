@@ -1,0 +1,133 @@
+
+// POST
+// --------------
+.post--detail-item {
+	border-color: $secondaryDarker;
+}
+
+.profile-tile--detail-minimal .profile-tile__name {
+    @include h2;
+	font-weight: bold;
+}
+
+// SIGNUP ROW
+// --------------
+.row--signup {
+
+	.col--6 {
+		padding-right: 3rem;
+
+		@include respond-to('mobile') {
+			padding-right: unset;
+		}
+	}
+}
+
+// FORM FIELD
+// --------------
+.form-field {
+
+	&,
+	&__label-text,
+	input {
+		@include colorDarken($primaryColor);
+	}
+}
+
+// PROGRESS BAR VARIANTS
+// --------------
+.row:not(.row--bg-half) .row__bg[style*='background-image: url('] ~ .row__container {
+
+	.progress-bar__progress {
+		background: rgba(255,255,255,0.4);
+	}
+
+	.progress-bar__bar {
+		background: $primaryColor;
+	}
+
+	.progress-bar__stats-outter {
+		color: white;
+	}
+}
+
+.progress-bar--large-total {
+	.progress-bar__total {
+		left: 0;
+	}
+	.progress-bar__stats-outter {
+		font-size: 1.25rem;
+		margin-bottom: 1.5rem;
+	}
+}
+
+// DONATION FORM
+// --------------
+.donation-form {
+	background: white;
+	box-shadow: inset 0 0 1px rgba(accessibleColor($primaryDarker),.25);
+
+    &__header {
+        position: relative;
+
+        &:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: $primaryDarker;
+            opacity: .05;
+			pointer-events: none;
+        }
+
+		> * {
+			position: relative;
+		}
+
+        h4 {
+            color: $primaryDark;
+        }
+    }
+
+    &__stage {
+        border-color: $primaryDarkest;
+		color: rgba(accessibleColor($primaryColor),.75);
+
+        &--active {
+            background: $primaryDarker;
+            color: accessibleColor(white, $primaryDarker);
+        }
+    }
+
+    &__amount-btn {
+        background: mix($btnPrimaryBgColor,white,30%);
+        color: darken($btnPrimaryBgColor,35);
+
+		@if lightness(mix($btnPrimaryBgColor,white,20%)) < 90 {
+			border: none;
+		}
+
+        &:hover,
+        &:focus {
+            background: $btnPrimaryBgColor;
+            color: $btnPrimaryTextColor;
+        }
+    }
+
+	// Donation Navigation
+    &__stripe-buttons .button,
+    &__nav .button {
+        margin: 0;
+        border-radius: 0;
+
+        &.donation-form__back {
+            border-bottom-right-radius: 0;
+        }
+
+        &.donation-form__next {
+            border-bottom-left-radius: 0;
+        }
+    }
+}
