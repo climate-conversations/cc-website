@@ -7,14 +7,7 @@
             "value": "",
             "singular": null
         },
-        "description": {
-            "id": "description",
-            "type": "text",
-            "label": "Description",
-            "value": "",
-            "singular": null
-        },
-		"fields": {
+        "fields": {
             "id": "fields",
             "type": "repeater",
             "label": "Fields",
@@ -44,7 +37,14 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 11
+            "value": 31
+        },
+        "description": {
+            "id": "description",
+            "type": "text",
+            "label": "Description",
+            "value": "",
+            "singular": null
         },
         "completeText": {
             "id": "completeText",
