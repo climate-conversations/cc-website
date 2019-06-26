@@ -1,14 +1,15 @@
-(RaiselyComponents) => class FacilDonationReport extends React.Component {
+/* eslint-disable class-methods-use-this */
+(RaiselyComponents, React) => class FacilDonationReport extends React.Component {
 	generateForm() {
 		const cashReport = ['event.wereDonationsReceived', 'event.cashReceivedAmount', 'event.reportScan'];
 		const transferReport = ['event.transferScreenshot', 'event.cashTransferredAt',
 			'event.cashTransferAmount', 'event.cashTransferReference'];
 
 		const multiFormConfig = [
-			{ title: 'Donation Report', fields: questions },
-			{ title: 'Transfer Cash', fields: questions, condition: (fields) => fields[0].wereDonationsReceived },
+			{ title: 'Donation Report', fields: cashReport },
+			{ title: 'Transfer Cash', fields: transferReport, condition: (values) => values[0].wereDonationsReceived },
 		];
-	
+
 		return multiFormConfig;
 	}
 
@@ -28,7 +29,7 @@
 			config={config}
 			controller={this}
 			saveEachStep="true"
-			saveMessage="Saving Donation Report"			
+			saveMessage="Saving Donation Report"
 			/>
 		);
 	}

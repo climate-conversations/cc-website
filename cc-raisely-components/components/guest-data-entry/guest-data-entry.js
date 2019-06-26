@@ -1,7 +1,8 @@
+/* eslint-disable class-methods-use-this */
 (RaiselyComponents, React) => {
 	const preSurvey = [];
 	const postSurvey = [];
-	const guestInfo = ['user.fullName', 'user.email', 'user.phone', 'user.postcode', 
+	const guestInfo = ['user.fullName', 'user.email', 'user.phone', 'user.postcode',
 		{
 			"label": 'I am interested in ...',
 			"id": "description1",
@@ -16,7 +17,7 @@
 			{ value: 'no', label: 'Not at this time' },
 			{ value: 'cash', label: 'Cash' },
 			{ value: 'online', label: 'Online' },
-			{ value: 'direct_debit', label: 'Direct Debit' },			
+			{ value: 'direct_debit', label: 'Direct Debit' },
 		],
 		active: true,
 		core: true,
@@ -30,10 +31,10 @@
 		{ title: 'Post-Survey', fields: postSurvey },
 		{ title: 'Personal Details', fields: guestInfo },
 		{ title: 'Action', fields: guestAction },
-		{ 
-			title: 'Conversation Date', 
-			fields: conversationDate, 
-			condition: (fields) => fields[3].host,
+		{
+			title: 'Conversation Date',
+			fields: conversationDate,
+			condition: fields => fields[3].host,
 		},
 	];
 
@@ -59,7 +60,7 @@
 				donation: 'cash donation',
 				intention: 'donation intention',
 				conversation: 'new conversation',
-				demographics: 'demographics'
+				demographics: 'demographics',
 			};
 
 			let hasError = false;

@@ -5,7 +5,7 @@
 		const multiFormConfig = [
 			{ title: 'Facilitator Reflection', fields: questions },
 		];
-	
+
 		return multiFormConfig;
 	}
 
@@ -20,7 +20,7 @@
 		return (<Form
 			config={config}
 			controller={this}
-			saveMessage="Saving reflection"			
+			saveMessage="Saving reflection"
 			/>
 		);
 	}
