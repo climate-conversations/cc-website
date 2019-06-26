@@ -40,6 +40,7 @@
       "react/no-unused-state": 1,
       "react/require-default-props": 0,
       "no-unused-vars": 1,
+      "no-unused-expressions": 0,
       "no-useless-escape": 1,
       "no-restricted-syntax": ["error", "ForInStatement", "LabeledStatement", "WithStatement"],
       "react/no-multi-comp": 0,
