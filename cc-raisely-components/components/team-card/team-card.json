@@ -1,0 +1,45 @@
+{
+    "fields": {
+        "name": {
+            "id": "name",
+            "type": "text",
+            "label": "Name",
+            "value": "",
+            "singular": null
+        },
+        "photo": {
+            "id": "photo",
+            "type": "text",
+            "label": "Photo",
+            "value": "",
+            "singular": null
+        },
+        "title": {
+            "id": "title",
+            "type": "text",
+            "label": "Title",
+            "value": "",
+            "singular": null
+        },
+        "twitter": {
+            "id": "twitter",
+            "type": "text",
+            "label": "Twitter Handle",
+            "value": "",
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 1
+        },
+        "position": {
+            "id": "position",
+            "type": "text",
+            "label": "Position",
+            "value": "",
+            "singular": null
+        }
+    },
+    "uuid": "afc379a0-971d-11e9-847c-11e9e564d3e4"
+}
