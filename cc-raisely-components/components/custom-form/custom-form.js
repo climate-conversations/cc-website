@@ -30,15 +30,16 @@
 		// eslint-disable-next-line no-param-reassign
 		if (!completeLabel) completeLabel = 'Continue';
 		return (
-			<React.Fragment>
+			<div className="custom-form__success">
 				<p>{completeMessage}</p>
 				{doRedirect ? <Button onClick={doRedirect}>{completeLabel}</Button> : ''}
-			</React.Fragment>
+			</div>
 		);
 	}
 
 	class FormStep extends React.Component {
 		constructor(props) {
+			console.log('FormStep constructor');
 			super(props);
 			this.state = {};
 		}
@@ -72,7 +73,7 @@
 			const { back } = this.props;
 
 			return (
-				<React.Fragment>
+				<div className="custom-form__navigation">
 					{ this.props.step < 1 ? '' : (
 						<Button
 							type="submit"
@@ -87,20 +88,27 @@
 					>
 						{isSubmitting ? 'Saving...' : nextText}
 					</Button>
-				</React.Fragment>
+				</div>
 			);
 		}
 
 		render() {
 			console.log('FormStep.render');
-			const { pageIndex, title } = this.props;
+			const { pageIndex, title, description } = this.props;
 			const values = this.props.values[pageIndex];
-			console.log(this.props.fields);
+			const className = `custom-form__step custom-form__step--${pageIndex + 1}`;
+
 			return (
-				<React.Fragment>
-					{title ? (
-						<h3>{title}</h3>
-					) : ''}
+				<div className={className}>
+					<div className="custom-form__step-header">
+						{title ? (
+							<h3>{title}</h3>
+						) : ''}
+						{description}
+						<div className="form-description">
+							<p>{description}</p>
+						</div>
+					</div>
 					<Form
 						unlocked
 						fields={this.props.fields}
@@ -108,7 +116,7 @@
 						onChange={this.onChange}
 						buttons={this.buttons}
 					/>
-				</React.Fragment>
+				</div>
 			);
 		}
 	}
@@ -329,7 +337,7 @@
 			console.log('CustomForm.save');
 			const save = this.props.save || get(this.props, 'controller.save');
 			if (save) {
-				await save({ values: this.state.values });
+				await save(values);
 			}
 		}
 
@@ -411,15 +419,17 @@
 			}
 
 			return (
-				<MultiForm {...{
-					name: 'custom-form',
-					...this.props,
-					values: this.state.values,
-					updateValues: this.updateValues,
-					steps: this.state.steps,
-					error: this.state.error,
-					onNavigation: this.navigate,
-				}} />
+				<div className="custom-form">
+					<MultiForm {...{
+						name: 'custom-form',
+						...this.props,
+						values: this.state.values,
+						updateValues: this.updateValues,
+						steps: this.state.steps,
+						error: this.state.error,
+						onNavigation: this.navigate,
+					}} />
+				</div>
 			);
 		}
 	}

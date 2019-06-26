@@ -13,6 +13,7 @@
 			const { fields, title, description } = this.props.getValues();
 			const step1 = {
 				title,
+				description,
 			};
 
 			step1.fields = fields ? fields.map(field => ({
@@ -20,14 +21,6 @@
 				sourceFieldId: field.id,
 				hidden: !!field.hidden,
 			})) : [];
-
-			if (description) {
-				step1.fields.unshift({
-					id: 'description1',
-					type: 'rich-description',
-					default: description,
-				});
-			}
 
 			return [step1];
 		}
@@ -40,10 +33,12 @@
 			}
 			const settings = this.props.getValues();
 			delete settings.fields;
-			const props = { ...this.props, ...settings, steps };
+			const props = { ...this.props, ...settings, steps, controller: this };
 
 			return (
-				<CustomForm {...{ ...props }} />
+				<div className="custom-form--signup">
+					<CustomForm {...{ ...props }} />
+				</div>
 			);
 		}
 	}
