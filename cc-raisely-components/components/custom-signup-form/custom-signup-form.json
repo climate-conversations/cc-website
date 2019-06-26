@@ -1,9 +1,36 @@
 {
     "fields": {
+        "fields": {
+            "id": "fields",
+            "type": "repeater",
+            "label": "Fields",
+            "value": "",
+            "options": [
+                {
+                    "id": "id",
+                    "type": "text",
+                    "label": "Field ID (recordType.fieldId)",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "default",
+                    "type": "text",
+                    "label": "Default Value",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "",
+                    "type": "text",
+                    "label": "Hidden (blank for visible)",
+                    "defaultValue": ""
+                }
+            ],
+            "singular": "Field"
+        },
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 7
+            "value": 8
         }
     },
     "uuid": "a6090890-97b7-11e9-8a7b-47401a90ec39"

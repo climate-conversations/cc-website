@@ -251,6 +251,14 @@ p {
 .form-field {
   border: 2px solid $accentBlue;
   border-radius: $borderRadius*.5;
+  
+  &:focus-within {
+    border-color: $accentBlue;
+    
+    .form-field__label-text {
+      color: $accentBlue;
+    }
+  }
 }
 
 .card {
@@ -564,6 +572,7 @@ p {
     height: auto;
     width: auto;
     
+    &--previous,
     &--active {
       color: $primaryColor;
     }
@@ -662,6 +671,16 @@ p {
       border-radius: 0 0 $borderRadius $borderRadius;
       color: white;
       
+      &.donation-form__back {
+        
+        &,
+        &:hover,
+        &:focus {
+          border-color: transparent;
+          background: none;
+        }
+      }
+      
       .icon {
         color: accessibleColor($secondaryColor);
       }
@@ -674,15 +693,6 @@ p {
       &:focus {
 				animation: none;
       }
-    }
-  }
-  
-  &__back {
-    
-    &,
-    &:hover,
-    &:focus {
-   		background: none;
     }
   }
 }
