@@ -46,6 +46,7 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
     }
   }
   
+  .block--#{nth($suffix,$i)},
   .card--#{nth($suffix,$i)} {
     color: accessibleColor(nth($colors,$i),nth($colors,$i));
     background: nth($colors,$i);
@@ -54,6 +55,11 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
 
   .color--#{nth($suffix,$i)} {
     color: nth($colors,$i);
+    
+    
+    .icon {
+      color: inherit !important;
+    }
   }
   
   .fill--#{nth($suffix,$i)} {
@@ -245,6 +251,15 @@ p {
   max-width: none;
 }
 
+.page--home .header .logo {
+  visibility: hidden;
+}
+
+.profile-image {
+  overflow: hidden;
+  border-radius: #{$borderRadius*.5} #{$borderRadius*.5} 0 #{$borderRadius*.5};
+}
+
 
 // MOLECULES //
 
@@ -277,6 +292,7 @@ p {
 }
 
 .card {
+  white-space: normal;
   border-width: 2px;
   border-style: solid;
   border-radius: $borderRadius;
@@ -310,7 +326,7 @@ p {
     position: relative;
 
     &-image {
-      border-radius: $borderRadius 0 $borderRadius $borderRadius;
+      border-radius: calc(#{$borderRadius} - 2px) 0 calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px);
       background: inherit;
       background-size: cover;
       
@@ -333,13 +349,13 @@ p {
         margin: 0 0 -2px -2px;
         
         padding-bottom: 55%;
-        border-radius: 0 $borderRadius $borderRadius $borderRadius;
+        border-radius: 0 calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px);
       }
     }
 
     &-text {
       padding: 1em;
-      border-radius: $borderRadius 0 $borderRadius $borderRadius;
+      border-radius: calc(#{$borderRadius} - 2px) 0 calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px);
       position: relative;
       min-height: 5em;
       
@@ -365,14 +381,21 @@ p {
     border-width: 0;
     border-color: inherit;
     
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    flex-direction: column;
+    
     .post {
       
       &__wrapper {
-        margin-top: -1.25rem;
-        padding: 2rem 1.15rem 1rem;
+        padding: 1rem 1.15rem;
         border-color: inherit;
         position: relative;
         border-radius: inherit;
+        
+        display: flex;
+        flex-wrap: wrap;
         
         &:before {
           content: '';
@@ -382,6 +405,7 @@ p {
           border-color: inherit;
           border-radius: inherit;
           mix-blend-mode: multiply;
+          transition: .3s $easeOut;
         }
       }
       
@@ -391,6 +415,7 @@ p {
       }
       
       &__image {
+        width: 100%;
         
         img {
           border-radius: $borderRadius $borderRadius $borderRadius 0;
@@ -406,12 +431,25 @@ p {
         font-weight: 600;
         opacity: 1;
         margin-bottom: 0;
+        align-self: end;
       }
     }
           
     .button {
       opacity: 0;
       @include full;
+    }
+  }
+  
+  &.post--image {
+    
+    > a:first-child {
+      width: 100%;
+    }
+
+    .post__wrapper {
+      margin-top: -1.25rem;
+      padding-top: 2rem;
     }
   }
 }
@@ -426,6 +464,18 @@ p {
       
       &:nth-of-type(#{$i}) {
       	border-color: nth($accentColors,$i);
+        
+        &:hover .post__wrapper,
+        &:focus .post__wrapper {
+          color: accessibleColor(
+            accessibleColor($secondaryColor),
+            nth($accentColors,$i)
+          );
+          
+          &:before { 
+            background: nth($accentColors,$i);
+          }
+        }
       }
     }
   }
@@ -537,6 +587,46 @@ p {
   }
 }
 
+.share {
+  
+  &--alongside {
+    position: relative;
+    
+    .page--is-editor & {
+      margin-top: -1.5em;
+      height: 1.5em;
+
+      &:before {
+        text-transform: capitalize;
+        position: relative;
+        z-index: 1;
+        font-weight: bold;
+        content: '<share-alongside>';
+      }
+
+      &:hover .share {
+        box-shadow: 0 0 0 1px rgb(69, 112, 228);
+      }
+    }
+  	
+    .share {
+      position: absolute;
+      width: 2.5em;
+      right: calc(100% + 1.5em);
+    }
+    
+    .share-button {
+      margin-bottom: .5em;
+    }
+        
+    @include respond-to('mobile') {
+			position: relative;
+      width: auto;
+      margin-left: unset;
+    }
+  }
+}
+
 
 // MODULES //
 
@@ -600,8 +690,11 @@ p {
       content: '';
       @include full;
       top: -$borderRadius;
+      
+      background: white;
       border: 2px solid $accentBlue;
       border-radius: $borderRadius;
+      
       mix-blend-mode: multiply;
       pointer-events: none;
     }
