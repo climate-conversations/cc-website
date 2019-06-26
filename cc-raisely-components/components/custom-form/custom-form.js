@@ -12,6 +12,8 @@
 	const { Button } = RaiselyComponents.Atoms;
 	const { get, isEqual, set } = RaiselyComponents.Common;
 
+	const errorStyle = 'style="border: 1px solid red;"';
+
 	function singular(word) {
 		return (word[word.length - 1]) !== 's' ? word : `${word}s`;
 	}
@@ -30,18 +32,25 @@
 		return (
 			<React.Fragment>
 				<p>{completeMessage}</p>
-				{doRedirect ? <Button href={doRedirect}>{completeLabel}</Button> : ''}
+				{doRedirect ? <Button onClick={doRedirect}>{completeLabel}</Button> : ''}
 			</React.Fragment>
 		);
 	}
 
 	class FormStep extends React.Component {
+		constructor(props) {
+			super(props);
+			this.state = {};
+		}
+
 		onChange = (values) => {
+			console.log('FormStep.onChange');
 			const { pageIndex } = this.props;
 			this.props.updateValues({ [pageIndex]: values });
 		}
 
 		next = async () => {
+			console.log('FormStep.next');
 			const { save } = this.props;
 			if (save) {
 				this.setState({ saving: true });
@@ -55,23 +64,26 @@
 		}
 
 		buttons = ({ isSubmitting }) => {
+			console.log('FormStep.buttons');
 			const nextText = this.props.actionText || 'Next';
 
-			const { back, next } = this.props;
+			console.log(nextText)
+
+			const { back } = this.props;
 
 			return (
 				<React.Fragment>
 					{ this.props.step < 1 ? '' : (
 						<Button
 							type="submit"
-							onClick={back()}
+							onClick={back}
 						>
 							Previous
 						</Button>
 					)}
 					<Button
 						type="submit"
-						onClick={this.next()}
+						onClick={this.next}
 					>
 						{isSubmitting ? 'Saving...' : nextText}
 					</Button>
@@ -80,32 +92,62 @@
 		}
 
 		render() {
-			const { pageIndex } = this.props;
+			console.log('FormStep.render');
+			const { pageIndex, title } = this.props;
 			const values = this.props.values[pageIndex];
-			return (<Form
-				unlocked
-				fields={this.props.fields}
-				values={values}
-				onChange={this.onChange}
-				buttons={this.buttons}
-			/>);
+			console.log(this.props.fields);
+			return (
+				<React.Fragment>
+					{title ? (
+						<h3>{title}</h3>
+					) : ''}
+					<Form
+						unlocked
+						fields={this.props.fields}
+						values={values}
+						onChange={this.onChange}
+						buttons={this.buttons}
+					/>
+				</React.Fragment>
+			);
 		}
 	}
 
 	class CustomForm extends React.Component {
-		static getDerivedStateFromProps(props, state) {
-			const { values } = props;
-			if (values && !isEqual(values, state.values)) {
-				return { values: props.values };
-			}
-			return null;
+		constructor(props) {
+			super(props);
+			this.state = { values: [] };
 		}
 
 		componentDidMount() {
 			const steps = this.resolveFields(this.props.steps);
-			this.steps = this.buildSteps(steps);
+			// eslint-disable-next-line react/no-did-mount-set-state
+			this.setState({ steps: this.buildSteps(steps) });
 
 			this.loadValues();
+		}
+
+		/**
+		 * If the parent updates the steps or the values
+		 * reload steps or values respectively
+		 */
+		componentDidUpdate(prevProps, prevState) {
+			const { values } = this.props;
+
+			const changed = {};
+
+			if (!isEqual(this.props.steps, this.lastSteps)) {
+				const steps = this.resolveFields(this.props.steps);
+				changed.steps = this.buildSteps(steps);
+			}
+
+			if (values && !isEqual(values, this.state.values)) {
+				changed.values = values;
+			}
+
+			if (Object.keys(changed).length) return this.setState(changed);
+
+			return null;
 		}
 
 		/**
@@ -113,16 +155,19 @@
 		 * if it's defined and handles setting up a loading message
 		 */
 		async loadValues() {
-			const load = get(this.props, 'controller.load');
-			if (load) {
-				this.setState({ loading: true });
-				try {
+			console.log('CustomForm.loadValues');
+
+			try {
+				const load = get(this.props, 'controller.load');
+				if (load) {
+					this.setState({ loading: true });
 					await load({ dataToForm: this.dataToForm });
-				} catch (e) {
-					console.error(e);
-					this.setState({ error: e.message });
 				}
-				this.setState({ loading: false });
+			} catch (e) {
+				console.error(e);
+				this.setState({ error: e.message });
+			} finally {
+				this.setState({ loaded: true });
 			}
 		}
 
@@ -132,15 +177,16 @@
 		 * @return {object} The field definition
 		 */
 		findField(sourceId) {
+			console.log('CustomForm.findField');
 			const customFields = get(this.props, 'global.campaign.config.customFields');
 			const fieldSources = sourceId.split('.');
-			if (fieldSources.length !== 2) throw new Error(`Badly specified field ${sourceId}. Should be in the form recordType.field`);
+			if (fieldSources.length !== 2) throw new Error(`Badly specified field "${sourceId}". Should be in the form recordType.field`);
 			const [record, fieldId] = fieldSources;
-			const recordType = singular[record];
+			const recordType = singular(record);
 
-			if (!customFields[record]) throw new Error(`Unknown record type ${recordType} for custom field ${sourceId}`);
-			const field = customFields[record].find(f => f.id === fieldId);
-			if (!field) throw new Error(`Cannot find custom field ${fieldId} for custom field ${sourceId} (Hint: you need to reload the page after adding a custom field to the campaign)`);
+			if (!customFields[recordType]) throw new Error(`Unknown record type "${record}" for custom field "${sourceId}"`);
+			const field = customFields[recordType].find(f => f.id === fieldId);
+			if (!field) throw new Error(`Cannot find custom field "${fieldId}" for custom field "${sourceId}" (Hint: you need to reload the page after adding a custom field to the campaign)`);
 
 			// Save the record type for help in formatting the data
 			field.recordType = recordType;
@@ -149,23 +195,32 @@
 		}
 
 		navigate = async (step) => {
+			console.log('CustomForm.navigate');
 			let canShow;
 
 			// Save the last step so we know if this navigation is going backwards or forwards
 			if (!this.lastStep) this.lastStep = 0;
-			const direction = step > this.lastStep ? 1 : -1;
-			do {
-				const stepConfig = this.steps[step];
+			const direction = step >= this.lastStep ? 1 : -1;
+
+			// Scan through steps until we find one we can show
+			// don't bother checking if we're at the start or end
+			while ((!canShow) && (step > 0) && (step < this.state.steps.length - 1)) {
+				const stepConfig = this.state.steps[step];
 				canShow = stepConfig.condition ? stepConfig.condition(this.state.values) : true;
 
-				// eslint-disable-next-line no-param-reassign
-				if (!canShow) step += direction;
-			} while ((!canShow) && (step < this.steps.length));
+				if (!canShow) {
+					// eslint-disable-next-line no-param-reassign
+					step += direction;
+					// eslint-disable-next-line no-param-reassign
+					step = Math.max(0, Math.min(step, this.state.steps.length - 1));
+				}
+			}
 
 			const onNavigate = this.props.onNavigate || get(this.props, 'controller.updateStep');
 			if (onNavigate) {
 				onNavigate(step, this.state.values);
 			}
+			console.log('CustomForm.navigate (finished)');
 
 			this.lastStep = step;
 			return step;
@@ -180,14 +235,17 @@
 		 */
 		prepareField(field) {
 			let definition;
+			console.log('CustomForm.prepareField');
 
-			if (typeof field === 'string' || field.sourceFieldId) {
-				const sourceId = field.sourceFieldId || field;
+			if (typeof field === 'string' || Object.keys(field).includes('sourceFieldId')) {
+				let sourceId = field.sourceFieldId || field;
+				// Happens if sourceFieldId is '', which happens when user is building form
+				if (typeof sourceId !== 'string') sourceId = '';
 				definition = this.findField(sourceId);
 
 				// If it's an object, copy over any properties specified
-				if (field.sourceField) {
-					Object.assign({}, definition, field);
+				if (field.sourceFieldId) {
+					definition = Object.assign({}, definition, field);
 				}
 			} else {
 				definition = Object.assign({}, field);
@@ -197,6 +255,7 @@
 		}
 
 		doRedirect = () => {
+			console.log('doRedirect');
 			const { completeRedirect, history } = this.props;
 			if (completeRedirect) history.push(completeRedirect);
 		}
@@ -207,23 +266,29 @@
 		 * @return {object[]} The steps with resolved fields
 		 */
 		resolveFields(steps) {
-			const errors = [];
+			// Cache steps so we don't rerun this too frequently
+			this.lastSteps = steps;
+			console.log('CustomForm.resolveFields');
+			if (!(steps && Array.isArray(steps))) return null;
+
 			const resolvedSteps = steps.map((step) => {
 				const result = Object.assign({}, step);
 				if (step.fields) {
-					result.fields = step.fields.map((field) => {
+					result.fields = step.fields.map((field, fieldIndex) => {
 						try {
 							return this.prepareField(field);
 						} catch (e) {
 							console.error(e);
-							errors.push(e.message);
+							return {
+								id: `error-${fieldIndex}`,
+								type: 'rich-description',
+								default: `<p ${errorStyle}>Error: ${e.message}</p>`,
+							};
 						}
-						return field;
 					});
 				}
-				return step;
+				return result;
 			});
-			if (errors.length) this.setState({ error: errors.join(',') });
 
 			return resolvedSteps;
 		}
@@ -261,6 +326,7 @@
 		}
 
 		save = async () => {
+			console.log('CustomForm.save');
 			const save = this.props.save || get(this.props, 'controller.save');
 			if (save) {
 				await save({ values: this.state.values });
@@ -287,21 +353,26 @@
 		 *  randomField,
 		 * });
 		 */
-		dataToForm = data => mapFormToData(data, this.steps, true);
-		formToData = values => mapFormToData(values, this.steps, false)
+		dataToForm = data => mapFormToData(data, this.state.steps, true);
+		formToData = values => mapFormToData(values, this.state.steps, false)
 
 		/**
 		 * Build the MultiForm steps from the declared steps
 		 */
 		buildSteps(steps) {
+			console.log('CustomForm.buildSteps');
+			if (!(steps && Array.isArray(steps))) return null;
+
 			const builtSteps = steps.map((step, index) => {
-				const stepProps = Object.assign({}, step);
+				let stepProps = Object.assign({}, step);
 				delete stepProps.component;
 				const Component = step.component || FormStep;
 
-				const save = (index === steps.length - 1) ? this.save : '';
+				if (index === steps.length - 1) {
+					stepProps = { save: this.save, actionText: 'Save', ...stepProps };
+				}
 
-				return props => <Component {...props} {...stepProps} pageIndex={index} save={save} />;
+				return props => <Component {...props} {...stepProps} pageIndex={index} />;
 			});
 
 			const FinishedPanel = this.props.finalPage || get(this.props, 'controller.finalPage');
@@ -321,15 +392,22 @@
 		}
 
 		render() {
-			const { loadingText } = this.props;
+			console.log('CustomForm.render');
 
-			if (this.state.loading) {
+			if (!this.state.loaded) {
+				const { loadingText } = this.props;
+
 				return (
 					<React.Fragment>
 						<Spinner />
-						<p>{loadingText || 'Loading'}</p>
+						<p>{loadingText}</p>
 					</React.Fragment>
 				);
+			}
+
+			if (!this.state.steps) {
+				console.error(`ERROR: ${this.constructor.name} must have an array of objects for the steps property`);
+				return <p className="error">You must specify the steps property for this form</p>;
 			}
 
 			return (
@@ -338,7 +416,7 @@
 					...this.props,
 					values: this.state.values,
 					updateValues: this.updateValues,
-					steps: this.steps,
+					steps: this.state.steps,
 					error: this.state.error,
 					onNavigation: this.navigate,
 				}} />
@@ -353,6 +431,7 @@
 	 * @param {boolean} toForm
 	 */
 	function mapFormToData(source, steps, toForm) {
+		console.log('CustomForm.mapFormToData');
 		const values = {};
 		steps.forEach((step, index) => {
 			step.fields.forEach((field) => {
@@ -377,6 +456,8 @@
 				}
 			});
 		});
+		console.log('CustomForm.mapFormToData (finished)');
+
 		return values;
 	}
 

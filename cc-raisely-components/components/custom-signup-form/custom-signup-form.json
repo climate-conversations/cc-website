@@ -1,6 +1,20 @@
 {
     "fields": {
-        "fields": {
+        "title": {
+            "id": "title",
+            "type": "text",
+            "label": "Form Title",
+            "value": "",
+            "singular": null
+        },
+        "description": {
+            "id": "description",
+            "type": "text",
+            "label": "Description",
+            "value": "",
+            "singular": null
+        },
+		"fields": {
             "id": "fields",
             "type": "repeater",
             "label": "Fields",
@@ -19,7 +33,7 @@
                     "defaultValue": ""
                 },
                 {
-                    "id": "",
+                    "id": "hidden",
                     "type": "text",
                     "label": "Hidden (blank for visible)",
                     "defaultValue": ""
@@ -30,7 +44,28 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 8
+            "value": 11
+        },
+        "completeText": {
+            "id": "completeText",
+            "type": "text",
+            "label": "Message on Completion",
+            "value": "",
+            "singular": null
+        },
+        "completeLabel": {
+            "id": "completeLabel",
+            "type": "text",
+            "label": "Labe for button on complete page",
+            "value": "",
+            "singular": null
+        },
+        "completeRedirect": {
+            "id": "completeRedirect",
+            "type": "text",
+            "label": "Redirect on Complete to",
+            "value": "",
+            "singular": null
         }
     },
     "uuid": "a6090890-97b7-11e9-8a7b-47401a90ec39"
