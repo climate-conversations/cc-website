@@ -248,6 +248,21 @@ p {
 
 // MOLECULES //
 
+.page-navigation {
+  
+  &__link {
+    
+    &.button {
+			font-size: .9rem;
+    }
+    
+    &.button--inverse {
+      background: none;
+      color: inherit;
+    }
+  }
+}
+
 .form-field {
   border: 2px solid $accentBlue;
   border-radius: $borderRadius*.5;
