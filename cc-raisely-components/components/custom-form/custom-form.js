@@ -15,7 +15,10 @@
 	const errorStyle = 'style="border: 1px solid red;"';
 
 	function singular(word) {
-		return (word[word.length - 1]) !== 's' ? word : `${word}s`;
+		return (word[word.length - 1]) !== 's' ? word : word.substr(0, word.length - 1);
+	}
+	function plural(word) {
+		return (word[word.length - 1]) === 's' ? word : `${word}s`;
 	}
 
 	// eslint-disable-next-line object-curly-newline
