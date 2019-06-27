@@ -75,7 +75,7 @@
             "singular": null
 		},
 		"colour": {
-            "id": "backgrounColour",
+            "id": "backgroundColour",
             "type": "select",
             "label": "Background Colour",
             "value": "green",
