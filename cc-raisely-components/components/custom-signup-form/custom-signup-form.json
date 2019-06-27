@@ -7,13 +7,6 @@
             "value": "",
             "singular": null
         },
-        "description": {
-            "id": "description",
-            "type": "text",
-            "label": "Description",
-            "value": "",
-            "singular": null
-        },
         "fields": {
             "id": "fields",
             "type": "repeater",
@@ -44,7 +37,21 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 31
+            "value": 44
+        },
+        "saveLabel": {
+            "id": "actionText",
+            "type": "text",
+            "label": "Save button label",
+            "value": "Save",
+            "singular": null
+        },
+        "description": {
+            "id": "description",
+            "type": "text",
+            "label": "Description",
+            "value": "",
+            "singular": null
         },
         "completeText": {
             "id": "completeText",
@@ -66,14 +73,7 @@
             "label": "Redirect on Complete to",
             "value": "",
             "singular": null
-		},
-		"saveLabel": {
-            "id": "actionText",
-            "type": "text",
-            "label": "Save button label",
-            "value": "Save",
-            "singular": null
-		}
+        }
     },
     "uuid": "a6090890-97b7-11e9-8a7b-47401a90ec39"
 }

@@ -22,7 +22,7 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
 @for $i from 1 through length($suffix) {
 
   .button--#{nth($suffix,$i)} {
-    
+
     &,
     &:hover,
     &:focus {
@@ -30,12 +30,12 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
       background: nth($colors,$i);
       border-color: nth($colors,$i);
     }
-    
+
     &:after,
     &-outline:after {
       background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10px' height='9px'><path fill='%23#{str-slice('#{nth($colors,$i)}',2)}' d='M-7.10542736e-15,4.26325641e-14 C-7.10542736e-15,4.33333333 -7.10542736e-15,6.83333333 -7.10542736e-15,7.5 C-7.10542736e-15,8.5 1,9 2,8 C3.33333333,6.66666667 6,4 10,4.26325641e-14 L-7.10542736e-15,4.26325641e-14 Z'></path></svg>") no-repeat center / 100%;
     }
-    
+
     &-outline,
     &-outline:hover,
     &-outline:focus {
@@ -45,7 +45,7 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
       background: none;
     }
   }
-  
+
   .block--#{nth($suffix,$i)},
   .card--#{nth($suffix,$i)} {
     color: accessibleColor(nth($colors,$i),nth($colors,$i));
@@ -55,25 +55,25 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
 
   .color--#{nth($suffix,$i)} {
     color: nth($colors,$i);
-    
-    
+
+
     .icon {
       color: inherit !important;
     }
   }
-  
+
   .fill--#{nth($suffix,$i)} {
     fill: nth($colors,$i);
   }
-  
+
   .border--#{nth($suffix,$i)} {
     border-color: nth($colors,$i);
   }
-}	
+}
 
 .button {
   position: relative;
-  
+
   &:after {
     content: '';
     position: absolute;
@@ -82,13 +82,13 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
     width: 10px;
     height: 9px;
   }
-  
+
   transform-origin: left calc(100% + 9px);
-  
+
   &:hover,
   &:focus {
     animation: squiggle .5s forwards;
-    
+
     @keyframes squiggle {
       0% { transform: rotate(0) }
       40% { transform: rotate(-2deg) }
@@ -97,10 +97,10 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
       100% { transform: rotate(0deg) }
     }
   }
-  
+
   &-row  {
     margin-bottom: -1em;
-    
+
     > .button {
       margin-right: 1em;
       margin-bottom: calc(1em + 9px);
@@ -112,45 +112,45 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
 // ROW, COLUMNS & BLOCKS //
 
 .row {
-  
+
   &--on-top {
     z-index: 11;
   }
-  
+
   &--overflow {
     overflow: hidden;
   }
 }
 
 .col {
-  
+
   &--overlap {
     z-index: 15;
     mix-blend-mode: multiply;
     pointer-events: none;
-    
+
     a,
     button,
     [data-slate-editor] {
       pointer-events: all;
     }
-    
+
     &:first-child .col__container {
       margin-right: -6rem;
-      
+
       @include respond-to('mobile') {
         margin-right: unset;
         margin-bottom: -1rem;
       }
-      
+
       > * {
         margin-right: .5rem;
         padding-right: inherit;
-        
+
         @include respond-to('mobile') {
           padding-right: unset;
           margin-right: 0;
-          
+
           &:first-child {
             padding-top: inherit;
             margin-top: .5rem;
@@ -158,24 +158,24 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
         }
       }
     }
-    
-       
+
+
     &:last-child .col__container {
       margin-left: -6rem;
-           
+
       @include respond-to('mobile') {
         margin-left: unset;
         margin-top: -1rem;
       }
-      
+
       > * {
         margin-left: .5rem;
         padding-left: inherit;
-        
+
         @include respond-to('mobile') {
           padding-left: unset;
           margin-left: 0;
-          
+
           &:first-child {
             padding-bottom: inherit;
             margin-bottom: .5rem;
@@ -184,17 +184,17 @@ $colors: $btnPrimaryBgColor, $btnSecondaryBgColor, $btnInverseBgColor, $btnCallT
       }
     }
   }
-	
+
   &--box .col__container {
     border-width: 2px;
     border-style: solid;
     border-radius: 1em;
     border-color: inherit;
   }
-} 
+}
 
 .block {
-	
+
   &--box {
     border-width: 2px;
     border-radius: $borderRadius;
@@ -210,7 +210,7 @@ h1, h2, h3, h4, h5, h6 {
 
 p {
   font-weight: 500;
-  
+
   strong {
 		color: $accentBlue;
   }
@@ -264,13 +264,13 @@ p {
 // MOLECULES //
 
 .page-navigation {
-  
+
   &__link {
-    
+
     &.button {
 			font-size: .9rem;
     }
-    
+
     &.button--inverse {
       background: none;
       color: inherit;
@@ -279,12 +279,12 @@ p {
 }
 
 .form-field {
-  border: 2px solid $accentBlue;
+  border: 2px solid accessibleColor($secondaryColor);
   border-radius: $borderRadius*.5;
-  
+
   &:focus-within {
-    border-color: $accentBlue;
-    
+    border-color: accessibleColor($secondaryColor);
+
     .form-field__label-text {
       color: $accentBlue;
     }
@@ -296,32 +296,32 @@ p {
   border-width: 2px;
   border-style: solid;
   border-radius: $borderRadius;
-  
+
   transition: .3s $easeOut;
-  
+
   &--link:not(:hover):not(:focus) {
     background: white;
   }
-  
+
   position: relative;
-  
+
   &__title {
     color: inherit;
     padding: .5em .66em;
-    
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    
+
     border-radius: $borderRadius $borderRadius 0 0;
-        
+
     h4 {
 			color: inherit;
       line-height: 1;
       margin: 0;
     }
   }
-  
+
   &__content {
     position: relative;
 
@@ -329,25 +329,25 @@ p {
       border-radius: calc(#{$borderRadius} - 2px) 0 calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px);
       background: inherit;
       background-size: cover;
-      
-      display: inline-block;    
+
+      display: inline-block;
       @include full(-2px);
       margin-top: 2px;
-      
+
       mix-blend-mode: multiply;
-      
+
       &:last-child {
         mix-blend-mode: normal;
-        
+
         position: relative;
         top: unset;
         right: unset;
         bottom: unset;
         left: unset;
-        
+
         width: calc(100% + 4px);
         margin: 0 0 -2px -2px;
-        
+
         padding-bottom: 55%;
         border-radius: 0 calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px);
       }
@@ -358,7 +358,7 @@ p {
       border-radius: calc(#{$borderRadius} - 2px) 0 calc(#{$borderRadius} - 2px) calc(#{$borderRadius} - 2px);
       position: relative;
       min-height: 5em;
-      
+
       &:first-child {
       	color: inherit;
         background: white;
@@ -366,7 +366,7 @@ p {
       }
     }
   }
-  
+
   &__link {
     @include full;
     z-index: 1;
@@ -375,28 +375,28 @@ p {
 
 
 .post {
-  
+
   &--detail-item {
     border-radius: $borderRadius;
     border-width: 0;
     border-color: inherit;
-    
+
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
     flex-direction: column;
-    
+
     .post {
-      
+
       &__wrapper {
         padding: 1rem 1.15rem;
         border-color: inherit;
         position: relative;
         border-radius: inherit;
-        
+
         display: flex;
         flex-wrap: wrap;
-        
+
         &:before {
           content: '';
           @include full;
@@ -408,24 +408,24 @@ p {
           transition: .3s $easeOut;
         }
       }
-      
+
       &__title a {
         font-weight: inherit;
         text-decoration: none;
       }
-      
+
       &__image {
         width: 100%;
-        
+
         img {
           border-radius: $borderRadius $borderRadius $borderRadius 0;
         }
       }
-      
+
       &__content {
 				display: none;
       }
-      
+
       &__meta {
         font-style: italic;
         font-weight: 600;
@@ -434,15 +434,15 @@ p {
         align-self: end;
       }
     }
-          
+
     .button {
       opacity: 0;
       @include full;
     }
   }
-  
+
   &.post--image {
-    
+
     > a:first-child {
       width: 100%;
     }
@@ -456,23 +456,23 @@ p {
 
 
 .postfeed {
-  
-  
+
+
   &__item {
-    
+
    	@for $i from 1 through length($accents) {
-      
+
       &:nth-of-type(#{$i}) {
       	border-color: nth($accentColors,$i);
-        
+
         &:hover .post__wrapper,
         &:focus .post__wrapper {
           color: accessibleColor(
             accessibleColor($secondaryColor),
             nth($accentColors,$i)
           );
-          
-          &:before { 
+
+          &:before {
             background: nth($accentColors,$i);
           }
         }
@@ -483,22 +483,22 @@ p {
 
 
 .dropdown {
-  
+
   .dropdown__tab {
     padding: 0;
     font-size: inherit;
-    
+
     &:after {
 			content: none;
     }
   }
-  
+
   .dropdown__menu {
     background: white;
     text-align: left;
     border: 2px solid $secondaryColor;
     border-radius: 0 #{$borderRadius*.5} #{$borderRadius*.5} #{$borderRadius*.5};
-    
+
     &:after {
       background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10px' height='9px'><path fill='%23#{str-slice('#{$secondaryColor}',2)}' d='M-7.10542736e-15,4.26325641e-14 C-7.10542736e-15,4.33333333 -7.10542736e-15,6.83333333 -7.10542736e-15,7.5 C-7.10542736e-15,8.5 1,9 2,8 C3.33333333,6.66666667 6,4 10,4.26325641e-14 L-7.10542736e-15,4.26325641e-14 Z'></path></svg>") no-repeat center / 100%;
       content: '';
@@ -509,47 +509,47 @@ p {
       height: 9px;
       transform: scaleY(-1);
   	}
-    
+
     top: calc(100% + 1rem);
     left: 0;
-    
+
     &__item {
       border-top: none;
-      
+
       a {
         padding: .33rem 1rem;
         line-height: 1.2;
         transition: .3s $easeOut;
-        
+
         &:hover,
         &:focus {
           background: none;
           color: $accentBlue;
         }
       }
-      
+
       &:first-of-type a {
         padding-top: .75rem;
       }
-      
+
       &:last-of-type a {
         padding-bottom: .75rem;
       }
     }
   }
 }
-  
+
 
 .segment {
   margin-top: -1.5em;
   height: 1.5em;
   position: relative;
   z-index: -1;
-  
+
   @include respond-to('mobile') {
     opacity: .2;
   }
-  
+
   .page--is-editor &:before {
     text-transform: capitalize;
     position: relative;
@@ -557,29 +557,29 @@ p {
     font-weight: bold;
     content: '<' attr(data-colour) ' segment>';
   }
-  
+
   &__shape {
   	position: absolute;
-    
+
     @keyframes segment {
       0% { transform: rotate(-10deg) }
       100% { transform: rotate(350deg) }
     }
     animation: segment 300s linear infinite;
   }
-    
+
   &--size-normal &__shape,
   &--size-normal svg {
     width: 400px;
     height: 400px;
   }
-  
+
   &--size-medium &__shape,
   &--size-medium svg {
     width: 540px;
     height: 540px;
   }
-  
+
   &--size-large &__shape,
   &--size-large svg {
     width: 840px;
@@ -588,10 +588,10 @@ p {
 }
 
 .share {
-  
+
   &--alongside {
     position: relative;
-    
+
     .page--is-editor & {
       margin-top: -1.5em;
       height: 1.5em;
@@ -608,17 +608,17 @@ p {
         box-shadow: 0 0 0 1px rgb(69, 112, 228);
       }
     }
-  	
+
     .share {
       position: absolute;
       width: 2.5em;
       right: calc(100% + 1.5em);
     }
-    
+
     .share-button {
       margin-bottom: .5em;
     }
-        
+
     @include respond-to('mobile') {
 			position: relative;
       width: auto;
@@ -633,154 +633,162 @@ p {
 .donation-form {
   background: none;
   box-shadow: none;
-  
+
+  .form-field {
+      border-color: $accentBlue;
+
+      &:focus-within {
+        border-color: $accentBlue;
+      }
+  }
+
   &__header {
     background: url(https://raisely-images.imgix.net/climate-conversations-2019/uploads/donation-form-header-jpg-6f4cfd.jpg) no-repeat center/ cover;
     border-radius: $borderRadius $borderRadius $borderRadius 0;
     position: relative;
     overflow: hidden;
-    
+
     display: flex;
     flex-wrap: wrap;
     padding: 1.5rem;
-    
+
     &:before {
       content: '';
       @include full;
       background: black;
       opacity: .33;
     }
-    
+
     h4 {
       position: relative;
     }
-    
+
     &,
     h4 {
       color: white;
     }
   }
-  
+
   &__stages {
     position: relative;
   }
-  
+
   &__stage {
     background: none;
     border: none;
     font-weight: bold;
     font-size: 1.25em;
-    
+
     margin-left: 0;
     margin-right: 2em;
-    
+
     height: auto;
     width: auto;
-    
+
     &--previous,
     &--active {
       color: $primaryColor;
     }
   }
-  
+
   &__body {
     position: relative;
-    
+
     &:before {
       content: '';
       @include full;
       top: -$borderRadius;
-      
+
       background: white;
       border: 2px solid $accentBlue;
       border-radius: $borderRadius;
-      
+
       mix-blend-mode: multiply;
       pointer-events: none;
     }
   }
-  
+
   &__amount {
-    
+
     &-type {
       border: 2px solid $accentCyan;
       border-radius: $borderRadius;
       display: inline-flex;
       margin-top: .75em;
     }
-    
+
     &-type-btn {
       text-transform: uppercase;
       padding: .5em 1em;
       letter-spacing: .1em;
       border: none;
       color: accessibleColor($secondaryColor);
-      
+
       &,
       &:first-child,
       &:last-child {
         border-radius: $borderRadius;
       }
-      
+
       &--active {
         background: $accentCyan;
         color: accessibleColor($accentCyan,$accentCyan,5.5);
       }
     }
-    
+
     &-btn {
       font-size: 1.25em;
       border-radius: $borderRadius*.5;
       padding: .85em 1.25em;
-      
+
       background: $accentBlue;
       border-color: $accentBlue;
-      
+
       &:hover,
       &:focus {
         background: $accentPink;
       	border-color: $accentPink;
       }
-        
+
     }
-      
+
     &-value {
       color: white;
     }
   }
-  
+
   &__other-field {
     font-size: 1.25em;
-    
+
     &.form-field {
       min-width: 10ch;
-            
+
       .input-full {
         padding: 1em 5px 1em 1.725em !important;
       }
     }
-    
+
     .form-field {
-      
+
       &__input-group__prepend {
         opacity: 1;
         left: .75em;
       }
     }
   }
-  
+
   &__nav {
     background: rgba($accentBlue,.25);
     border-radius: 0 0 $borderRadius $borderRadius;
-    
+
     .button {
       background: $accentBlue;
       border-color: $accentBlue;
       border-radius: 0 0 $borderRadius $borderRadius;
       color: white;
-      
+
       &.donation-form__back {
-        
+
         &,
         &:hover,
         &:focus {
@@ -788,15 +796,15 @@ p {
           background: none;
         }
       }
-      
+
       .icon {
         color: accessibleColor($secondaryColor);
       }
-      
+
       &:after {
 				content: none;
       }
-      
+
       &:hover,
       &:focus {
 				animation: none;
@@ -804,27 +812,18 @@ p {
     }
   }
 }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
 
+.custom-form {
+    border-radius: $borderRadius;
+    border: 2px solid $accentViolet;
 
+    form,
+    &__step-header {
+        padding: 1em;
+    }
 
-  
+    form {
+        background: white;
+        border-radius: $borderRadius;
+    }
+}
