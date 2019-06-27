@@ -21,7 +21,7 @@
 	// eslint-disable-next-line object-curly-newline
 	function DefaultComplete({ completeMessage, completeLabel, history, doRedirect }) {
 		// If there's a redirect, but no labels, just redirect straight away
-		if (completeMessage || completeLabel) {
+		if (!(completeMessage || completeLabel)) {
 			doRedirect();
 		}
 
@@ -57,6 +57,10 @@
 				this.setState({ saving: true });
 				try {
 					await save();
+				} catch (e) {
+					// Save function handles the error, we just need
+					// to avoid advancing the form
+					return;
 				} finally {
 					this.setState({ saving: false });
 				}
@@ -64,11 +68,9 @@
 			this.props.next();
 		}
 
-		buttons = ({ isSubmitting }) => {
+		buttons = () => {
 			console.log('FormStep.buttons');
 			const nextText = this.props.actionText || 'Next';
-
-			console.log(nextText)
 
 			const { back } = this.props;
 
@@ -76,17 +78,19 @@
 				<div className="custom-form__navigation">
 					{ this.props.step < 1 ? '' : (
 						<Button
-							type="submit"
+							type="button"
+							disabled={this.state.saving}
 							onClick={back}
 						>
 							Previous
 						</Button>
 					)}
 					<Button
-						type="submit"
+						type="button"
 						onClick={this.next}
+						disabled={this.state.saving}
 					>
-						{isSubmitting ? 'Saving...' : nextText}
+						{this.state.saving ? 'Saving...' : nextText}
 					</Button>
 				</div>
 			);
@@ -94,6 +98,7 @@
 
 		render() {
 			console.log('FormStep.render');
+			const { props } = this.props;
 			const { pageIndex, title, description } = this.props;
 			const values = this.props.values[pageIndex];
 			const className = `custom-form__step custom-form__step--${pageIndex + 1}`;
@@ -104,12 +109,12 @@
 						{title ? (
 							<h3>{title}</h3>
 						) : ''}
-						{description}
 						<div className="form-description">
 							<p>{description}</p>
 						</div>
 					</div>
 					<Form
+						{...props}
 						unlocked
 						fields={this.props.fields}
 						values={values}
@@ -309,7 +314,7 @@
 
 			const proxyCallback = (...args) => {
 				if (this.props.updateValues) this.props.updateValues(handleState);
-				afterUpdateCallback(...args);
+				if (afterUpdateCallback) afterUpdateCallback(...args);
 			};
 
 			// handle state update function
@@ -337,7 +342,14 @@
 			console.log('CustomForm.save');
 			const save = this.props.save || get(this.props, 'controller.save');
 			if (save) {
-				await save(values);
+				try {
+					await save(this.state.values);
+				} catch (e) {
+					console.error(e);
+					this.setState({ error: e.message });
+					// Rethrow so that next step is aborted
+					throw e;
+				}
 			}
 		}
 
@@ -419,7 +431,8 @@
 			}
 
 			return (
-				<div className="custom-form">
+				<div className="custom-form-wrapper">
+					{this.state.error ? <div className="custom-form--error">{this.state.error}</div> : ''}
 					<MultiForm {...{
 						name: 'custom-form',
 						...this.props,
