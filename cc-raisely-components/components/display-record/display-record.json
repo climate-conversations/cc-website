@@ -1,0 +1,58 @@
+{
+    "fields": {
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 1
+		},
+		"fields": {
+            "id": "fields",
+            "type": "repeater",
+            "label": "Fields",
+            "value": "",
+            "options": [
+                {
+                    "id": "id",
+                    "type": "text",
+                    "label": "Field ID (recordType.fieldId)",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "default",
+                    "type": "text",
+                    "label": "Default Value",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "hidden",
+                    "type": "text",
+                    "label": "Hidden (blank for visible)",
+                    "defaultValue": ""
+                }
+            ],
+            "singular": "Field"
+		},
+		"associations": {
+            "id": "associations",
+            "type": "repeater",
+            "label": "Associations",
+            "value": "",
+            "options": [
+                {
+                    "id": "uuidFrom",
+                    "type": "text",
+                    "label": "Path to uuid to load (eg event.private.profileUuid)",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "recordType",
+                    "type": "text",
+                    "label": "Record type to load (eg profile)",
+                    "defaultValue": ""
+                }
+            ],
+            "singular": "Association"
+        }
+    },
+    "uuid": "3b80bab0-98dc-11e9-b003-7d7133e797fc"
+}
