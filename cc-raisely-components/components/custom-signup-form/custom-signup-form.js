@@ -13,7 +13,7 @@
 
 			if (!this.tried) {
 				this.tried = true;
-				throw Error('This is what it looks like when cannot save. Try again.')
+				throw Error('This is what it looks like when cannot save. Try again.');
 			}
 			// Upsert user / register
 			// Save interaction
@@ -46,14 +46,17 @@
 			}
 			const settings = this.props.getValues();
 			delete settings.fields;
+			// eslint-disable-next-line object-curly-newline
 			const props = { ...this.props, ...settings, steps, controller: this };
+			const { backgroundColour } = settings;
+			const className = `custom-form--signup block--${backgroundColour}`;
 
 			return (
-				<div className="custom-form--signup">
+				<div className={className}>
 					<CustomForm {...{ ...props }} />
 				</div>
 			);
 		}
-	}
+	};
 };
 
