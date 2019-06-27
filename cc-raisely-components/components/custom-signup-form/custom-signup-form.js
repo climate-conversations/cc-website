@@ -1,19 +1,32 @@
 /* eslint-disable class-methods-use-this */
 (RaiselyComponents, React) => {
-	let CustomForm;
+	const CustomForm = RaiselyComponents.import('custom-form');
 
-	class CustomSignupForm extends React.Component {
-		async save() {
+	return class CustomSignupForm extends React.Component {
+		save = async () => {
+			const p = new Promise((resolve) => {
+				setTimeout(resolve, 1000);
+			});
+
+			// Wait for 1s so we can see how the form works
+			await p;
+
+			if (!this.tried) {
+				this.tried = true;
+				throw Error('This is what it looks like when cannot save. Try again.')
+			}
 			// Upsert user / register
 			// Save interaction
 		}
 
 		buildSteps() {
 			console.log(this.props.getValues());
-			const { fields, title, description } = this.props.getValues();
+			// eslint-disable-next-line object-curly-newline
+			const { fields, title, description, actionText } = this.props.getValues();
 			const step1 = {
 				title,
 				description,
+				actionText,
 			};
 
 			step1.fields = fields ? fields.map(field => ({
@@ -42,11 +55,5 @@
 			);
 		}
 	}
-
-	return React.lazy(async () => {
-		// use React.lazy to defer rendering until the component loads lodash
-		CustomForm = await RaiselyComponents.import('custom-form');
-		return { default: CustomSignupForm };
-	});
 };
 
