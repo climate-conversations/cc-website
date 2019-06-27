@@ -76,7 +76,7 @@
 				<div className="user-select">
 					<Downshift
 						onSelect={({ value }) => {
-							this.props.update(value.uuid);
+							this.props.update({ user: value, userUuid: value.uuid });
 						}}
 						inputValue={this.state.searchValue}
 						itemToString={item => (item ? item.value : '')}>
