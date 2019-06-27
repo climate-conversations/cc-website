@@ -21,12 +21,12 @@
 	// eslint-disable-next-line object-curly-newline
 	function DefaultComplete({ completeMessage, completeLabel, history, doRedirect }) {
 		// If there's a redirect, but no labels, just redirect straight away
-		if (!(completeMessage || completeLabel)) {
+		if (!(completeMessage || completeLabel) && doRedirect) {
 			doRedirect();
 		}
 
 		// eslint-disable-next-line no-param-reassign
-		if (!completeMessage) completeMessage = 'Thank you. Your response has been submitted';
+		if (!completeMessage) completeMessage = 'Thank you. Your response has been saved.';
 		// eslint-disable-next-line no-param-reassign
 		if (!completeLabel) completeLabel = 'Continue';
 		return (
@@ -343,6 +343,8 @@
 			const save = this.props.save || get(this.props, 'controller.save');
 			if (save) {
 				try {
+					// Clear any previous error message
+					this.setState({ error: false });
 					await save(this.state.values);
 				} catch (e) {
 					console.error(e);
