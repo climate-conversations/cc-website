@@ -61,7 +61,7 @@
 		setFields = () => {
 			const { fields } = this.getConfig();
 			const resolvedFields = this.resolveFields(fields);
-			this.setState({ fields });
+			this.setState({ fields: resolvedFields });
 		}
 
 		/**
@@ -140,11 +140,20 @@
 		}
 
 		async load() {
-			const { associations } = this.getConfig();
+			const { associations, models } = this.getConfig();
 
 			this.setState({ loading: true }, this.setFields);
 
-			const values = await api.loadFromPage(this.props);
+			try {
+				const values = await quickLoad({
+					models,
+					props: this.props,
+					required: true,
+				});
+			} catch (e) {
+				console.error(e);
+				this.setState({ error: e.message });
+			}
 
 			if (Array.isArray(associations)) {
 				const loaded = associations.map(async ({ uuidFrom, recordType }) => {
@@ -165,6 +174,13 @@
 		render() {
 			if (this.state.loading) {
 				return <Spinner />;
+			}
+			if (this.state.error) {
+				return (
+					<div className="error">
+						{this.state.error}
+					</div>
+				);
 			}
 
 			const settings = this.getConfig();

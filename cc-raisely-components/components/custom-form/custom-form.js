@@ -234,7 +234,8 @@
 
 			const onNavigate = this.props.onNavigate || get(this.props, 'controller.updateStep');
 			if (onNavigate) {
-				onNavigate(step, this.state.values);
+				const result = onNavigate(step, this.state.values, this.formToData, this.dataToForm);
+				if (result) this.setState({ values: result });
 			}
 			console.log('CustomForm.navigate (finished)');
 

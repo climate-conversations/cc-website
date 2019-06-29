@@ -16,10 +16,13 @@
 		conversation.private.cashTransferReference;
 	}
 
+	const eventHelp = 'Help us keep good records of who was involved in every event so we can credit everyone';
+
 	const checklist = [
 		{ id: 'reflection', label: 'Complete a reflection', href: '/conversations/reflection', done: hasReflection },
 		{ id: 'donation-report', label: 'Complete Donations Report', href: '/conversations/donations-report', done: donationsReported },
 		{ id: 'photo', label: 'Upload Photo', href: '/conversations/upload-photo', done: hasPhoto },
+		{ id: 'check-event', label: 'Check Event Details', href: '/conversations/edit', help: eventHelp },
 		{ id: 'surveys', label: 'Enter Guest Surveys', href: '/conversations/guest-survey', done: atLeastOneGuest },
 		{ id: 'email-guests', label: 'Email Guests', href: '/conversations/email-guests' },
 		{ id: 'host-report', label: 'Send Host Report', href: '/conversations/host-report' },

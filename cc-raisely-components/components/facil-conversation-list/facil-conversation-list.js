@@ -78,7 +78,7 @@
 				uuids = await api.users.getAll({
 					query: {
 						'private.teamLeaderUuid': currentUserUuid,
-					}
+					},
 				});
 			}
 

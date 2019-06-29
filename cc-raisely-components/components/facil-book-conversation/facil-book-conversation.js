@@ -5,16 +5,19 @@
 
 	const { api } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
+	const { dayjs, get } = RaiselyComponents.Common;
 
-	const rsvpToItem = ({uuid, type, userUuid, user}) => ({
+	// eslint-disable-next-line object-curly-newline
+	const rsvpToItem = (({ uuid, type, userUuid, user }) => ({
 		uuid,
 		userUuid,
 		type,
 		firstName: user.firstName,
 		lastName: user.lastName,
 		fullName: user.fullName,
+		prefName: user.prefName,
 		email: user.email,
-	});
+	}));
 
 	class ConversationTeam extends React.Component {
 		componentDidMount() {
@@ -23,13 +26,13 @@
 
 		prepareRsvps() {
 			const defaultRsvps = ['host', 'facilitator', 'co-facilitator', 'observer', 'mentor'];
+			// Permit facilitator to add more of these
 			const additionalRsvps = ['co-host', 'co-facilitator', 'observer'];
-
 
 			const initialRsvps = [...this.props.eventRsvps];
 
 			const rsvps = defaultRsvps.map((rsvpType) => {
-				const rsvp = { type: rsvpType }
+				const rsvp = { type: rsvpType };
 				const person = initialRsvps.find(r => r.type === rsvp);
 				if (person) {
 					Object.assign(rsvp, rsvpToItem(person));
@@ -78,13 +81,16 @@
 		renderRsvp = (rsvp, index) => {
 			const { global } = this.props;
 
+			const adminLink = `https://admin.raisely.com/people/${rsvp.userUuid}`;
+
 			if (rsvp.userUuid) {
 				const name = rsvp.fullName || `${rsvp.firstName} ${rsvp.lastName}`;
 
 				return (
 					<div className="conversation-team__selected_user">
 						<span>{name}</span>
-						<Button type="button" onClick={() => updateRsvp({})}>Change</Button>
+						<Button type="button" onClick={() => this.updateRsvp({})}>Change</Button>
+						<Button href={adminLink} target="raisely">Raisely</Button>
 					</div>
 				);
 			}
@@ -101,12 +107,24 @@
 		}
 
 		render() {
-			const { save, back, global } = this.props;
+			// eslint-disable-next-line object-curly-newline
+			const { save, back, global, eventRsvps } = this.props;
 			const nextText = this.props.actionText || 'Next';
 
 			return (
 				<div className="conversation-team">
-					{rsvps.map(this.renderRsvp);
+					<div className="conversation-team__title">
+						<h3>Volunteers Involved</h3>
+						<p>
+							Enter the details of all the people involved. You can come back and add more later.
+						</p>
+						<p>
+							If the host is an organisation, enter the name of the contact person
+							then edit that person in Raisely and make sure {"they're"} associated with
+							the organisation.
+						</p>
+					</div>
+					{eventRsvps.map(this.renderRsvp)}
 					<div className="conversation-team__add-more">
 						<Button>Add More Team Members</Button>
 					</div>
@@ -132,8 +150,14 @@
 	}
 
 	return class FacilBookConversation extends React.Component {
+		oldName = '';
+
 		generateForm() {
-			const fields = ['event.startAt', 'event.processAt', 'event.address1', 'event.address2',
+			const fields = [
+				'event.startAt',
+				{ sourceFieldId: 'name', help: 'Leave blank to name after host' },
+				'event.status',
+				'event.processAt', 'event.address1', 'event.address2',
 				'event.city', 'event.state', 'event.postcode'];
 
 			const multiFormConfig = [
@@ -144,30 +168,94 @@
 			return multiFormConfig;
 		}
 
-		load = async () => {
-			// Load event data
-			// Load eventRsvps in the form
-			// {
-			//	uuid, userUuid, type, user: { firstName, prefName },
-			// }
-			// Filter out guest rsvps
-			// Default city to Singapore (set in admin)
+		/**
+		 * Load eventRsvps in the form
+		 * {
+		 *	  uuid, userUuid, type, user: { firstName, prefName },
+		 *	}
+		 *
+		 */
+		load = async ({ dataToForm }) => {
+			const eventUuid = this.props.eventUuid || this.props.router.match.params.event;
+
+			if (!eventUuid) return {};
+
+			// Load event and rsvps
+			const [{ event }, eventRsvps] = await Promise.all([
+				quickLoad({ props: this.props, models: ['event'], required: true }),
+				this.loadRsvps(eventUuid),
+			]);
+
+			this.oldName = event.name;
+			this.setState({ eventRsvps });
+
+			return dataToForm({ event });
+
+			// FIXME: Default city to Singapore (set in admin)
 		}
 
-		save = async () => {
-
+		async loadRsvps(eventUuid) {
+			const rsvps = await api.eventRsvps.getAll({ query: eventUuid });
+			return rsvps
+				.filter(({ type }) => type !== 'guest');
+			// eslint-disable-next-line object-curly-newline
+			// .map(({ uuid, userUuid, type, user }) => ({
+			// 	uuid,
+			// 	userUuid,
+			// 	type,
+			// 	user: pick(user, userAttributes),
+			// }));
 		}
 
-		updateStep(step, values, formToData) {
+		save = async (values, formToData) => {
+			const data = formToData(values);
+			const record = await upsert('events', { record: data.event });
+
+			// Refresh rsvps in case they've changed while the form was open
+			const oldRsvps = await this.loadRsvps(record.uuid);
+			const newRsvps = values[1].rsvps;
+
+			const toInsert = [];
+			const toDelete = [];
+
+			newRsvps.forEach(rsvp => rsvp.uuid || toInsert.push(rsvp));
+			oldRsvps.forEach((rsvp) => {
+				if (!newRsvps.find(({ uuid }) => rsvp.uuid === uuid)) {
+					toDelete.push(rsvp);
+				}
+			});
+
+			promises = toInsert.map(rsvp => api.eventRsvps.crate({ data: rsvp }));
+			promises.push(...toDelete.map(rsvp => api.eventRsvps.delete({ id: rsvp.uuid })));
+
+			return Promise.all(promises);
+		}
+
+		updateStep(step, values, formToData, dataToForm) {
 			const data = formToData(values);
 
-			// FIXME extract
-			data.event.name = `${data.event.startAt} ${data.event.host}`;
+			if (step === 1) {
+				// Save the form as we go
+				this.save().catch(e => console.error(e));
+			}
 
-			// Upsert event
-			// Calculate difference in RSVPs
-			// Add new rsvps
-			// Delete old rsvps (careful not remove guests)
+			if (data.event.name === this.oldName) {
+				const date = dayjs(data.event.startAt).format('YYYY-MM-DD');
+				const host = get(values, '[1].rsvps', []).find(rsvp => rsvp.type === 'host');
+				const facil = get(values, '[1].rsvps', []).find(rsvp => rsvp.type === 'facilitator');
+				const hostName = host.name;
+				const facilName = facil.name;
+
+				data.event.name = `${date} - ${hostName} / ${facilName}`;
+
+				this.oldName = data.event.name;
+
+				const newValues = Object.assign({}, values, dataToForm(data));
+
+				return newValues;
+			}
+
+			return null;
 		}
 
 		render() {
