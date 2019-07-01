@@ -182,7 +182,7 @@
 
 			// Load event and rsvps
 			const [{ event }, eventRsvps] = await Promise.all([
-				quickLoad({ props: this.props, models: ['event'], required: true }),
+				api.quickLoad({ props: this.props, models: ['event'], required: true }),
 				this.loadRsvps(eventUuid),
 			]);
 
@@ -209,7 +209,7 @@
 
 		save = async (values, formToData) => {
 			const data = formToData(values);
-			const record = await upsert('events', { record: data.event });
+			const record = await upsert('events', { data: data.event });
 
 			// Refresh rsvps in case they've changed while the form was open
 			const oldRsvps = await this.loadRsvps(record.uuid);
@@ -225,7 +225,7 @@
 				}
 			});
 
-			promises = toInsert.map(rsvp => api.eventRsvps.crate({ data: rsvp }));
+			const promises = toInsert.map(rsvp => api.eventRsvps.crate({ data: rsvp }));
 			promises.push(...toDelete.map(rsvp => api.eventRsvps.delete({ id: rsvp.uuid })));
 
 			return Promise.all(promises);

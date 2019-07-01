@@ -9,7 +9,7 @@
 		corporate: 'accessibility_new',
 	};
 
-	class Conversation extends React.Component {
+	class Host extends React.Component {
 		componentDidMount() {
 			this.setTimes();
 		}
@@ -61,7 +61,7 @@
 		}
 
 		setHosts = () => {
-			const hostStatus = ['lead', 'interested', 'booked', 'complete', 'not interested']
+			const hostStatus = ['lead', 'interested', 'booked', 'complete', 'not interested'];
 			const filterStatus = ['lead', 'interested'];
 
 			let { hosts } = this;

@@ -166,6 +166,43 @@
 			return null;
 		}
 
+		saveUuids(values) {
+			this.recordKeys = {};
+			Object.keys(values).forEach((record) => {
+				if (record === 'interaction') {
+					Object.keys(values[record]).forEach((interaction) => {
+						const key = `${record}.${interaction}.uuid`;
+						const value = get(values, key);
+						if (value) set(this.recordKeys, key, value);
+					});
+				} else {
+					const key = `${record}.uuid`;
+					const value = get(values, key);
+					if (value) set(this.recordKeys, key, value);
+				}
+			});
+		}
+
+		retrieveUuids(data) {
+			const values = this.recordKeys;
+
+			Object.keys(values).forEach((record) => {
+				if (record === 'interaction') {
+					Object.keys(values[record]).forEach((interaction) => {
+						const key = `${record}.${interaction}.uuid`;
+						const value = get(values, key);
+						const exists = get(data, key);
+						if (value && !exists) set(data, key, value);
+					});
+				} else {
+					const key = `${record}.uuid`;
+					const value = get(values, key);
+					const exists = get(data, key);
+					if (value && !exists) set(data, key, value);
+				}
+			});
+		}
+
 		/**
 		 * Helper that calls load on the calling component
 		 * if it's defined and handles setting up a loading message
@@ -177,7 +214,9 @@
 				const load = get(this.props, 'controller.load');
 				if (load) {
 					this.setState({ loading: true });
-					await load({ dataToForm: this.dataToForm });
+					const values = await load({ dataToForm: this.dataToForm });
+					this.saveUuids(values);
+					this.setState({ values });
 				}
 			} catch (e) {
 				console.error(e);
@@ -380,7 +419,12 @@
 		 * });
 		 */
 		dataToForm = data => mapFormToData(data, this.state.steps, true);
-		formToData = values => mapFormToData(values, this.state.steps, false)
+		formToData = (values) => {
+			const data = mapFormToData(values, this.state.steps, false);
+			this.retrieveRecordUuids(data);
+
+			return data;
+		};
 
 		/**
 		 * Build the MultiForm steps from the declared steps

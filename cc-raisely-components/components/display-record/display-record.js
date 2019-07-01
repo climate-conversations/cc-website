@@ -144,8 +144,9 @@
 
 			this.setState({ loading: true }, this.setFields);
 
+			let values;
 			try {
-				const values = await quickLoad({
+				values = await api.quickLoad({
 					models,
 					props: this.props,
 					required: true,
@@ -153,6 +154,7 @@
 			} catch (e) {
 				console.error(e);
 				this.setState({ error: e.message });
+				throw e;
 			}
 
 			if (Array.isArray(associations)) {

@@ -19,7 +19,7 @@
 		}
 
 		async load() {
-			const record = await quickLoad({ props: this.props, required: true, models: ['event'] });
+			const record = await api.quickLoad({ props: this.props, required: true, models: ['event'] });
 			this.record = record;
 		}
 

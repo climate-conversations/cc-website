@@ -1,5 +1,5 @@
 (RaiselyComponents, React) => {
-	const { Icon, Button } = RaiselyComponents.Atoms;
+	const { Icon, Button, Spinner } = RaiselyComponents.Atoms;
 	const { get, dayjs } = RaiselyComponents.Common;
 	const { api } = RaiselyComponents;
 
@@ -113,8 +113,14 @@
 
 		render() {
 			const now = dayjs();
-			const { conversations, filter } = this.state;
+			const { conversations, filter, loading } = this.state;
 			const isTeam = this.isTeam();
+
+			if (loading) {
+				return (
+					<Spinner />
+				);
+			}
 
 			return (
 				<div className="conversation-list__wrapper">

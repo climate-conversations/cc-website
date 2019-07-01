@@ -1,5 +1,5 @@
 (RaiselyComponents, React) => {
-	const { Link } = RaiselyComponents;
+	const { Link, api } = RaiselyComponents;
 	const { Icon } = RaiselyComponents.Atoms;
 
 	// These functions determine when to mark an item as done
@@ -48,7 +48,7 @@
 		async load() {
 			let records;
 			try {
-				records = await loadPageRecords({ props: this.props, require: ['event'] });
+				records = await api.quickLoad({ props: this.props, require: ['event'] });
 			} catch (e) {
 				console.error(e);
 				this.setState(e.message);
