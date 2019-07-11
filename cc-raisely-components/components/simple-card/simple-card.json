@@ -65,6 +65,14 @@
                 {
                     "label": "Magenta",
                     "value": "magenta"
+                },
+                {
+                    "label": "Dark",
+                    "value": "dark"
+                },
+                {
+                    "label": "White",
+                    "value": "white"
                 }
             ],
             "singular": null
@@ -72,7 +80,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 2
+            "value": 5
         }
     },
     "uuid": "5f92e6c0-96e9-11e9-847c-11e9e564d3e4"
