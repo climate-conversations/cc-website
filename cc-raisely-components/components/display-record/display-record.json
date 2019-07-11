@@ -1,11 +1,6 @@
 {
     "fields": {
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 1
-		},
-		"fields": {
+        "fields": {
             "id": "fields",
             "type": "repeater",
             "label": "Fields",
@@ -31,8 +26,13 @@
                 }
             ],
             "singular": "Field"
-		},
-		"associations": {
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 18
+        },
+        "associations": {
             "id": "associations",
             "type": "repeater",
             "label": "Associations",

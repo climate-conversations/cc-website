@@ -7,74 +7,7 @@
             "value": "",
             "singular": null
         },
-        "fields": {
-            "id": "fields",
-            "type": "repeater",
-            "label": "Fields",
-            "value": "",
-            "options": [
-                {
-                    "id": "id",
-                    "type": "text",
-                    "label": "Field ID (recordType.fieldId)",
-                    "defaultValue": ""
-                },
-                {
-                    "id": "default",
-                    "type": "text",
-                    "label": "Default Value",
-                    "defaultValue": ""
-                },
-                {
-                    "id": "hidden",
-                    "type": "text",
-                    "label": "Hidden (blank for visible)",
-                    "defaultValue": ""
-                }
-            ],
-            "singular": "Field"
-        },
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 44
-        },
-        "saveLabel": {
-            "id": "actionText",
-            "type": "text",
-            "label": "Save button label",
-            "value": "Save",
-            "singular": null
-        },
-        "description": {
-            "id": "description",
-            "type": "text",
-            "label": "Description",
-            "value": "",
-            "singular": null
-        },
-        "completeText": {
-            "id": "completeText",
-            "type": "text",
-            "label": "Message on Completion",
-            "value": "",
-            "singular": null
-        },
-        "completeLabel": {
-            "id": "completeLabel",
-            "type": "text",
-            "label": "Label for button on complete page",
-            "value": "",
-            "singular": null
-        },
-        "completeRedirect": {
-            "id": "completeRedirect",
-            "type": "text",
-            "label": "Redirect on Complete to",
-            "value": "",
-            "singular": null
-		},
-		"colour": {
+        "colour": {
             "id": "backgroundColour",
             "type": "select",
             "label": "Background Colour",
@@ -113,6 +46,73 @@
                     "value": "magenta"
                 }
             ],
+            "singular": null
+        },
+        "fields": {
+            "id": "fields",
+            "type": "repeater",
+            "label": "Fields",
+            "value": "",
+            "options": [
+                {
+                    "id": "id",
+                    "type": "text",
+                    "label": "Field ID (recordType.fieldId)",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "default",
+                    "type": "text",
+                    "label": "Default Value",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "hidden",
+                    "type": "text",
+                    "label": "Hidden (blank for visible)",
+                    "defaultValue": ""
+                }
+            ],
+            "singular": "Field"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 55
+        },
+        "saveLabel": {
+            "id": "actionText",
+            "type": "text",
+            "label": "Save button label",
+            "value": "Save",
+            "singular": null
+        },
+        "description": {
+            "id": "description",
+            "type": "text",
+            "label": "Description",
+            "value": "",
+            "singular": null
+        },
+        "completeText": {
+            "id": "completeText",
+            "type": "text",
+            "label": "Message on Completion",
+            "value": "",
+            "singular": null
+        },
+        "completeLabel": {
+            "id": "completeLabel",
+            "type": "text",
+            "label": "Label for button on complete page",
+            "value": "",
+            "singular": null
+        },
+        "completeRedirect": {
+            "id": "completeRedirect",
+            "type": "text",
+            "label": "Redirect on Complete to",
+            "value": "",
             "singular": null
         }
     },
