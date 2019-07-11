@@ -52,7 +52,7 @@
                     "value": "red"
                 },
                 {
-                    "label": "Bue",
+                    "label": "Blue",
                     "value": "blue"
                 },
                 {
@@ -65,7 +65,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 1
+            "value": 8
         },
         "position": {
             "id": "position",
