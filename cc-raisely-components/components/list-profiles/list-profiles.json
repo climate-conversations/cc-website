@@ -1,0 +1,43 @@
+{
+    "fields": {
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 1
+		},
+		"fields": {
+			"id": "fields",
+			"type": "text",
+			"label": "Fields",
+			"defaultValue": "name"
+		},
+		"conditions": {
+            "id": "conditions",
+            "type": "repeater",
+            "label": "Conditions",
+            "value": "",
+            "options": [
+                {
+                    "id": "field",
+                    "type": "text",
+                    "label": "Field ID (fieldId)",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "value",
+                    "type": "text",
+                    "label": "Is equal to",
+                    "defaultValue": ""
+                }
+            ],
+            "singular": "Field"
+        }
+    },
+	"sort": {
+		"id": "sort",
+		"type": "text",
+		"label": "Sort by",
+		"defaultValue": "name"
+	},
+	"uuid": "d7be0770-9c51-11e9-b800-c954df621000"
+}
