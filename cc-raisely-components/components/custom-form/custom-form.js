@@ -136,9 +136,9 @@
 		}
 
 		componentDidMount() {
-			const steps = this.resolveFields(this.props.steps);
+			this.resolvedSteps = this.resolveFields(this.props.steps);
 			// eslint-disable-next-line react/no-did-mount-set-state
-			this.setState({ steps: this.buildSteps(steps) });
+			this.setState({ steps: this.buildSteps(this.resolvedSteps) });
 
 			this.loadValues();
 		}
@@ -153,8 +153,8 @@
 			const changed = {};
 
 			if (!isEqual(this.props.steps, this.lastSteps)) {
-				const steps = this.resolveFields(this.props.steps);
-				changed.steps = this.buildSteps(steps);
+				this.resolvedSteps = this.resolveFields(this.props.steps);
+				changed.steps = this.buildSteps(this.resolvedSteps);
 			}
 
 			if (values && !isEqual(values, this.state.values)) {
@@ -183,7 +183,7 @@
 			});
 		}
 
-		retrieveUuids(data) {
+		retrieveRecordUuids(data) {
 			const values = this.recordKeys;
 
 			Object.keys(values).forEach((record) => {
@@ -249,7 +249,7 @@
 			return field;
 		}
 
-		navigate = async (step) => {
+		navigate = (step) => {
 			console.log('CustomForm.navigate');
 			let canShow;
 
@@ -345,6 +345,7 @@
 				}
 				return result;
 			});
+			console.log('Resolved Steps', resolvedSteps);
 
 			return resolvedSteps;
 		}
@@ -369,7 +370,7 @@
 
 			// setState only updates the state keys it's presented, so only batch
 			// changes that are passed through handleState
-			const toUpdate = {};
+			const toUpdate = oldState;
 
 			Object.keys(handleState).forEach((step) => {
 				// apply the updated values to the old one and append
@@ -388,7 +389,7 @@
 				try {
 					// Clear any previous error message
 					this.setState({ error: false });
-					await save(this.state.values);
+					await save(this.state.values, this.formToData);
 				} catch (e) {
 					console.error(e);
 					this.setState({ error: e.message });
@@ -418,9 +419,9 @@
 		 *  randomField,
 		 * });
 		 */
-		dataToForm = data => mapFormToData(data, this.state.steps, true);
+		dataToForm = data => mapFormToData(data, this.resolvedSteps, true);
 		formToData = (values) => {
-			const data = mapFormToData(values, this.state.steps, false);
+			const data = mapFormToData(values, this.resolvedSteps, false);
 			this.retrieveRecordUuids(data);
 
 			return data;
@@ -475,6 +476,19 @@
 				);
 			}
 
+			if (!get(this.props, 'global.campaign')) {
+				console.error(`ERROR: ${this.constructor.name} is missing this.props.global.campaign`);
+				return (
+					<div className="error">
+						<p>props.global.campaign property is missing.</p>
+						<p>
+							Did you remember to pass the props into this component? (eg
+							{'<CustomForm {...this.props} />'}
+						</p>
+					</div>
+				);
+			}
+
 			if (!this.state.steps) {
 				console.error(`ERROR: ${this.constructor.name} must have an array of objects for the steps property`);
 				return <p className="error">You must specify the steps property for this form</p>;
@@ -490,7 +504,7 @@
 						updateValues: this.updateValues,
 						steps: this.state.steps,
 						error: this.state.error,
-						onNavigation: this.navigate,
+						onNavigate: this.navigate,
 					}} />
 				</div>
 			);
@@ -504,30 +518,33 @@
 	 * @param {boolean} toForm
 	 */
 	function mapFormToData(source, steps, toForm) {
-		console.log('CustomForm.mapFormToData');
+		console.log('CustomForm.mapFormToData', source, steps);
 		const values = {};
 		steps.forEach((step, index) => {
-			step.fields.forEach((field) => {
-				const formPath = [index];
-				const dataPath = [];
-				if (field.recordType) {
-					dataPath.push(field.recordType);
-					if (!field.core) {
-						dataPath.push(field.private ? 'private' : 'public');
-						formPath.push(field.private ? 'private' : 'public');
+			// If no fields, then might be a custom step
+			if (step.fields) {
+				step.fields.forEach((field) => {
+					const formPath = [index];
+					const dataPath = [];
+					if (field.recordType) {
+						dataPath.push(field.recordType);
+						if (!field.core) {
+							dataPath.push(field.private ? 'private' : 'public');
+							formPath.push(field.private ? 'private' : 'public');
+						}
 					}
-				}
-				dataPath.push(field.id);
-				formPath.push(field.id);
+					dataPath.push(field.id);
+					formPath.push(field.id);
 
-				if (toForm) {
-					const value = get(source, dataPath);
-					set(values, formPath, value);
-				} else {
-					const value = get(source, formPath);
-					set(values, dataPath, value);
-				}
-			});
+					if (toForm) {
+						const value = get(source, dataPath);
+						set(values, formPath, value);
+					} else {
+						const value = get(source, formPath);
+						set(values, dataPath, value);
+					}
+				});
+			}
 		});
 		console.log('CustomForm.mapFormToData (finished)');
 
