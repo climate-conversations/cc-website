@@ -29,11 +29,15 @@
 				actionText,
 			};
 
-			step1.fields = fields ? fields.map(field => ({
-				default: field.default,
-				sourceFieldId: field.id,
-				hidden: !!field.hidden,
-			})) : [];
+			step1.fields = fields ? fields.map((field) => {
+				const result = {
+					default: field.default,
+					sourceFieldId: field.id,
+					hidden: !!field.hidden,
+				};
+				if (field.hidden) result.type = 'hidden';
+				return result;
+			}) : [];
 
 			return [step1];
 		}
