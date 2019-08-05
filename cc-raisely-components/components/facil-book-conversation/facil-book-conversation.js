@@ -222,7 +222,7 @@
 
 			// Load event and rsvps
 			const [{ event }, rsvps] = await Promise.all([
-				api.quickLoad({ props: this.props, models: ['event'], required: true }),
+				api.quickLoad({ props: this.props, models: ['event.private'], required: true }),
 				this.loadRsvps(eventUuid),
 			]);
 
@@ -235,7 +235,7 @@
 		}
 
 		async loadRsvps(eventUuid) {
-			const result = await api.eventRsvps.getAll({ query: eventUuid });
+			const result = await api.eventRsvps.getAll({ query: { eventUuid, private: 1 } });
 			const rsvps = result.body().data().data;
 			return rsvps
 				.filter(({ type }) => type !== 'guest');
@@ -258,7 +258,16 @@
 			if (!newEvent) {
 				data.event.uuid = this.state.event.uuid;
 			}
-			const result = await doApi(save('events', data.event));
+			// workaround broken save
+			let result;
+			if (!data.event.uuid) {
+				result = await doApi(save('events', data.event));
+			} else {
+				const event = { ...data.event };
+				delete event.uuid;
+				result = await api.events.update({ id: data.event.uuid, data: { data: event } });
+			}
+
 			const record = result.body().data().data;
 
 			this.setState({ event: record });
@@ -268,7 +277,8 @@
 
 			const promises = [];
 			const toInsert = [];
-			const newRsvps = values[1];
+			const newRsvps = [];
+			Object.keys(values[1]).forEach((key) => { newRsvps[key] = values[1][key]; });
 
 			if (newEvent) {
 				// newRsvps is an object. convert to array
