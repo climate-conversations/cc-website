@@ -1,5 +1,5 @@
 (RaiselyComponents, React) => {
-	const { TextField } = RaiselyComponents.inputs;
+	const { Input } = RaiselyComponents.Atoms;
 
 	const { debounce, Downshift } = RaiselyComponents.Common;
 	const { Spinner } = RaiselyComponents;
@@ -40,26 +40,41 @@
 			300
 		)
 
-		render() {
+		renderOptions(items) {
+			if (!items.length) {
+				return (
+					<li className="user-select__list-item no__results">
+						No results
+					</li>
+				);
+			}
+
 			const { getItemProps } = this.props;
+
+			return this.state.items
+				.map((item, index) => (
+					<li
+						className="user-select__list-item list__item"
+						{...getItemProps({
+							key: item.value.uuid,
+							index,
+							item,
+						})}>
+						<span className="list__item--title">{item.value.fullName}</span>
+						<span className="email list__item--subtitle">{item.value.email}</span>
+					</li>
+				));
+		}
+
+		render() {
 			if (!this.state.loading && this.state.items.length === 0) return null;
 
 			return (
-				<ul className="user-select__list" {...this.props.getMenuProps()}>
+				<ul className="user-select__list list__wrapper" {...this.props.getMenuProps()}>
 					<div className="user-select__list-container">
-						{this.state.loading && <Spinner />}
-						{!this.state.loading && this.state.items
-							.map((item, index) => (
-								<li
-									className="user-select__list-item"
-									{...getItemProps({
-										key: item.value.uuid,
-										index,
-										item,
-									})}>
-									<span>{item.value.fullName}</span><span className="email">{item.value.email}</span>
-								</li>
-							))}
+						{this.state.loading ? (
+							<Spinner className="spinner	" />
+						) : this.renderOptions(this.state.items)}
 					</div>
 				</ul>
 			);
@@ -72,6 +87,8 @@
 		}
 
 		render() {
+			const { label } = this.props;
+
 			return (
 				<div className="user-select">
 					<Downshift
@@ -91,20 +108,21 @@
 							selectedItem,
 						}) => (
 							<div>
-								<TextField
+								<Input
 									className="user-select__input"
-									label="Search for a person"
+									label={label || 'Search for a person'}
 									placeholder={this.props.placeholder || 'Enter the persons name or email'}
 									{...getInputProps({
 										change: (id, value) => this.setState({ searchValue: value }),
 									})}
+									type="TextField"
 								/>
 								{this.state.searchValue ? (
 									<UserSelectList
 										getMenuProps={getMenuProps}
 										inputValue={this.state.searchValue}
 										getItemProps={getItemProps}
-										request={value => this.props.api.search.getAll({
+										request={value => this.props.api.search.get({
 											query: queryHelper({
 												q: value,
 												recordTypes: 'user',
