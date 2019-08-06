@@ -1,34 +1,44 @@
 (RaiselyComponents, React) => {
-	const { Icon, Button, Spinner } = RaiselyComponents.Atoms;
+	const { Icon, Button } = RaiselyComponents.Atoms;
 	const { get, dayjs } = RaiselyComponents.Common;
-	const { api } = RaiselyComponents;
+	const { api, Spinner, Link		 } = RaiselyComponents;
 
 	const icons = {
 		public: 'public',
-		private: 'supervised_user',
-		corporate: 'accessibility_new',
+		private: 'home',
+		corporate: 'work',
 	};
 
-	class Conversation extends React.Component {
-		componentDidMount() {
-			this.setTimes();
+	async function doApi(promise) {
+		const response = await promise;
+		const status = response.statusCode();
+		if (status >= 400) {
+			const message = get(response.body(), 'errors[0].message', 'An unknown error has occurred');
+			console.error(response.body());
+			throw new Error(message);
 		}
+		return response.body().data().data;
+	}
 
+	class Conversation extends React.Component {
 		setTimes() {
 			// eslint-disable-next-line object-curly-newline
 			const { cashDonationsNotes, cashTransferAmount, cashReceivedAmount, cashCtaAmount, processAt } = get(this.props, 'conversation.private', {});
 
 			const startAt = get(this.props, 'conversation.startAt');
 
-			this.processOverdue = processAt.add(1, 'day');
+
 			this.startAt = dayjs(startAt);
-			this.displayDate = this.startAt.format('DD/MM/YYYY');
+			this.processOverdue = dayjs(processAt || startAt).add(1, 'day');
+			this.displayDate = this.startAt.format('DD MMM');
 
 			this.reconciled = cashDonationsNotes ||
 				((cashTransferAmount === cashReceivedAmount) && (cashTransferAmount === cashCtaAmount));
 		}
 
 		render() {
+			if (!this.startAt) this.setTimes();
+
 			const { now, conversation, showFacil } = this.props;
 
 			const { conversationType, isProcessed } = get(conversation, 'private', {});
@@ -40,21 +50,30 @@
 
 			const icon = (warning ? 'warning' : icons[conversationType]) || icons.private;
 
+			const tooltip = `${conversationType} conversation ${warning ? '(action overdue)' : ''}`;
+
+			let defaultUrl = `/conversations/${conversation.uuid}`;
+			if (!hasPassed) defaultUrl += '/edit';
+
 			return (
 				<li className="conversation-list-item" key={conversation.uuid}>
-					<Icon name={icon} />
-					<div className="conversation-start">{this.displayDate}</div>
-					<div className="conversation-name">{conversation.name}</div>
-					{showFacil ? <div className="conversation-facil">{conversation.name}</div> : ''}
-					<Button>edit</Button>
-					{hasPassed && !isProcessed ? <Button>process</Button> : ''}
+					<Link className="list__item" href={defaultUrl}>
+						<Icon name={icon} title={tooltip} />
+						<div className="conversation-name list__item--title">
+							{conversation.name}
+							<div className="conversation-start list__item--subtitle">{this.displayDate}</div>
+							{showFacil ? <div className="conversation-facil">Chris Jensen</div> : ''}
+						</div>
+						{/* {hasPassed && !isProcessed ? <Button>process</Button> : ''} */}
+						<Button className="button-small button-secondary" href="">process</Button>
+					</Link>
 				</li>
 			);
 		}
 	}
 
 	return class FacilConversationList extends React.Component {
-		state = { filter: true };
+		state = { filter: true, loading: true };
 
 		componentDidMount() {
 			this.load();
@@ -67,7 +86,7 @@
 					.filter(c => get(c, 'private.isProcessed'));
 			}
 
-			this.setState({ conversations });
+			this.setState({ conversations, loading: false });
 		}
 
 		async getUserUuids() {
@@ -75,11 +94,11 @@
 			let uuids = currentUserUuid;
 
 			if (this.isTeam()) {
-				uuids = await api.users.getAll({
+				uuids = await doApi(api.users.getAll({
 					query: {
 						'private.teamLeaderUuid': currentUserUuid,
 					},
-				});
+				}));
 			}
 
 			return uuids;
@@ -87,12 +106,12 @@
 
 		async load() {
 			const userUuid = this.getUserUuids();
-			const rsvps = await api.eventRsvps.getAll({
+			const rsvps = await doApi(api.eventRsvps.getAll({
 				query: {
 					userUuid,
 					type: 'facilitator,co-facilitator',
 				},
-			});
+			}));
 			this.conversations = rsvps.map((rsvp) => {
 				// eslint-disable-next-line no-param-reassign
 				rsvp.event.facilitator = rsvp.user;
@@ -116,15 +135,11 @@
 			const { conversations, filter, loading } = this.state;
 			const isTeam = this.isTeam();
 
-			if (loading) {
-				return (
-					<Spinner />
-				);
-			}
+			if (loading) return <Spinner />;
 
 			return (
-				<div className="conversation-list__wrapper">
-					<Button onClick={this.toggleFilter}>
+				<div className="conversation-list__wrapper list__wrapper">
+					<Button className="list__toggle" onClick={this.toggleFilter}>
 						{filter ? 'Show All' : 'Hide Complete' }
 					</Button>
 					<ul className="conversation-list">
