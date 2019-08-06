@@ -22,19 +22,19 @@
 	}
 
 	// eslint-disable-next-line object-curly-newline
-	function DefaultComplete({ completeMessage, completeLabel, history, doRedirect }) {
+	function DefaultComplete({ completeText, completeLabel, history, doRedirect }) {
 		// If there's a redirect, but no labels, just redirect straight away
-		if (!(completeMessage || completeLabel) && doRedirect) {
+		if (!(completeText || completeLabel) && doRedirect) {
 			doRedirect();
 		}
 
 		// eslint-disable-next-line no-param-reassign
-		if (!completeMessage) completeMessage = 'Thank you. Your response has been saved.';
+		if (!completeText) completeText = 'Thank you. Your response has been saved.';
 		// eslint-disable-next-line no-param-reassign
 		if (!completeLabel) completeLabel = 'Continue';
 		return (
 			<div className="custom-form__success">
-				<p>{completeMessage}</p>
+				<p>{completeText}</p>
 				{doRedirect ? <Button onClick={doRedirect}>{completeLabel}</Button> : ''}
 			</div>
 		);
