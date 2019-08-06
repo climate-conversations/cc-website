@@ -28,7 +28,7 @@
 			console.error(response.body());
 			throw new Error(message);
 		}
-		return response;
+		return response.body().data().data;
 	}
 
 	class ConversationTeam extends React.Component {
@@ -221,22 +221,20 @@
 			}
 
 			// Load event and rsvps
-			const [{ event }, rsvps] = await Promise.all([
+			const [quickLoads, rsvps] = await Promise.all([
 				api.quickLoad({ props: this.props, models: ['event.private'], required: true }),
 				this.loadRsvps(eventUuid),
 			]);
 
+			const { event } = quickLoads;
 			this.oldName = event.name;
 			this.setState({ rsvps, event });
 
 			return dataToForm({ event });
-
-			// FIXME: Default city to Singapore (set in admin)
 		}
 
 		async loadRsvps(eventUuid) {
-			const result = await api.eventRsvps.getAll({ query: { eventUuid, private: 1 } });
-			const rsvps = result.body().data().data;
+			const rsvps = await doApi(api.eventRsvps.getAll({ query: { eventUuid, private: 1 } }));
 			return rsvps
 				.filter(({ type }) => type !== 'guest');
 			// eslint-disable-next-line object-curly-newline
@@ -259,16 +257,14 @@
 				data.event.uuid = this.state.event.uuid;
 			}
 			// workaround broken save
-			let result;
+			let record;
 			if (!data.event.uuid) {
-				result = await doApi(save('events', data.event));
+				record = await doApi(save('events', data.event));
 			} else {
 				const event = { ...data.event };
 				delete event.uuid;
-				result = await api.events.update({ id: data.event.uuid, data: { data: event } });
+				record = await doApi(api.events.update({ id: data.event.uuid, data: { data: event } }));
 			}
-
-			const record = result.body().data().data;
 
 			this.setState({ event: record });
 
@@ -350,9 +346,9 @@
 				steps={steps}
 				controller={this}
 				rsvps={this.state.rsvps}
+				completeRedirect={redirect}
 				onRsvpChange
 			/>);
-				// completeRedirect={redirect}
 		}
 	};
 };
