@@ -19,14 +19,14 @@
 	const eventHelp = 'Help us keep good records of who was involved in every event so we can credit everyone';
 
 	const checklist = [
-		{ id: 'reflection', label: 'Complete a reflection', href: '/conversations/reflection', done: hasReflection },
-		{ id: 'donation-report', label: 'Complete Donations Report', href: '/conversations/donations-report', done: donationsReported },
-		{ id: 'photo', label: 'Upload Photo', href: '/conversations/upload-photo', done: hasPhoto },
-		{ id: 'check-event', label: 'Check Event Details', href: '/conversations/edit', help: eventHelp },
-		{ id: 'surveys', label: 'Enter Guest Surveys', href: '/conversations/guest-survey', done: atLeastOneGuest },
-		{ id: 'email-guests', label: 'Email Guests', href: '/conversations/email-guests' },
-		{ id: 'host-report', label: 'Send Host Report', href: '/conversations/host-report' },
-		{ id: 'destroy-surveys', label: 'Destroy Surveys', href: '/conversations/destroy-surveys' },
+		{ id: 'reflection', label: 'Complete a reflection', href: '/conversations/:event/reflection', done: hasReflection, isDone: true },
+		{ id: 'donation-report', label: 'Complete Donations Report', href: '/conversations/:event/donations-report', done: donationsReported },
+		{ id: 'photo', label: 'Upload Photo', href: '/conversations/:event/upload-photo', done: hasPhoto },
+		{ id: 'check-event', label: 'Check Event Details', href: '/conversations/:event/edit', help: eventHelp },
+		{ id: 'surveys', label: 'Enter Guest Surveys', href: '/conversations/:event/guest-survey', done: atLeastOneGuest },
+		{ id: 'email-guests', label: 'Email Guests', href: '/conversations/:event/email-guests' },
+		{ id: 'host-report', label: 'Send Host Report', href: '/conversations/:event/host-report' },
+		{ id: 'destroy-surveys', label: 'Destroy Surveys', href: '/conversations/:event/destroy-surveys' },
 	];
 
 	function CheckListItem({ item }) {
@@ -43,12 +43,13 @@
 
 	return class FacilProcessingChecklist extends React.Component {
 		componentDidMount() {
+			this.load().catch(console.error);
 		}
 
 		async load() {
 			let records;
 			try {
-				records = await api.quickLoad({ props: this.props, require: ['event'] });
+				records = await api.quickLoad({ props: this.props, models: ['event.private'], required: true });
 			} catch (e) {
 				console.error(e);
 				this.setState(e.message);
@@ -67,6 +68,8 @@
 				} else {
 					item.isDone = true;
 				}
+				// Complete the url
+				item.href = item.href.replace(':event', conversation.uuid);
 			});
 
 			// Get a list of now completed steps
@@ -88,7 +91,6 @@
 		}
 
 		render() {
-			const values = this.props.getValues();
 			return checklist.map(item => (
 				<CheckListItem item={item} />
 			));
