@@ -4,6 +4,23 @@
             "type": "number",
             "label": "Current Version of Component",
             "value": 2
+		},
+		"show": {
+            "id": "show",
+            "type": "select",
+            "label": "Show host for:",
+			"value": "green",
+			"options": [
+				{
+					"label": "Facilitator",
+					"value": "facilitator"
+				},
+				{
+					"label": "Team",
+					"value": "team"
+				}
+            ],
+            "singular": "Field"
         }
     },
     "uuid": "55cfd850-9932-11e9-b003-7d7133e797fc"
