@@ -83,7 +83,7 @@
 			let { conversations } = this;
 			if (this.state.filter) {
 				conversations = this.conversations
-					.filter(c => get(c, 'private.isProcessed'));
+					.filter(c => !get(c, 'private.isProcessed'));
 			}
 
 			this.setState({ conversations, loading: false });
@@ -94,29 +94,35 @@
 			let uuids = currentUserUuid;
 
 			if (this.isTeam()) {
-				uuids = await doApi(api.users.getAll({
+				const facils = await doApi(api.users.getAll({
 					query: {
 						'private.teamLeaderUuid': currentUserUuid,
 					},
 				}));
+				uuids = facils.map(f => f.uuid).join(',');
 			}
 
 			return uuids;
 		}
 
 		async load() {
-			const userUuid = this.getUserUuids();
-			const rsvps = await doApi(api.eventRsvps.getAll({
-				query: {
-					userUuid,
-					type: 'facilitator,co-facilitator',
-				},
-			}));
-			this.conversations = rsvps.map((rsvp) => {
-				// eslint-disable-next-line no-param-reassign
-				rsvp.event.facilitator = rsvp.user;
-				return rsvp.event;
-			});
+			try {
+				const userUuid = await this.getUserUuids();
+				const rsvps = await doApi(api.eventRsvps.getAll({
+					query: {
+						user: userUuid,
+						// type: 'facilitator,co-facilitator',
+						private: 1,
+					},
+				}));
+				this.conversations = rsvps.map((rsvp) => {
+					// eslint-disable-next-line no-param-reassign
+					rsvp.event.facilitator = rsvp.user;
+					return rsvp.event;
+				});
+			} catch (error) {
+				this.setState({ loading: false, error })
+			}
 
 			this.setConversations();
 		}
@@ -132,25 +138,34 @@
 
 		render() {
 			const now = dayjs();
-			const { conversations, filter, loading } = this.state;
+			const { conversations, filter, loading, error } = this.state;
 			const isTeam = this.isTeam();
 
 			if (loading) return <Spinner />;
 
 			return (
 				<div className="conversation-list__wrapper list__wrapper">
-					<Button className="list__toggle" onClick={this.toggleFilter}>
-						{filter ? 'Show All' : 'Hide Complete' }
-					</Button>
-					<ul className="conversation-list">
-						{conversations.map(conversation => (
-							<Conversation
-								{...this.props}
-								now={now}
-								showFacil={isTeam}
-								conversation={conversation} />
-						))}
-					</ul>
+					{error ? (
+						<div className="error">{error.message}</div>
+					) : ''}
+					{this.conversations.length ? (
+						<Button className="list__toggle" onClick={this.toggleFilter}>
+							{filter ? 'Show All' : 'Hide Complete' }
+						</Button>
+					) : ''}
+					{conversations.length ? (
+						<ul className="conversation-list">
+							{conversations.map(conversation => (
+								<Conversation
+									{...this.props}
+									now={now}
+									showFacil={isTeam}
+									conversation={conversation} />
+							))}
+						</ul>
+					) : (
+						<p>You have no {this.conversations.length ? 'upcoming' : ''} conversations</p>
+					)}
 				</div>
 			);
 		}
