@@ -13,8 +13,9 @@
 
 	function mergeQuery(url, newQuery) {
 		const { path, query } = parsePath(url);
-
-		const fullQuery = qs.stringify(Object.assign(query, newQuery));
+		const oldQuery = qs.parse(query);
+		const mergedQuery = Object.assign(oldQuery, newQuery);
+		const fullQuery = qs.stringify(mergedQuery);
 		const finalUrl = `${path}?${fullQuery}`;
 		return finalUrl;
 	}
@@ -41,7 +42,7 @@
 
 		render() {
 			const values = this.props.getValues();
-			const { backLabel, saveLabel } = values;
+			const { backLabel, saveLabel, saveTheme, backTheme } = values;
 			const defaultUrl = values.defaultUrl || '/dashboards';
 			const query = getQuery(get(this.props, 'router.location.search'));
 
@@ -50,10 +51,10 @@
 
 			return (
 				<div>
-					{ backLabel ? <Button href={backUrl}>{backLabel}</Button> : '' }
-					{ saveLabel ? <Button href={saveUrl}>{saveLabel}</Button> : '' }
+					{ backLabel ? <Button theme={backTheme} href={backUrl}>{backLabel}</Button> : '' }
+					{ saveLabel ? <Button theme={saveTheme} href={saveUrl}>{saveLabel}</Button> : '' }
 				</div>
 			);
 		}
-	}
-}
+	};
+};
