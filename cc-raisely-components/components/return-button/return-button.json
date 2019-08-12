@@ -4,7 +4,76 @@
             "type": "number",
             "label": "Current Version of Component",
             "value": 1
-        }
-    },
-    "uuid": "e21541c0-bc45-11e9-8e97-e172ff036ffa"
+		},
+        "saveLabel": {
+            "id": "saveLabel",
+            "type": "text",
+            "label": "Save button label",
+            "value": "Save",
+            "singular": null
+        },
+        "backLabel": {
+            "id": "backLabel",
+            "type": "text",
+            "label": "Back button label",
+            "value": "Go back",
+            "singular": null
+		},
+		"saveTheme": {
+            "id": "saveTheme",
+            "type": "select",
+            "label": "Save button theme",
+            "value": "cta",
+            "options": [
+                {
+                    "label": "Primary",
+                    "value": "primary"
+				},
+                {
+                    "label": "Secondary",
+                    "value": "secondary"
+				},
+                {
+                    "label": "Call to Action",
+                    "value": "cta"
+				},
+                {
+                    "label": "Inverse",
+                    "value": "inverse"
+				}
+			]
+		},
+		"backTheme": {
+            "id": "backTheme",
+            "type": "select",
+            "label": "Back button theme",
+            "value": "secondary",
+            "options": [
+                {
+                    "label": "Primary",
+                    "value": "primary"
+				},
+                {
+                    "label": "Secondary",
+                    "value": "secondary"
+				},
+                {
+                    "label": "Call to Action",
+                    "value": "cta"
+				},
+                {
+                    "label": "Inverse",
+                    "value": "inverse"
+				}
+			]
+		},
+        "defaultUrl": {
+            "id": "defaultUrl",
+            "type": "text",
+            "label": "Default Path",
+            "value": "/dashboards",
+            "singular": null
+		}
+	},
+	"uuid": "e21541c0-bc45-11e9-8e97-e172ff036ffa"
 }
