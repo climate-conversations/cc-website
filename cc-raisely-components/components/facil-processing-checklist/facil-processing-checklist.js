@@ -1,8 +1,12 @@
 (RaiselyComponents, React) => {
 	const { Link, Spinner, api } = RaiselyComponents;
-	const { getData } = RaiselyComponents.api;
+	const { getData, getQuery } = RaiselyComponents.api;
 	const { Icon } = RaiselyComponents.Atoms;
 	const { dayjs, get, pick, set } = RaiselyComponents.Common;
+
+	const ReturnButton = RaiselyComponents.import('return-button');
+
+	/** NOTE: See the checklist definition below which defines items on the checklist */
 
 	// These functions determine when to mark an item as done
 	async function atLeastOneGuest(conversation, rsvps) {
@@ -38,6 +42,7 @@
 
 	const eventHelp = 'Help us keep good records of who was involved in every event so we can credit everyone';
 
+	/** CHECKLIST DEFINITION */
 	const checklist = [
 		{ id: 'check-event', label: 'Check Conversation Details', href: '/conversations/:event/edit', help: eventHelp },
 		{ id: 'reflection', label: 'Complete a reflection', href: '/conversations/:event/reflection', done: hasReflection },
@@ -51,7 +56,6 @@
 
 	function CheckListItem({ item }) {
 		const { label, isDone, href, help } = item;
-		const icon = isDone ? 'done' : 'check-circle-outline';
 
 		const className = `checklist--item ${isDone ? 'done' : ''}`;
 
@@ -86,24 +90,33 @@
 			get(conversation, 'private.completedSteps', '').split(';').sort();
 
 		setHrefs(uuid) {
+			const ReturnButtonClass = ReturnButton();
+			if (!ReturnButtonClass) return;
+			const { createReturningLink } = ReturnButtonClass.type;
+
 			checklist.forEach((item) => {
-				// Complete the url asap so users can just click through
-				// without waiting for async requests
-				// (as facilitators will come back to this page
-				// frequently when processing a conversation)
+				// Create links that return to this page with a done flag
+				// to manually mark complete steps
 				// eslint-disable-next-line no-param-reassign
-				item.href = item.href.replace(':event', uuid);
+				item.href = createReturningLink({
+					props: this.props,
+					url: item.href.replace(':event', uuid),
+					done: item.id,
+				});
 			});
 			this.setState({ checklist });
 		}
 
 		setKnownCompletedSteps(eventPromise) {
+			// Items can be manually marked done by passing a query of ?done=${item.id}
+			const { done } = getQuery(get(this.props, 'router.location.search'));
+
 			eventPromise
 				.then(({ event: conversation }) => {
 					const completedSteps = this.getCompletedSteps(conversation);
 					checklist.forEach((item) => {
 						// eslint-disable-next-line no-param-reassign
-						if (completedSteps.includes(item.id)) item.isDone = true;
+						if ((done === item.id) || completedSteps.includes(item.id)) item.isDone = true;
 					});
 					this.setState({ checklist, conversation });
 				})
@@ -147,11 +160,11 @@
 
 			if (hasChanged) {
 				set(conversation, 'private.completedSteps', stepsDoneNow);
-				const allDone = checklist.reduce((i, done) => (i.isDone && done), true);
+				const allDone = checklist.reduce((done, i) => (i.isDone && done), true);
 				if (allDone) set(conversation, 'private.isProcessed', true);
 				await getData(api.events.update({
 					id: conversation.uuid,
-					data: pick(conversation, ['private']),
+					data: { data: pick(conversation, ['private']) },
 				}));
 			}
 
@@ -162,6 +175,10 @@
 			try {
 				const uuid = get(this.props, 'match.params.event');
 
+				// Complete the url asap so users can just click through
+				// without waiting for async requests to return
+				// (as facilitators will come back to this page
+				// frequently when processing a conversation)
 				this.setHrefs(uuid);
 
 				const eventPromise = api.quickLoad({ props: this.props, models: ['event.private'], required: true });
