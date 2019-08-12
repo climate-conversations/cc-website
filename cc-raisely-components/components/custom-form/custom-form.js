@@ -316,6 +316,21 @@
 			if (completeRedirect) history.push(completeRedirect);
 		}
 
+		resolveInteractionFields(description) {
+			const category = description.interactionCategory;
+
+			const allInteractionFields = get(this.props, 'global.campaign.config.interactionCategoryFields', {})[category];
+
+			const fieldList = [];
+			allInteractionFields.forEach((field) => {
+				let include = description.include ? description.include.indexOf(field) > -1 : true;
+				if (description.exclude) include = description.exclude.indexOf(field) === -1;
+				if (include) fieldList.push(`interaction.${category}.${field}`);
+			});
+
+			return fieldList;
+		}
+
 		/**
 		 * Resolve all the fields in all the steps
 		 * @param {object[]} steps The steps
@@ -330,7 +345,20 @@
 			const resolvedSteps = steps.map((step) => {
 				const result = Object.assign({}, step);
 				if (step.fields) {
-					result.fields = step.fields.map((field, fieldIndex) => {
+					result.fields = [];
+
+					// Expand an interaction category into its individual fields
+					const expandedFields = [];
+					step.fields.forEach((field) => {
+						if (field.interactionCategory) {
+							expandedFields.push(...this.resolveInteractionFields(field));
+						} else {
+							expandedFields.push(field);
+						}
+					});
+
+					// Fully describe each field
+					result.fields = expandedFields.map((field, fieldIndex) => {
 						try {
 							return this.prepareField(field);
 						} catch (e) {
