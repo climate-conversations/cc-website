@@ -173,7 +173,7 @@
 							{filter ? 'Show All' : 'Hide Complete' }
 						</Button>
 					) : ''}
-					{hosts.length ? (
+					{this.hosts.length ? (
 						<ul className="host-list">
 							{hosts.map(host => (
 								<Host
