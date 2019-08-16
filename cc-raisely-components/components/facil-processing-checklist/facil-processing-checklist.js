@@ -36,23 +36,31 @@
 		return (facils.length && !incomplete.length);
 	}
 	function donationsReported(conversation) {
-		conversation.private.cashReceived === false ||
-		conversation.private.cashTransferReference;
+		return get(conversation, 'private.cashReceived') === false ||
+			get(conversation, 'private.cashTransferReference');
 	}
-
-	const eventHelp = 'Help us keep good records of who was involved in every event so we can credit everyone';
 
 	/** CHECKLIST DEFINITION */
 	const checklist = [
-		{ id: 'check-event', label: 'Check Conversation Details', href: '/conversations/:event/edit', help: eventHelp },
+		{ id: 'check-event', label: 'Check Conversation Details', href: '/conversations/:event/edit' },
 		{ id: 'reflection', label: 'Complete a reflection', href: '/conversations/:event/reflection', done: hasReflection },
 		{ id: 'donation-report', label: 'Complete Donations Report', href: '/conversations/:event/donations-report', done: donationsReported },
 		{ id: 'photo', label: 'Upload Photo', href: '/conversations/:event/upload-photo', done: hasPhoto },
-		{ id: 'surveys', label: 'Enter Guest Surveys', href: '/conversations/:event/guest-survey', done: atLeastOneGuest },
+		{ id: 'surveys', label: 'Enter Guest Surveys', href: '/conversations/:event/surveys', done: atLeastOneGuest },
 		{ id: 'email-guests', label: 'Email Guests', href: '/conversations/:event/email-guests' },
 		{ id: 'host-report', label: 'Send Host Report', href: '/conversations/:event/host-report' },
 		{ id: 'destroy-surveys', label: 'Destroy Surveys', href: '/conversations/:event/destroy-surveys' },
 	];
+	const checklistHelp = {
+		'check-event': 'Help us keep good records of who was involved in every event so we can credit everyone',
+		reflection: 'Help yourself and your team leader reflect how the conversation went',
+		'donation-report': 'Keep accurate records of cash received so we comply with our auditing',
+		photo: 'Upload the photo you took from your conversation',
+		surveys: 'Enter the survey and CTA details for each guest',
+		'email-guests': 'Send an email to the guests to thank them and offer next steps',
+		'host-report': 'Send a report to the host to show them the impact of hosting',
+		'destroy-surveys': 'Comply with PDPA by properly disposing of the paper surveys',
+	};
 
 	function CheckListItem({ item }) {
 		const { label, isDone, href, help } = item;
@@ -89,20 +97,41 @@
 		getCompletedSteps = conversation =>
 			get(conversation, 'private.completedSteps', '').split(';').sort();
 
+		/**
+		 * Display help hint for just the next item to do
+		 */
+		setDoNext() {
+			let found = false;
+			checklist.forEach((item) => {
+				if (found || item.isDone) {
+					console.log(`${item.id} no`)
+					delete checklist.help;
+				} else {
+					console.log(`${item.id} yes, ${checklistHelp[item.id]}`)
+					item.help = checklistHelp[item.id];
+					found = true;
+				}
+			});
+			this.setState({ checklist });
+		}
+
 		setHrefs(uuid) {
 			const ReturnButtonClass = ReturnButton();
 			if (!ReturnButtonClass) return;
 			const { createReturningLink } = ReturnButtonClass.type;
 
 			checklist.forEach((item) => {
+				const query = {
+					props: this.props,
+					url: item.href.replace(':event', uuid),
+				};
+				// Only set done if there isn't a more difinitive way to set it
+				if (!item.done) query.done = item.id;
+
 				// Create links that return to this page with a done flag
 				// to manually mark complete steps
 				// eslint-disable-next-line no-param-reassign
-				item.href = createReturningLink({
-					props: this.props,
-					url: item.href.replace(':event', uuid),
-					done: item.id,
-				});
+				item.href = createReturningLink(query);
 			});
 			this.setState({ checklist });
 		}
@@ -121,6 +150,8 @@
 					this.setState({ checklist, conversation });
 				})
 				.catch(e => this.setState({ error: e.message }));
+
+			this.setDoNext();
 		}
 
 		async checkCompletedSteps(conversation, rsvps) {
@@ -156,7 +187,7 @@
 
 			const stepsDoneNow = nowComplete.join(';');
 
-			const hasChanged = (stepsDoneNow === completedSteps.join(';'));
+			const hasChanged = (stepsDoneNow !== completedSteps.join(';'));
 
 			if (hasChanged) {
 				set(conversation, 'private.completedSteps', stepsDoneNow);
@@ -167,7 +198,7 @@
 					data: { data: pick(conversation, ['private']) },
 				}));
 			}
-
+			this.setDoNext();
 			this.setState({ loading: false });
 		}
 
