@@ -32,6 +32,7 @@
 			const config = this.generateForm();
 			return (
 				<CustomForm
+					{...this.props}
 					steps={config}
 					controller={this}
 				/>
