@@ -235,9 +235,14 @@
 			console.log('CustomForm.findField');
 			const customFields = get(this.props, 'global.campaign.config.customFields');
 			const fieldSources = sourceId.split('.');
-			if (fieldSources.length !== 2) throw new Error(`Badly specified field "${sourceId}". Should be in the form recordType.field`);
-			const [record, fieldId] = fieldSources;
-			const recordType = singular(record);
+			const valid = fieldSources.length === 2 || (fieldSources[0] === 'interaction' && fieldSources.length === 3);
+			if (!valid) throw new Error(`Badly specified field "${sourceId}". Should be in the form recordType.field or interaction.category.field`);
+			let [recordType, category, fieldId] = fieldSources;
+			if (fieldSources.length === 2) {
+				fieldId = category;
+				category = null;
+			}
+			recordType = singular(recordType);
 
 			if (!customFields[recordType]) throw new Error(`Unknown record type "${record}" for custom field "${sourceId}"`);
 			const field = customFields[recordType].find(f => f.id === fieldId);
@@ -245,6 +250,7 @@
 
 			// Save the record type for help in formatting the data
 			field.recordType = recordType;
+			if (category) field.interactionCategory = category;
 
 			return field;
 		}
@@ -260,7 +266,7 @@
 			// Scan through steps until we find one we can show
 			// don't bother checking if we're at the start or end
 			while ((!canShow) && (step > 0) && (step < this.state.steps.length - 1)) {
-				const stepConfig = this.state.steps[step];
+				const stepConfig = this.props.steps[step];
 				canShow = stepConfig.condition ? stepConfig.condition(this.state.values) : true;
 
 				if (!canShow) {
@@ -398,7 +404,7 @@
 
 			// setState only updates the state keys it's presented, so only batch
 			// changes that are passed through handleState
-			const toUpdate = oldState;
+			const toUpdate = oldState || {};
 
 			Object.keys(handleState).forEach((step) => {
 				// apply the updated values to the old one and append
@@ -556,6 +562,7 @@
 					const dataPath = [];
 					if (field.recordType) {
 						dataPath.push(field.recordType);
+						if (field.interactionCategory) dataPath.push(field.interactionCategory);
 						if (!field.core) {
 							dataPath.push(field.private ? 'private' : 'public');
 							formPath.push(field.private ? 'private' : 'public');
@@ -566,10 +573,11 @@
 
 					if (toForm) {
 						const value = get(source, dataPath);
-						set(values, formPath, value);
+						// Only set the value if it's present, don't fill with nulls
+						if (value !== undefined) set(values, formPath, value);
 					} else {
 						const value = get(source, formPath);
-						set(values, dataPath, value);
+						if (value !== undefined) set(values, dataPath, value);
 					}
 				});
 			}
