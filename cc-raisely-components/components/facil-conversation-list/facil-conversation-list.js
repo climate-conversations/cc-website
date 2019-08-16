@@ -1,7 +1,7 @@
 (RaiselyComponents, React) => {
 	const { Icon, Button } = RaiselyComponents.Atoms;
 	const { get, dayjs } = RaiselyComponents.Common;
-	const { api, Spinner, Link		 } = RaiselyComponents;
+	const { api, Spinner, Link } = RaiselyComponents;
 
 	const icons = {
 		public: 'public',
@@ -53,6 +53,8 @@
 			const tooltip = `${conversationType} conversation ${warning ? '(action overdue)' : ''}`;
 
 			let defaultUrl = `/conversations/${conversation.uuid}`;
+			const processUrl = `${defaultUrl}/process`;
+
 			if (!hasPassed) defaultUrl += '/edit';
 
 			return (
@@ -64,8 +66,9 @@
 							<div className="conversation-start list__item--subtitle">{this.displayDate}</div>
 							{showFacil ? <div className="conversation-facil">Chris Jensen</div> : ''}
 						</div>
-						{/* {hasPassed && !isProcessed ? <Button>process</Button> : ''} */}
-						<Button className="button-small button-secondary" href="">process</Button>
+						{hasPassed && !isProcessed ? (
+							<Button className="button-small button-secondary" href={processUrl}>process</Button>
+						) : ''}
 					</Link>
 				</li>
 			);
