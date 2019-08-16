@@ -3,6 +3,7 @@
 	const { Button } = RaiselyComponents.Atoms;
 	const { get, set } = RaiselyComponents.Common;
 	const { api } = RaiselyComponents;
+	const { quickLoad, save } = api;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 
@@ -25,47 +26,114 @@
 	// Show all questions in the post survey
 	const postSurveyQuestions = [{
 		interactionCategory: postSurvey,
-		exclude: ['research', 'fundraise', 'host', 'volunteer', 'corporate'],
+		exclude: ['research', 'fundraise', 'host', 'volunteer', 'corporate', 'facilitate'],
 	}];
-	// Fixme warn the facil that without an email, follow up will be limited, and ask the
-	// host if they can get it
-	const guestAction = ['user.fullName', 'user.email', 'user.phone', 'user.postcode',
+
+	const guestAction = [
+		'user.fullName',
+		{ sourceFieldId: 'user.email', required: false },
+		'user.phoneNumber', 'user.postcode',
 		{
 			interactionCategory: postSurvey,
 			include: ['host', 'facilitate', 'volunteer', 'corporate', 'research', 'fundraise'],
 		},
 	];
-	const guestDonation = ['eventRsvp.donationIntention', 'eventRsvp.donationAmount'];
-	const conversationDate = ['event.startDate'];
+	const guestDonation = ['event_rsvp.donationIntention', 'event_rsvp.donationAmount'];
+	const conversationDate = [{ sourceFieldId: 'event.startAt', required: false }];
 
 	const allSteps = [
 		{ title: 'Pre-Survey', fields: preSurveyQuestions },
 		{ title: 'Post-Survey', fields: postSurveyQuestions },
 		{ title: 'Guest Action', fields: guestAction },
 		{
+			title: 'Warning: Uncontactable',
+			description: `This person has indicated interest in taking action with us
+				but they have no email address. Follow up will be very limited.`,
 			fields: [{
 				id: 'description-no-email',
 				type: 'rich-description',
 				default: `
-					<p>Warning: This person has indicated interest in taking action with us
-					but they have no email address. Follow up will be limited. </p>
-					<p>Do you want to go back and enter an email for them?
-					 (Maybe you can ask the host
-						if they are sure they want to share their email with us?)</p>`
+					<p>Do you want to go back and enter an email for them?</p>
+					<p>(Maybe you can message the host to ask
+						if they want to share their email with us?)</p>`,
 			}],
 			condition: (fields) => {
-				const takeAction = actionFields.reduce((field, result) =>
-					result || fields[3][`interaction.${preSurvey}.${field}`], false);
-				return (takeAction && !fields[3].user.email);
+				const takeAction = actionFields.reduce((result, field) =>
+					result || get(fields, `2.private.${field}`, false), false);
+				return (takeAction && !get(fields, '2.email'));
 			},
 		},
 		{ title: 'Donation', fields: guestDonation },
 		{
 			title: 'Conversation Date',
+			description: "Did you set a tentative date with them to host a conversation? (leave blank if you didn't)",
 			fields: conversationDate,
-			condition: fields => fields[3].private.host,
+			condition: fields => get(fields, '2.private.host'),
 		},
 	];
+
+	async function findUserBy(attribute, record) {
+		throw new Error("This API is not live yet");
+		const query = _.pick(record, [attribute]);
+		query.private=1;
+		return getData(api.users.findAll({ query }));
+	}
+
+	/**
+	 * Set alternate value for email or phone if primary is already
+	 * set to something different
+	 * If the primary or alternate value is not already the same as
+	 * the new primary value, put the old primary value in the alternate field
+	 * @param {object} existing Existing user record
+	 * @param {object} user Record to update with
+	 * @param {string} field Primary field
+	 * @param {string} alternate Alternate field
+	 */
+	function setAlternate(existing, user, field, alternate) {
+		const primaryValue = get(existing, field);
+		const newPrimary = get(user, field);
+		if (primaryValue && newPrimary && primaryValue !== newPrimary) {
+			const secondaryValue = get(existing, alternate);
+			if (secondaryValue && secondaryValue !== newPrimary) {
+				set(user, alternate, primaryValue);
+			}
+		}
+	}
+
+	function prepareUserForSave(existing, user) {
+		if (existing) {
+			setAlternate(existing, user, 'email', 'private.alternateEmail');
+			setAlternate(existing, user, 'phoneNumber', 'private.alternatePhone');
+		}
+		const privateKeys = Object.keys(get(user, 'private', {}));
+		// Delete any action keys that are false so we don't overwrite existing
+		actionFields.forEach((field) => {
+			// eslint-disable-next-line no-param-reassign
+			if (privateKeys.includes(field) && !user.private[field]) delete user.private[field];
+		});
+		// Raisely requires an email address, so create a dummy address if one's not
+		// there so we can store the other data
+		throw new Error('Must create dummy email');
+	}
+
+	async function upsertUser(record) {
+		let existing;
+		if (!record.uuid) {
+			const promises = [];
+			if (record.email) promises.push(findUserBy('email', record));
+			if (record.phoneNumber) promises.push(findUserBy('phoneNumber', record));
+
+			// Concat all results (if any)
+			const existingCheck = await Promise.all(promises);
+			[existing] = existingCheck.reduce((all, result) => all.concat(result), []);
+			if (existing) {
+				// eslint-disable-next-line no-param-reassign
+				record.uuid = existing.uuid;
+			}
+		}
+		prepareUserForSave(existing, record);
+		return save('user', record, { partial: 1 });
+	}
 
 	return class GuestDataEntry extends React.Component {
 		load = async () => {
@@ -89,7 +157,7 @@
 				}
 			});
 
-			const user = await upsert('user', data.user);
+			const user = await upsertUser(data.user);
 
 			// Associate surveys with conversation and user
 			surveys.forEach(survey =>
@@ -174,7 +242,7 @@
 				details = this.state.saving.map((setting) => {
 					if (setting.message) hasError = true;
 					const status = setting.message || 'OK';
-					return <p>Saving {descriptions[setting.id]} ... {status}</p>
+					return <p>Saving {descriptions[setting.id]} ... {status}</p>;
 				});
 			}
 
@@ -200,6 +268,7 @@
 			return (
 				<div className="guest-data-entry-wrapper">
 					<CustomForm
+						{...this.props}
 						steps={allSteps}
 						followNextQuery="1"
 					/>
