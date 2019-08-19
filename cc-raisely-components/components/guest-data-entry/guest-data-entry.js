@@ -3,9 +3,10 @@
 	const { Button } = RaiselyComponents.Atoms;
 	const { get, set } = RaiselyComponents.Common;
 	const { api } = RaiselyComponents;
-	const { quickLoad, save } = api;
+	const { quickLoad } = api;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
+	const UserSaveHelper = RaiselyComponents.import('cc-user-save', { asRaw: true });
 
 	const preSurvey = 'cc-pre-survey-2019';
 	const postSurvey = 'cc-post-survey-2019';
@@ -14,7 +15,7 @@
 	/**
 	 * Action fields that a user can opt in to
 	 */
-	const actionFields = ['host', 'facilitate', 'volunteer', 'corporate', 'research', 'fundraise'];
+	const { actionFields } = UserSaveHelper;
 	/**
 	 * Actions are stored on the interaction, but key ones are also copied to the
 	 * user record
@@ -72,69 +73,6 @@
 		},
 	];
 
-	async function findUserBy(attribute, record) {
-		throw new Error("This API is not live yet");
-		const query = _.pick(record, [attribute]);
-		query.private=1;
-		return getData(api.users.findAll({ query }));
-	}
-
-	/**
-	 * Set alternate value for email or phone if primary is already
-	 * set to something different
-	 * If the primary or alternate value is not already the same as
-	 * the new primary value, put the old primary value in the alternate field
-	 * @param {object} existing Existing user record
-	 * @param {object} user Record to update with
-	 * @param {string} field Primary field
-	 * @param {string} alternate Alternate field
-	 */
-	function setAlternate(existing, user, field, alternate) {
-		const primaryValue = get(existing, field);
-		const newPrimary = get(user, field);
-		if (primaryValue && newPrimary && primaryValue !== newPrimary) {
-			const secondaryValue = get(existing, alternate);
-			if (secondaryValue && secondaryValue !== newPrimary) {
-				set(user, alternate, primaryValue);
-			}
-		}
-	}
-
-	function prepareUserForSave(existing, user) {
-		if (existing) {
-			setAlternate(existing, user, 'email', 'private.alternateEmail');
-			setAlternate(existing, user, 'phoneNumber', 'private.alternatePhone');
-		}
-		const privateKeys = Object.keys(get(user, 'private', {}));
-		// Delete any action keys that are false so we don't overwrite existing
-		actionFields.forEach((field) => {
-			// eslint-disable-next-line no-param-reassign
-			if (privateKeys.includes(field) && !user.private[field]) delete user.private[field];
-		});
-		// Raisely requires an email address, so create a dummy address if one's not
-		// there so we can store the other data
-		throw new Error('Must create dummy email');
-	}
-
-	async function upsertUser(record) {
-		let existing;
-		if (!record.uuid) {
-			const promises = [];
-			if (record.email) promises.push(findUserBy('email', record));
-			if (record.phoneNumber) promises.push(findUserBy('phoneNumber', record));
-
-			// Concat all results (if any)
-			const existingCheck = await Promise.all(promises);
-			[existing] = existingCheck.reduce((all, result) => all.concat(result), []);
-			if (existing) {
-				// eslint-disable-next-line no-param-reassign
-				record.uuid = existing.uuid;
-			}
-		}
-		prepareUserForSave(existing, record);
-		return save('user', record, { partial: 1 });
-	}
-
 	return class GuestDataEntry extends React.Component {
 		load = async () => {
 			const data = await quickLoad({
@@ -157,7 +95,7 @@
 				}
 			});
 
-			const user = await upsertUser(data.user);
+			const user = await UserSaveHelper.upsertUser(data.user);
 
 			// Associate surveys with conversation and user
 			surveys.forEach(survey =>
