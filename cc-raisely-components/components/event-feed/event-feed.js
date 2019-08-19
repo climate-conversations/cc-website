@@ -1,45 +1,79 @@
 (RaiselyComponents, React) => {
-	const { api, Link } = RaiselyComponents;
+	const { api, Link, Spinner } = RaiselyComponents;
+	const { getData } = api;
+	const { dayjs } = RaiselyComponents.Common;
 
 	function EventCard(props) {
-		const event = {
-			name: 'Demo Event',
-			shortDescription: `Come to this event! It's cool. There'll be this person speaking, and that person doing a skill share.`,
-			startAt: 'Monday, 27th September',
-			startTime: '7:30pm',
-			link: '/events/:uuid',
-			photoUrl: 'https://raisely-images.imgix.net/climate-conversations-2019/uploads/conversation-1-jpg-bc7064.jpg',
-		};
+		const { event } = props;
+		const defaultPhoto = 'https://raisely-images.imgix.net/climate-conversations-2019/uploads/conversation-1-jpg-bc7064.jpg';
+
+		const startAt = dayjs(event.startAt);
+		const date = startAt.format('dddd, MMMM D');
+		const time = startAt.format('h:mm a');
+
+		const photo = event.photoUrl || defaultPhoto;
+
+		const link = event.public.signupUrl || `/events/${event.path}`;
 
 		// Just so it doesnn't look completely awful, feel free to delete
-		const style = { maxWidth: '50px' };
+		const style = { maxWidth: '200px' };
 
 		return (
 			<div className="event--card__wrapper">
 				<h3 className="event-card__name">{event.name}</h3>
 				<div className="event-card__date">
-					{event.startAt}
-					<span className="event-card__time">{event.startTime}</span>
+					{date}
+					<span className="event-card__time">{time}</span>
 				</div>
-				<Link href={event.link} />
-				<div className="event--card__description">{event.description}</div>
-				<img style={style} className="event--card__photo" src={event.photoUrl} alt="" />
+				<Link href={link} >Sign up</Link>
+				<div className="event--card__description">{event.public.shortDescription}</div>
+				<img style={style} className="event--card__photo" src={photo} alt="" />
 			</div>
 		);
 	}
 
 	return class EventFeed extends React.Component {
-		componentDidMount() {
+		state = { loading: true };
 
+		componentDidMount() {
+			this.load()
+				.catch((e) => {
+					console.error(e);
+					this.setState({ loading: false, error: e.message });
+				});
+		}
+
+		async load() {
+			const now = new Date().toISOString();
+			const { show } = this.props.getValues();
+
+			const searchKey = show === 'past' ? 'startAtLT' : 'startAtGTE';
+
+			const events = await getData(api.events.getAll({
+				query: {
+					[searchKey]: now,
+				},
+			}));
+
+			this.setState({ loading: false, events });
 		}
 
 		render() {
-			const values = this.props.getValues();
-			const events = [1, 2, 3];
+			const { events, loading, error } = this.state;
+
+			if (loading) {
+				return <Spinner />;
+			}
+
 			return (
-				<ul className="event--feed__wrapper">
-					{events.map(e => <EventCard {...this.props} event={e} />)}
-				</ul>
+				<React.Fragment>
+					{error ? (
+						<div className="error">{error}</div>
+					) : ''}
+					<ul className="event--feed__wrapper">
+						{events.map(e => <EventCard {...this.props} event={e} />)}
+					</ul>
+				</React.Fragment>
 			);
 		}
 	};
