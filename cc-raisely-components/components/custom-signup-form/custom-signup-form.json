@@ -47,6 +47,13 @@
                 }
             ],
             "singular": null
+		},
+		"interactionCategory": {
+            "id": "interactionCategory",
+            "type": "text",
+            "label": "Interaction Category",
+            "value": "form-submission",
+            "singular": null
         },
         "fields": {
             "id": "fields",
@@ -80,7 +87,7 @@
             "label": "Current Version of Component",
             "value": 55
         },
-        "saveLabel": {
+        "actionText": {
             "id": "actionText",
             "type": "text",
             "label": "Save button label",

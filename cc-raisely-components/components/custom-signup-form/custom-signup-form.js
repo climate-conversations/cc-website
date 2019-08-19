@@ -1,22 +1,40 @@
 /* eslint-disable class-methods-use-this */
 (RaiselyComponents, React) => {
+	const { api } = RaiselyComponents;
+	const { getData } = api;
+	const { get } = RaiselyComponents.Common;
+
 	const CustomForm = RaiselyComponents.import('custom-form');
+	const UserSaveHelper = RaiselyComponents.import('cc-user-save', { asRaw: true });
+
+	const userOnlyFields = ['email', 'preferredName', 'fullName', 'phoneNumber'];
 
 	return class CustomSignupForm extends React.Component {
-		save = async () => {
-			const p = new Promise((resolve) => {
-				setTimeout(resolve, 1000);
-			});
+		save = async (values, formToData) => {
+			const data = formToData(values);
 
-			// Wait for 1s so we can see how the form works
-			await p;
+			const details = { ...data.user };
 
-			if (!this.tried) {
-				this.tried = true;
-				throw Error('This is what it looks like when cannot save. Try again.');
+			const user = await UserSaveHelper.upsertUser(data.user);
+
+			const settings = this.props.getValues();
+			if (settings.interactionCategory) {
+				userOnlyFields.forEach(field => delete details[field]);
+
+				details.formName = settings.formName || '<unnamed form>';
+				details.formUrl = window.location.href;
+
+				const interaction = {
+					categoryUuid: settings.interactionCategory,
+					userUuid: user.uuid,
+					recordType: 'user',
+					recordUuid: user.uuid,
+					details: {
+						private: details,
+					},
+				};
+				await getData(api.interactions.create({ data: interaction }));
 			}
-			// Upsert user / register
-			// Save interaction
 		}
 
 		buildSteps() {
@@ -38,6 +56,8 @@
 				if (field.hidden) result.type = 'hidden';
 				return result;
 			}) : [];
+
+			step1.fields.push('user.privacyNotice');
 
 			return [step1];
 		}
