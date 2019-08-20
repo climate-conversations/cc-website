@@ -14,6 +14,8 @@
 				"babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
 				"babel-preset-env": "^1.6.1",
 				"babel-preset-react": "^6.24.1",
+				"chai": "^4.2.0",
+				"chai-subset": "^1.6.0",
 				"eslint": "^4.19.1",
 				"eslint-config-airbnb": "^16.1.0",
 				"eslint-loader": "^2.0.0",
@@ -21,10 +23,18 @@
 				"eslint-plugin-jsx-a11y": "^6.0.3",
 				"eslint-plugin-prettier": "^3.0.1",
 				"eslint-plugin-react": "^7.7.0",
+				"mocha": "^6.2.0",
+				"nock": "^10.0.6",
 				"prettier": "^1.11.1"
 		},
 		"dependencies": {
+				"babel-eslint": "^10.0.2",
+				"datastore-env": "^1.2.3",
+				"deasync": "^0.1.15",
+				"lodash": "^4.17.15",
 				"qs": "^6.8.0",
-				"request-promise-native": "^1.0.7"
+				"request": "^2.88.0",
+				"request-promise-native": "^1.0.7",
+				"short-uuid": "^3.1.1"
 		}
 }
