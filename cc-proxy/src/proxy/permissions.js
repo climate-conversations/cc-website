@@ -16,13 +16,16 @@ const { onlyUsers, isUserAssignment, isAssignedUser } = require('./conditions');
  * Endpoints that do not allow for privilege escalation throw a 403
  */
 const escalations = [{
+// 	method: 'POST',
+// 	path: '/users',
+// 	transform: minimalUser,
+// }, {
+	// method: 'POST',
+	// path: '/users',
+	// tags: ['team-leader', 'facilitator'],
 	method: 'POST',
-	path: '/users',
-	transform: minimalUser,
-}, {
-	method: 'POST',
-	path: '/users',
-	tags: ['team-leader', 'facilitator'],
+	path: '/interactions',
+	// condition: onlyCertainCategories
 }, {
 	method: 'POST',
 	path: '/users/:user/assignments',
