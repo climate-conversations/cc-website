@@ -2,9 +2,6 @@ const deasync = require('deasync');
 const DatastoreEnvironment = require('datastore-env');
 const envVars = require('./requiredEnv.js');
 
-console.log('Environment', process.env);
-
-
 const options = {
 	// namespace, // Namespace for datastore
 	// projectId, // Defaults to the value of process.env.PROJECT_ID
@@ -17,7 +14,7 @@ const env = new DatastoreEnvironment(options);
 
 // Wrap loadEnvironment in a node callback style
 function asyncLoad(cb) {
-    env.loadEnvironment().then(() => cb()).catch(cb);
+	env.loadEnvironment().then(() => cb()).catch(cb);
 }
 
 // This will block until loadEnvironment has finished
