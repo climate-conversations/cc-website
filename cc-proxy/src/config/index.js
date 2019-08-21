@@ -2,6 +2,9 @@ const deasync = require('deasync');
 const DatastoreEnvironment = require('datastore-env');
 const envVars = require('./requiredEnv.js');
 
+console.log('Environment', process.env);
+
+
 const options = {
 	// namespace, // Namespace for datastore
 	// projectId, // Defaults to the value of process.env.PROJECT_ID
