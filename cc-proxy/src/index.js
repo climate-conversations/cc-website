@@ -70,7 +70,7 @@ function wrap(fn) {
 			const user = get(req, 'authentication.user', '<public>');
 			console.log(`${status} ${req.method} ${user} ${req.url}`);
 			console.error(error);
-			console.error(req.body);
+			console.error('Request Body:', req.body);
 
 			const errorData = get(error, 'response.body', {
 				errors: [{
