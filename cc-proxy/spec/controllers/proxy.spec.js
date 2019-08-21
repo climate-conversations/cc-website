@@ -30,7 +30,7 @@ describe('proxy', () => {
 			results.res = new MockResponse();
 			results.req = new MockRequest({
 				method: 'POST',
-				originalUrl: '/proxy/users',
+				url: '/proxy/users',
 				headers: {
 					Origin: 'https://climateconversations.raisely.com',
 				},

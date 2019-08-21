@@ -2,6 +2,7 @@ class Request {
 	constructor(options) {
 		this.headers = {};
 		Object.assign(this, options);
+		this.originalUrl = this.url;
 	}
 
 	get(key) {

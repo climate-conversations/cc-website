@@ -62,8 +62,12 @@ function wrap(fn) {
 			res
 				.status(200)
 				.send(result);
+
+			const user = get(req, 'authentication.user', '<public>');
+			console.log(`${res.statusCode} ${req.method} ${user} ${req.url}`);
 		} catch (error) {
-			console.error(error);
+			const user = get(req, 'authentication.user', '<public>');
+			console.log(`${res.statusCode} ${req.method} ${user} ${req.url}`);
 
 			const status = error.statusCode || 500;
 			const errorData = get(error, 'response.body', {
