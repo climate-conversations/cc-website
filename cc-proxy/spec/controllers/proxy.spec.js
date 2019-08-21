@@ -74,6 +74,50 @@ describe('proxy', () => {
 	// 	itReturnsMinimalUser(results);
 	// });
 
+	describe('proxies failure', () => {
+		const errorBody = {
+			errors: [{
+				message: 'That was not good',
+			}],
+		};
+		before(() => {
+			raiselyRequest = null;
+
+			results.res = new MockResponse();
+			results.req = new MockRequest({
+				method: 'POST',
+				url: '/proxy/interactions',
+				headers: {
+					Origin: 'https://climateconversations.raisely.com',
+				},
+				body: {
+					data: {
+						category: 'bad category',
+					},
+				},
+			});
+			nock('https://api.raisely.com')
+				.post('/v3/interactions')
+				.reply(400, function userRequest(uri, body) {
+					raiselyRequest = {
+						body,
+						headers: this.req.headers,
+					};
+					return errorBody;
+				});
+
+			// Run the controller
+			return proxy(results.req, results.res);
+		});
+
+		it('status 400', () => {
+			expect(results.res.statusCode).to.eq(400);
+		});
+		it('returns raisely body', () => {
+			expect(results.res.body).to.containSubset(errorBody);
+		});
+	});
+
 	describe('disallowed', () => {
 		before(() => {
 			raiselyRequest = null;

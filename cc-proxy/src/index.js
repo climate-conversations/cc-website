@@ -66,7 +66,7 @@ function wrap(fn) {
 			const user = get(req, 'authentication.user', '<public>');
 			console.log(`${res.statusCode} ${req.method} ${user} ${req.url}`);
 		} catch (error) {
-			const status = error.status || 500;
+			const status = error.status || error.statusCode || 500;
 			const user = get(req, 'authentication.user', '<public>');
 			console.log(`${status} ${req.method} ${user} ${req.url}`);
 			console.error(error);
