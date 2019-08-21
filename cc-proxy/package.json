@@ -2,11 +2,18 @@
 		"name": "cc-proxy",
 		"version": "1.0.0",
 		"description": "Proxy endpoints for Volunteer Portal",
-		"main": "index.js",
+		"main": "src/index.js",
+		"repository": {
+				"type": "git",
+				"url": "https://github.com/climate-conversations/cc-proxy.git"
+		},
+		"engines": {
+				"node": ">=10.0.0"
+		},
 		"scripts": {
-			"g:r:e": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
-			"generate:required:env": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
-			"test": "mocha spec/**/*.js"
+				"g:r:e": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
+				"generate:required:env": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
+				"test": "mocha spec/**/*.js"
 		},
 		"author": "Raisely <engineering@raisely.com> (https://github.com/raisely)",
 		"license": "NoHarm",
