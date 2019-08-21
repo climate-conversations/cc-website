@@ -4,7 +4,9 @@
 		"description": "Proxy endpoints for Volunteer Portal",
 		"main": "index.js",
 		"scripts": {
-				"test": "echo \"Error: no test specified\" && exit 1"
+			"g:r:e": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
+			"generate:required:env": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
+			"test": "mocha spec/**/*.js"
 		},
 		"author": "Raisely <engineering@raisely.com> (https://github.com/raisely)",
 		"license": "NoHarm",
