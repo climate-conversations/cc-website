@@ -28,7 +28,7 @@ describe('proxy', () => {
 	describe('POST /users', () => {
 		before(() => {
 			results.res = new MockResponse();
-			results.eq = new MockRequest({
+			results.req = new MockRequest({
 				method: 'POST',
 				originalUrl: '/proxy/users',
 				headers: {
