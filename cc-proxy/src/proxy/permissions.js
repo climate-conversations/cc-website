@@ -58,6 +58,7 @@ function authorize(req, path) {
 
 	if (!escalation) {
 		throw new RestError({
+			path,
 			status: 403,
 			message: 'You are not authorized to make that request',
 			code: 'unauthorized',

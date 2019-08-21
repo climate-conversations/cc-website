@@ -64,11 +64,11 @@ function wrap(fn) {
 				.send(result);
 
 			const user = get(req, 'authentication.user', '<public>');
-			console.log(`${res.statusCode} ${req.method} ${user} ${req.url}`);
+			console.log(`${res.statusCode} ${req.method} ${user} ${req.originalUrl}`);
 		} catch (error) {
 			const status = error.status || error.statusCode || 500;
 			const user = get(req, 'authentication.user', '<public>');
-			console.log(`${status} ${req.method} ${user} ${req.url}`);
+			console.log(`${status} ${req.method} ${user} ${req.originalUrl}`);
 			console.error(error);
 			console.error('Request Body:', req.body);
 
