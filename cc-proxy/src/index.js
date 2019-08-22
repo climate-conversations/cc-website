@@ -46,6 +46,14 @@ function setCORS(req, res) {
 	return false;
 }
 
+function serializeError(error) {
+	const result = Object.assign({
+		message: error.message,
+		stack: error.stack,
+	}, error);
+	return result;
+}
+
 /**
  * Helper to log the request
  * @param {string} name Name of the function
@@ -81,7 +89,7 @@ function wrap(fn, name) {
 		} catch (error) {
 			const status = error.status || error.statusCode || 500;
 			const meta = Object.assign({}, error.meta, {
-				error,
+				error: serializeError(error),
 				body: req.body,
 			});
 			log(name, req, status, meta, 'error');
