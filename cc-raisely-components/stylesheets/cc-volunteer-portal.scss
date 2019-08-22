@@ -100,51 +100,6 @@ $thresholds: 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4, 4.5, 4.5, 4.5,
 
 .button {
     position: relative;
-    transform-origin: left calc(100% + 9px);
-
-    &:after {
-        content: '';
-        position: absolute;
-        top: 100%;
-        left: -2px;
-        width: 10px;
-        height: 9px;
-    }
-
-    &:focus,
-    &:hover {
-        animation: squiggle 0.5s forwards;
-        @keyframes squiggle {
-            0% {
-                transform: rotate(0);
-            }
-
-            40% {
-                transform: rotate(-2deg);
-            }
-
-            60% {
-                transform: rotate(1.5deg);
-            }
-
-            80% {
-                transform: rotate(-1deg);
-            }
-
-            100% {
-                transform: rotate(0deg);
-            }
-        }
-    }
-
-    &-row {
-        margin-bottom: -1em;
-
-        > .button {
-            margin-right: 1em;
-            margin-bottom: calc(1em + 9px);
-        }
-    }
 }
 
 
@@ -1526,4 +1481,232 @@ $selector: row, col, block;
             content: 'hidden';
         }
     }
+}
+
+.list__wrapper {
+  background: white;
+  padding: 5px;
+}
+
+ul.list__wrapper, .list__wrapper ul {
+  font-size: 0.85rem;
+  list-style: none;
+  border: #333 solid 2px;
+  padding-left: 0;
+  border-radius: 1em;
+
+  li {
+    >div {
+      display: inline-block;
+    }
+  }
+
+  .list__toggle {
+    font-size: 0.85rem;
+  }
+}
+
+
+.list__item {
+  display: flex;
+  flex-direction: row;
+  padding: 0.2em;
+  text-decoration: none;
+  border-radius: 1em;
+  align-items: center;
+  
+  &:hover {
+    text-decoration: none;
+    background-color: $secondaryLighter;
+  }
+  
+  .icon {
+    flex: 0 0;
+		font-size: 2rem;
+    margin: 0 0.6rem;
+  }
+  
+  .list__item--title {
+    display: flex;
+    flex: 1 1;
+    flex-direction: column;
+    color: black;    
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+
+  .list__item--subtitle {
+    color: black;    
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    font-weight: normal;
+    font-size: 1.2rem;
+  }
+
+  .button {
+    max-height: 2.2rem;
+  }
+}
+
+.host-list-item {
+  .list__item--title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: black;
+    
+    .list__item--subtitle {
+      font-weight: normal;
+      font-size: 1rem;
+    }
+  }
+}
+
+.field-help {
+  margin-top: 0.5em;
+}
+
+.user-select__list-container {
+  .spinner {
+    height: 5rem; 
+  }
+  .list__item--subtitle,
+  .list__item--title {
+    font-size: 1.2rem;
+  }
+}
+
+.conversation-team__selected_user {
+  flex: 1 1;
+}
+
+.col--12 .custom-form .custom-form__step-form, .col--11 .custom-form .custom-form__step-form, .col--10 .custom-form .custom-form__step-form {
+  width: 45%;
+}
+
+.user__card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 1em 0.6em 0.2em;
+  .button {
+    flex: 0 0;
+  }
+}
+
+.custom-form {
+    &__stages {
+        position: relative;
+        margin-top: 0.6rem;
+    }
+  
+  	&__stages__inner {
+  	  text-align: center;
+
+      &::before {
+        content: 'Step';
+        margin-right: 0.5rem;
+        margin-top: 0.2rem;
+      }
+    } 
+
+    &__stage {
+        border: none;
+        font-weight: bold;
+        font-size: 1.25em;
+        margin-left: 0;
+        margin-right: 0.2em;
+        height: auto;
+        width: auto;
+        border-radius: 1.5rem;
+				border: #333 solid 2px;
+
+        &--active,
+        &--previous {
+            background: $secondaryColor;
+            color: $primaryColor;
+            padding: 0.1rem 0.7rem;
+            margin-right: 0.2rem;
+            border: none;
+        }
+    }
+  
+  &--error {
+    background-color: $accentRed;
+    width: 100%;
+    padding: 0.3rem 0.8rem;
+    color: white;
+    font-weight: bold;
+  }
+}
+
+.cc--error {
+  background-color: $accentRed;
+  width: 100%;
+  padding: 0.3rem 0.8rem;
+  color: white;
+  font-weight: bold;
+}
+
+
+.conversation-team__selected_user.field-wrapper {
+  .static-field__title { font-weight: bold; }
+  .static-field__subtitle {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    color: #555;
+  }
+
+}
+
+.conversation--checklist {
+  &__loading {
+    margin-top: 0.5rem;
+    .spinner {
+      display: inline-block;
+      height: inherit;
+      vertical-align: middle;
+      margin-left: 1rem;
+    }
+  }
+
+  border-radius: 1.5rem;
+  border: #333 solid 2px;
+  list-style: none;
+  padding: 1rem;
+  font-size: 1.3rem;
+  line-height: 2.5rem;
+  
+  .checklist--item {
+    .icon {
+      margin-right: 0.5rem
+    }
+    i {
+      color: #eee;
+    }
+    &:hover,
+    &:focus,
+    &.done {
+      i {
+        color: $secondaryColor;
+      }
+    }
+    
+    &__help {
+      font-size: 1rem;
+      line-height: 1rem;
+      margin-left: 2rem;
+    }
+  }
+}
+
+.inverse--button {
+  border: #333 solid 1px;
+}
+
+.rounded-corners {
+  .col__container {
+     border-radius: $borderRadius;
+  }
 }
