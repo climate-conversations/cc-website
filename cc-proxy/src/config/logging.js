@@ -1,15 +1,15 @@
 const winston = require('winston');
 const { LoggingWinston } = require('@google-cloud/logging-winston');
 
-const transports = [
-	new winston.transports.Console({
-		format: winston.format.simple(),
-	}),
-];
+const transports = [];
 
 if (process.env.NODE_ENV === 'production') {
 	const gcloudLogging = new LoggingWinston();
 	transports.push(gcloudLogging);
+} else {
+	transports.push(new winston.transports.Console({
+		format: winston.format.simple(),
+	}));
 }
 
 // Create a Winston logger that streams to Stackdriver Logging
