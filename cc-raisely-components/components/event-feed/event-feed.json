@@ -4,7 +4,24 @@
             "type": "number",
             "label": "Current Version of Component",
             "value": 1
-        }
+		},
+        "show": {
+            "id": "show",
+            "type": "select",
+            "label": "Show",
+            "value": "green",
+            "options": [
+                {
+                    "label": "Upcoming events",
+                    "value": "upcoming"
+                },
+                {
+                    "label": "Past events",
+                    "value": "past"
+                }
+            ],
+            "singular": null
+		}
     },
     "uuid": "ef6758f0-c013-11e9-ad8f-d95d314399c0"
 }
