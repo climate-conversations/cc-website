@@ -1,6 +1,7 @@
 (RaiselyComponents, React) => {
 	const { Link, Spinner, api } = RaiselyComponents;
 	const { get } = RaiselyComponents.Common;
+	const { getData } = api;
 
 	function ProfileImage({
 		profile, defaultImage,
@@ -20,7 +21,6 @@
 	}
 
 	function ProfileField({ field, profile }) {
-		console.log(profile, field);
 		const value = get(profile, field, '');
 		const fieldClass = field.replace(/\./g, '_');
 		const className = `profile-card__${fieldClass}`;
@@ -42,16 +42,18 @@
 						profile={profile}
 					/>
 					<div className="profile-card__content">
-						{fields.map(field => <ProfileField field={field} profile={profile} />) }
+						{fields
+							.filter(field => !field.endsWith('quote'))
+							.map(field => <ProfileField field={field} profile={profile} />) }
 					</div>
 					{showQuote ? (
 						<div className="profile-card__quote quote__text quote--primary quote__text--size-undefined">
 							{quote}
 						</div>
 					) : ''}
-					<Link className="profile-tile__overlay" to={`/${profile.path}`}>
+					{/* <Link className="profile-tile__overlay" to={`/${profile.path}`}>
 						{`Link to ${profile.name}`}
-					</Link>
+					</Link> */}
 				</div>
 			</div>
 		);
@@ -68,12 +70,14 @@
 			this.setState({ loading: true });
 			try {
 				const conditions = get(this.props.getValues(), 'conditions', []);
-				const query = {};
+				const query = {
+					order: 'ASC',
+				};
 				if (conditions) {
 					conditions.forEach((c) => { query[c.field] = c.value; });
 				}
-				const data = await api.profiles.getAll({ query });
-				this.setState({ profiles: data.body().data().data, loading: false });
+				const profiles = await getData(api.profiles.getAll({ query }));
+				this.setState({ profiles, loading: false });
 			} catch (e) {
 				console.error(e);
 				this.setState({ loading: false, error: e.message });
