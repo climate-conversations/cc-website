@@ -4,8 +4,7 @@ const raisely = require('../raiselyRequest');
 module.exports = function proxy(req) {
 	// TODO Authenticate user
 	// TODO Load user tags
-	const baseUrl = '/proxy';
-	const path = req.originalUrl.substr(baseUrl.length);
+	const path = req.originalUrl;
 
 	const rule = authorize(req, path);
 

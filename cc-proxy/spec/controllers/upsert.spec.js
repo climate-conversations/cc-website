@@ -99,7 +99,7 @@ function setup(results) {
 	results.res = new MockResponse();
 	results.req = new MockRequest({
 		method: 'POST',
-		url: '/upsertUser',
+		url: '/',
 		headers: {
 			Origin: 'https://climateconversations.raisely.com',
 		},
