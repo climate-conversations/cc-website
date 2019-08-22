@@ -12,22 +12,28 @@
 		const time = startAt.format('h:mm a');
 
 		const photo = event.photoUrl || defaultPhoto;
-
 		const link = event.public.signupUrl || `/events/${event.path}`;
 
-		// Just so it doesnn't look completely awful, feel free to delete
-		const style = { maxWidth: '200px' };
-
 		return (
-			<div className="event--card__wrapper">
-				<h3 className="event-card__name">{event.name}</h3>
-				<div className="event-card__date">
-					{date}
-					<span className="event-card__time">{time}</span>
+			<div className="postfeed__item">
+				<div className="post post--detail-event post--direction-horizontal">
+					<div className="post__image">
+						<img src={photo} alt="" />
+					</div>
+					<div className="post__wrapper">
+						<h4 className="post__title"><Link href={link}>{event.name}</Link></h4>
+						<div className="post__meta">
+							<span className="post__meta__author">
+								{date}
+							</span>
+							<span className="post__meta__date">{time}</span>
+							<div className="post__meta__description">
+								{event.public.intro}
+							</div>
+						</div>
+						<Link className="button button--primary post__link" href={link} >Sign up</Link>
+					</div>
 				</div>
-				<Link href={link} >Sign up</Link>
-				<div className="event--card__description">{event.public.shortDescription}</div>
-				<img style={style} className="event--card__photo" src={photo} alt="" />
 			</div>
 		);
 	}
@@ -70,7 +76,7 @@
 					{error ? (
 						<div className="error">{error}</div>
 					) : ''}
-					<ul className="event--feed__wrapper">
+					<ul className="postfeed postfeed--direction-horizontal postfeed--events">
 						{events.map(e => <EventCard {...this.props} event={e} />)}
 					</ul>
 				</React.Fragment>
