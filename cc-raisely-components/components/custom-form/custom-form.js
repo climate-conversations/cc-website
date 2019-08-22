@@ -183,8 +183,8 @@
 			});
 		}
 
-		retrieveRecordUuids(data) {
-			const values = this.recordKeys;
+		retrieveRecordUuids = (data) => {
+			const values = this.recordKeys || {};
 
 			Object.keys(values).forEach((record) => {
 				if (record === 'interaction') {
