@@ -1,72 +1,74 @@
-(RaiselyComponents) => {
-	const { api } = RaiselyComponents;
-	const { get, set } = RaiselyComponents.Common;
-	const { save } = api;
+() => {
+	const proxyUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/proxy';
+	const upsertUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/upsertUser';
+
+	async function doFetch(url, options) {
+		let json;
+		// Message stores the best error message if an exception is
+		// thrown along the way
+		let message = 'Cannot reach server (are you offline?)';
+
+		const opts = Object.assign({
+			mode: 'cors',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		}, options);
+
+		try {
+			console.log('Doing fetch', url, opts);
+			if (opts.body && typeof opts.body !== 'string') {
+				opts.body = JSON.stringify(opts.body);
+			}
+			const response = await fetch(url, opts);
+
+			// If the request didn't succeed, log the error
+			// and try to create a helpful error for the user
+			if (response.status !== 200) {
+				// Default to showing the response text
+				message = `Error: ${response.statusText}`;
+
+				// But try to get a better message if we can
+				json = await response.json();
+				console.error(json);
+				// eslint-disable-next-line prefer-destructuring
+				message = json.errors[0].message;
+
+				throw new Error(message);
+			}
+
+			// If the request succeeded with no JSON, that's weird
+			message = 'Sorry, something unusual went wrong';
+			json = await response.json();
+		} catch (error) {
+			// If fetch has thrown an error the message is pretty cryptic
+			// log the message for developers and give the end user a better message
+			console.error(error);
+			error.oldMessage = error.message;
+			error.message = message;
+			throw error;
+		}
+
+		return json.data;
+	}
 
 	return class UserSaveHelper {
 		static actionFields = ['host', 'facilitate', 'volunteer', 'corporate', 'research', 'fundraise'];
 
-		static async findUserBy(attribute, record) {
-			throw new Error("This API is not live yet");
-			const query = _.pick(record, [attribute]);
-			query.private=1;
-			return getData(api.users.findAll({ query }));
+		static async proxy(path, options) {
+			const url = `${proxyUrl}${path}`;
+			return doFetch(url, options);
 		}
 
 		/**
-		 * Set alternate value for email or phone if primary is already
-		 * set to something different
-		 * If the primary or alternate value is not already the same as
-		 * the new primary value, put the old primary value in the alternate field
-		 * @param {object} existing Existing user record
-		 * @param {object} user Record to update with
-		 * @param {string} field Primary field
-		 * @param {string} alternate Alternate field
+		 * Helper to perform an upsert of a user
+		 * @param {object} record
 		 */
-		static setAlternate(existing, user, field, alternate) {
-			const primaryValue = get(existing, field);
-			const newPrimary = get(user, field);
-			if (primaryValue && newPrimary && primaryValue !== newPrimary) {
-				const secondaryValue = get(existing, alternate);
-				if (secondaryValue && secondaryValue !== newPrimary) {
-					set(user, alternate, primaryValue);
-				}
-			}
-		}
-
-		static prepareUserForSave(existing, user) {
-			if (existing) {
-				this.setAlternate(existing, user, 'email', 'private.alternateEmail');
-				this.setAlternate(existing, user, 'phoneNumber', 'private.alternatePhone');
-			}
-			const privateKeys = Object.keys(get(user, 'private', {}));
-			// Delete any action keys that are false so we don't overwrite existing
-			this.actionFields.forEach((field) => {
-				// eslint-disable-next-line no-param-reassign
-				if (privateKeys.includes(field) && !user.private[field]) delete user.private[field];
-			});
-			// Raisely requires an email address, so create a dummy address if one's not
-			// there so we can store the other data
-			throw new Error('Must create dummy email');
-		}
-
 		static async upsertUser(record) {
-			let existing;
-			if (!record.uuid) {
-				const promises = [];
-				if (record.email) promises.push(this.findUserBy('email', record));
-				if (record.phoneNumber) promises.push(this.findUserBy('phoneNumber', record));
-
-				// Concat all results (if any)
-				const existingCheck = await Promise.all(promises);
-				[existing] = existingCheck.reduce((all, result) => all.concat(result), []);
-				if (existing) {
-					// eslint-disable-next-line no-param-reassign
-					record.uuid = existing.uuid;
-				}
-			}
-			this.prepareUserForSave(existing, record);
-			return save('user', record, { partial: 1 });
+			return doFetch(upsertUrl, {
+				method: 'post',
+				body: { data: record },
+			});
 		}
 	};
 };
