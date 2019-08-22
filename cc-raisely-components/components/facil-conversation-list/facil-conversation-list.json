@@ -1,27 +1,27 @@
 {
-	"fields": {
-		"version": {
-			"type": "number",
-			"label": "Current Version of Component",
-			"value": 13
-		},
-		"show": {
-			"id": "show",
-			"type": "select",
-			"label": "Show conversations for",
-			"value": "user",
-			"options": [
-				{
-					"label": "The current faclitator",
-					"value": "user"
-				},
-				{
-					"label": "A Team",
-					"value": "user"
-				}
-			],
-			"singular": null
-		}
-	},
-	"uuid": "9eaf02d0-98ab-11e9-887f-b3118cd5fc87"
+    "fields": {
+        "show": {
+            "id": "show",
+            "type": "select",
+            "label": "Show conversations for",
+            "value": "user",
+            "options": [
+                {
+                    "label": "The current faclitator",
+                    "value": "user"
+                },
+                {
+                    "label": "A Team",
+                    "value": "user"
+                }
+            ],
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 80
+        }
+    },
+    "uuid": "9eaf02d0-98ab-11e9-887f-b3118cd5fc87"
 }

@@ -47,13 +47,6 @@
                 }
             ],
             "singular": null
-		},
-		"interactionCategory": {
-            "id": "interactionCategory",
-            "type": "text",
-            "label": "Interaction Category",
-            "value": "form-signup",
-            "singular": null
         },
         "fields": {
             "id": "fields",
@@ -85,7 +78,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 55
+            "value": 83
         },
         "actionText": {
             "id": "actionText",
@@ -120,6 +113,13 @@
             "type": "text",
             "label": "Redirect on Complete to",
             "value": "",
+            "singular": null
+        },
+        "interactionCategory": {
+            "id": "interactionCategory",
+            "type": "text",
+            "label": "Interaction Category",
+            "value": "form-signup",
             "singular": null
         }
     },
