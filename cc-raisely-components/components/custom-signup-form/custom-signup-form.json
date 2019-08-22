@@ -52,7 +52,7 @@
             "id": "interactionCategory",
             "type": "text",
             "label": "Interaction Category",
-            "value": "form-submission",
+            "value": "form-signup",
             "singular": null
         },
         "fields": {
