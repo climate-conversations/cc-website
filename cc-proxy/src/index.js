@@ -62,7 +62,7 @@ function serializeError(error) {
  */
 function log(name, req, status, meta = {}, level = 'info') {
 	const user = get(req, 'authentication.user', '<public>');
-	const message = `/${name}/${status} ${req.method} ${user} ${req.originalUrl}`;
+	const message = `${status} ${req.method} ${user} /${name}/${req.originalUrl}`;
 	logger.log(level, message, meta);
 }
 
@@ -88,11 +88,17 @@ function wrap(fn, name) {
 			log(name, req, res.statusCode);
 		} catch (error) {
 			const status = error.status || error.statusCode || 500;
-			const meta = Object.assign({}, error.meta, {
-				error: serializeError(error),
-				body: req.body,
-			});
-			log(name, req, status, meta, 'error');
+			try {
+				const meta = Object.assign({}, error.meta, {
+					error: serializeError(error),
+					body: req.body,
+				});
+				log(name, req, status, meta, 'error');
+			} catch (e) {
+				console.error('There was an error logging the error!');
+				console.error('Original error: ', error);
+				console.error('Additional error: ', e);
+			}
 
 			const errorData = get(error, 'response.body', {
 				errors: [{
