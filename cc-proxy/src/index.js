@@ -3,6 +3,8 @@ const { get } = require('lodash');
 const { upsertUser } = require('./upsert');
 const proxy = require('./proxy');
 
+const logger = require('./config/logging');
+
 require('./config');
 
 /**
@@ -45,6 +47,18 @@ function setCORS(req, res) {
 }
 
 /**
+ * Helper to log the request
+ * @param {string} name Name of the function
+ * @param {Request} req The request
+ * @param {int} status Status code of the response
+ */
+function log(name, req, status, meta = {}, level = 'info') {
+	const user = get(req, 'authentication.user', '<public>');
+	const message = `/${name}/${status} ${req.method} ${user} ${req.originalUrl}`;
+	logger.log(level, message, meta);
+}
+
+/**
  * Wrapper for requests
  * The passed function is expected to follow the convention
  * of request-promise-native
@@ -52,7 +66,7 @@ function setCORS(req, res) {
  * to return, or throws an error
  * @param {async function} fn Function to handle request
  */
-function wrap(fn) {
+function wrap(fn, name) {
 	return async function requestPassThrough(req, res) {
 		try {
 			// If it's an OPTIONS request, send CORS and return
@@ -63,14 +77,14 @@ function wrap(fn) {
 				.status(200)
 				.send(result);
 
-			const user = get(req, 'authentication.user', '<public>');
-			console.log(`${res.statusCode} ${req.method} ${user} ${req.originalUrl}`);
+			log(name, req, res.statusCode);
 		} catch (error) {
 			const status = error.status || error.statusCode || 500;
-			const user = get(req, 'authentication.user', '<public>');
-			console.log(`${status} ${req.method} ${user} ${req.originalUrl}`);
-			console.error(error);
-			console.error('Request Body:', req.body);
+			const meta = Object.assign({}, error.meta, {
+				error,
+				body: req.body,
+			});
+			log(name, req, status, meta, 'error');
 
 			const errorData = get(error, 'response.body', {
 				errors: [{
@@ -98,6 +112,6 @@ const functions = {
 
 const proxiedFunctions = {};
 
-Object.keys(functions).forEach((fn) => { proxiedFunctions[fn] = wrap(functions[fn]); });
+Object.keys(functions).forEach((fn) => { proxiedFunctions[fn] = wrap(functions[fn], fn); });
 
 module.exports = proxiedFunctions;
