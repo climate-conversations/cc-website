@@ -49,13 +49,18 @@
 	}
 
 	return class DisplayRecord extends React.Component {
+		state = { loading: true };
+
 		componentDidMount() {
 			this.load()
 				.catch(e => console.error(e));
 		}
 
 		getConfig() {
-			return Object.assign({}, this.props, this.props.getValues());
+			const config = Object.assign({}, this.props);
+			if (this.props.getValues) Object.assign(config, this.props.getValues());
+
+			return config;
 		}
 
 		setFields = () => {
