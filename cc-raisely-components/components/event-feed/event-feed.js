@@ -12,7 +12,8 @@
 		const time = startAt.format('h:mm a');
 
 		const photo = event.photoUrl || defaultPhoto;
-		const link = event.public.signupUrl || `/events/${event.path}`;
+		const link = event.public.signupUrl || `/events/${event.path || event.uuid}/view`;
+		const edit = `/events/${event.path || event.uuid}/edit`;
 
 		return (
 			<div className="postfeed__item">
@@ -31,6 +32,7 @@
 								{event.public.intro}
 							</div>
 						</div>
+						<Link className="button button--cta post__link show--logged-in" href={edit} >Edit</Link>
 						<Link className="button button--primary post__link" href={link} >Sign up</Link>
 					</div>
 				</div>
