@@ -12,6 +12,8 @@
 	const { Button } = RaiselyComponents.Atoms;
 	const { get, isEqual, set } = RaiselyComponents.Common;
 
+	const ReturnButton = RaiselyComponents.import('return-button');
+
 	const errorStyle = 'style="border: 1px solid red;"';
 
 	function singular(word) {
@@ -55,8 +57,8 @@
 
 		next = async () => {
 			console.log('FormStep.next');
-			const { save } = this.props;
-			if (save) {
+			const { save, shouldSave } = this.props;
+			if (shouldSave()) {
 				this.setState({ saving: true });
 				try {
 					await save();
@@ -73,7 +75,8 @@
 
 		buttons = () => {
 			console.log('FormStep.buttons');
-			const nextText = this.props.actionText || 'Next';
+			const nextText = this.props.shouldSave() ?
+				'Save' : this.props.actionText || 'Next';
 
 			const { back } = this.props;
 
@@ -181,6 +184,7 @@
 					if (value) set(this.recordKeys, key, value);
 				}
 			});
+			console.log('saveUuids', this.recordKeys);
 		}
 
 		retrieveRecordUuids = (data) => {
@@ -208,14 +212,13 @@
 		 * if it's defined and handles setting up a loading message
 		 */
 		async loadValues() {
-			console.log('CustomForm.loadValues');
+			console.log('CustomForm.loadValues', this.state);
 
 			try {
 				const load = get(this.props, 'controller.load');
 				if (load) {
 					this.setState({ loading: true });
 					const values = await load({ dataToForm: this.dataToForm });
-					this.saveUuids(values);
 					this.setState({ values });
 				}
 			} catch (e) {
@@ -224,6 +227,7 @@
 			} finally {
 				this.setState({ loaded: true });
 			}
+			console.log('CustomForm.loadValues (finished)', this.state);
 		}
 
 		/**
@@ -255,18 +259,18 @@
 			return field;
 		}
 
-		navigate = (step) => {
-			console.log('CustomForm.navigate');
-			let canShow;
-
-			// Save the last step so we know if this navigation is going backwards or forwards
+		findNextStep(direction, step) {
 			if (!this.lastStep) this.lastStep = 0;
-			const direction = step >= this.lastStep ? 1 : -1;
+			if (!step && step !== 0) step = this.lastStep + direction;
+			let canShow;
 
 			// Scan through steps until we find one we can show
 			// don't bother checking if we're at the start or end
 			while ((!canShow) && (step > 0) && (step < this.state.steps.length - 1)) {
 				const stepConfig = this.props.steps[step];
+				if (stepConfig.condition) {
+					console.log(`Evaluating step ${step} condition`, this.state.values);
+				}
 				canShow = stepConfig.condition ? stepConfig.condition(this.state.values) : true;
 
 				if (!canShow) {
@@ -276,13 +280,34 @@
 					step = Math.max(0, Math.min(step, this.state.steps.length - 1));
 				}
 			}
+			return step;
+		}
+
+		shouldSave = () => {
+			const step = this.findNextStep(1);
+			console.log(step, this.props.steps.length)
+			const shouldSave = (step >= this.props.steps.length);
+
+			console.log('CustomForm.shouldSave', shouldSave);
+
+			return shouldSave;
+		}
+
+		navigate = (step) => {
+			console.log('CustomForm.navigate', this.state);
+			let canShow;
+
+			// Save the last step so we know if this navigation is going backwards or forwards
+			const direction = step >= this.lastStep ? 1 : -1;
+
+			step = this.findNextStep(direction, step);
 
 			const onNavigate = this.props.onNavigate || get(this.props, 'controller.updateStep');
 			if (onNavigate) {
 				const result = onNavigate(step, this.state.values, this.formToData, this.dataToForm);
 				if (result) this.setState({ values: result });
 			}
-			console.log('CustomForm.navigate (finished)');
+			console.log('CustomForm.navigate (finished)', this.state);
 
 			this.lastStep = step;
 			return step;
@@ -318,8 +343,8 @@
 
 		doRedirect = () => {
 			console.log('doRedirect');
-			const { completeRedirect, history } = this.props;
-			if (completeRedirect) history.push(completeRedirect);
+			const { history } = this.props;
+			if (this.completeRedirect) history.push(this.completeRedirect);
 		}
 
 		resolveInteractionFields(description) {
@@ -404,7 +429,7 @@
 
 			// setState only updates the state keys it's presented, so only batch
 			// changes that are passed through handleState
-			const toUpdate = oldState || {};
+			const toUpdate = oldState.values || {};
 
 			Object.keys(handleState).forEach((step) => {
 				// apply the updated values to the old one and append
@@ -417,7 +442,7 @@
 		}
 
 		save = async () => {
-			console.log('CustomForm.save');
+			console.log('CustomForm.save', this.state);
 			const save = this.props.save || get(this.props, 'controller.save');
 			if (save) {
 				try {
@@ -453,7 +478,10 @@
 		 *  randomField,
 		 * });
 		 */
-		dataToForm = data => mapFormToData(data, this.resolvedSteps, true);
+		dataToForm = (data) => {
+			this.saveUuids(data);
+			return mapFormToData(data, this.resolvedSteps, true);
+		}
 		formToData = (values) => {
 			const data = mapFormToData(values, this.resolvedSteps, false);
 			this.retrieveRecordUuids(data);
@@ -469,12 +497,15 @@
 			if (!(steps && Array.isArray(steps))) return null;
 
 			const builtSteps = steps.map((step, index) => {
-				let stepProps = Object.assign({}, step);
+				let stepProps = Object.assign({}, step, {
+					save: this.save,
+					shouldSave: this.shouldSave,
+				});
 				delete stepProps.component;
 				const Component = step.component || FormStep;
 
 				if (index === steps.length - 1) {
-					stepProps = { save: this.save, actionText: 'Save', ...stepProps };
+					stepProps = { actionText: 'Save', ...stepProps };
 				}
 
 				return props => <Component {...props} {...stepProps} pageIndex={index} />;
@@ -483,13 +514,27 @@
 			const FinishedPanel = this.props.finalPage || get(this.props, 'controller.finalPage');
 
 			let lastPanel;
-			const { completeRedirect } = this.props;
-			const doRedirect = completeRedirect ? this.doRedirect : null;
+			const { completeRedirect, redirectToReturnTo } = this.props;
+
+			const finishedProps = { completeRedirect };
+
+			if (redirectToReturnTo) {
+				const ReturnButtonClass = ReturnButton();
+				if (ReturnButtonClass) {
+					const { getReturnUrl } = ReturnButtonClass.type;
+					finishedProps.completeRedirect = getReturnUrl(this.props, '/dashboards', true);
+					console.log(`set redirect to ${finishedProps.completeRedirect}`)
+				}
+			}
+
+			this.completeRedirect = finishedProps.completeRedirect;
+
+			finishedProps.doRedirect = finishedProps.completeRedirect ? this.doRedirect : null;
 
 			if (FinishedPanel) {
-				lastPanel = props => FinishedPanel({ ...props, doRedirect });
+				lastPanel = props => FinishedPanel({ ...props, ...finishedProps });
 			} else {
-				lastPanel = props => <DefaultComplete {...props} doRedirect={doRedirect} />;
+				lastPanel = props => <DefaultComplete {...props} {...finishedProps} />;
 			}
 			builtSteps.push(lastPanel);
 
