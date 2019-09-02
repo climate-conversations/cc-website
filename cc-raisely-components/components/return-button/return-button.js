@@ -30,6 +30,12 @@
 	}
 
 	return class ReturnButton extends React.Component {
+		static getReturnUrl(props, defaultUrl, isDone) {
+			const query = getQuery(get(props, 'router.location.search'));
+
+			return getReturnUrl(query, defaultUrl, isDone);
+		}
+
 		static createReturningLink({ props, url, done }) {
 			const { pathname, search } = get(props, 'router.location');
 			const thisPage = `${pathname}${search.startsWith('?') ? '' : '?'}${search}`;
