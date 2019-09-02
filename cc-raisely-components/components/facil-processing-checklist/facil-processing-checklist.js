@@ -37,7 +37,9 @@
 	}
 	function donationsReported(conversation) {
 		return get(conversation, 'private.cashReceived') === false ||
-			get(conversation, 'private.cashTransferReference');
+			(get(conversation, 'private.cashTransferReference') &&
+			get(conversation, 'private.cashTransferScreenshot') &&
+			get(conversation, 'private.cashReportScan'));
 	}
 
 	/** CHECKLIST DEFINITION */
@@ -45,7 +47,7 @@
 		{ id: 'check-event', label: 'Check Conversation Details', href: '/conversations/:event/edit' },
 		{ id: 'reflection', label: 'Complete a reflection', href: '/conversations/:event/reflection', done: hasReflection },
 		{ id: 'donation-report', label: 'Complete Donations Report', href: '/conversations/:event/donations-report', done: donationsReported },
-		{ id: 'photo', label: 'Upload Photo', href: '/conversations/:event/upload-photo', done: hasPhoto },
+		{ id: 'photo', label: 'Upload Photo', href: '/conversations/:event/photo/upload', done: hasPhoto },
 		{ id: 'surveys', label: 'Enter Guest Surveys', href: '/conversations/:event/surveys', done: atLeastOneGuest },
 		{ id: 'email-guests', label: 'Email Guests', href: '/conversations/:event/email-guests' },
 		{ id: 'host-report', label: 'Send Host Report', href: '/conversations/:event/host-report' },
@@ -104,10 +106,8 @@
 			let found = false;
 			checklist.forEach((item) => {
 				if (found || item.isDone) {
-					console.log(`${item.id} no`)
 					delete checklist.help;
 				} else {
-					console.log(`${item.id} yes, ${checklistHelp[item.id]}`)
 					item.help = checklistHelp[item.id];
 					found = true;
 				}
