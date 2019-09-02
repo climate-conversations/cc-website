@@ -259,7 +259,7 @@
 			// workaround broken save
 			let record;
 			if (!data.event.uuid) {
-				record = await doApi(save('events', data.event));
+				record = await doApi(save('events', data.event, { partial: true }));
 			} else {
 				const event = { ...data.event };
 				delete event.uuid;
@@ -318,20 +318,17 @@
 				this.save(values, formToData).catch(e => console.error(e));
 			}
 
-			if (data.event.name === this.oldName) {
-				const date = dayjs(data.event.startAt).format('YYYY-MM-DD');
+			if (!data.event.name) {
 				const host = get(values, '[1].rsvps', []).find(rsvp => rsvp.type === 'host');
-				const facil = get(values, '[1].rsvps', []).find(rsvp => rsvp.type === 'facilitator');
-				const hostName = get(host, 'name', '');
-				const facilName = get(facil, 'name', '');
 
-				data.event.name = `${date} - ${hostName} / ${facilName}`;
+				if (host) {
+					const hostName = get(host, 'preferredName', '');
+					data.event.name = `${hostName}'s Conversation`;
 
-				this.oldName = data.event.name;
+					const newValues = Object.assign({}, values, dataToForm(data));
 
-				const newValues = Object.assign({}, values, dataToForm(data));
-
-				return newValues;
+					return newValues;
+				}
 			}
 
 			return null;
@@ -339,15 +336,13 @@
 
 		render() {
 			const steps = this.generateForm();
-			const redirect = getQuery(get(this.props, 'router.location.search')).returnTo ||
-				'/dashboards';
 			return (<CustomForm
 				{...this.props}
 				steps={steps}
 				controller={this}
 				rsvps={this.state.rsvps}
-				completeRedirect={redirect}
 				onRsvpChange
+				redirectToReturnTo="true"
 			/>);
 		}
 	};
