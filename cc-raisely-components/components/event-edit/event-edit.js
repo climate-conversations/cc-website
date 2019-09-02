@@ -57,7 +57,7 @@
 				event.userUuid = get(this, 'props.global.user.uuid');
 				event.campaignUuid = this.props.global.campaign.uuid;
 			}
-			await getData(save('event', event));
+			await getData(save('event', event, { partial: true }));
 		}
 
 		render() {
