@@ -76,7 +76,7 @@
 	return class GuestDataEntry extends React.Component {
 		load = async () => {
 			const data = await quickLoad({
-				models: ['event'],
+				models: ['event.private'],
 				props: this.props,
 				required: true,
 			});
