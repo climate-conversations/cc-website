@@ -52,7 +52,7 @@
 
 			const tooltip = `${conversationType} conversation ${warning ? '(action overdue)' : ''}`;
 
-			let defaultUrl = `/conversations/${conversation.uuid}`;
+			let defaultUrl = `/conversations/${conversation.uuid}/view`;
 			const processUrl = `${defaultUrl}/process`;
 
 			if (!hasPassed) defaultUrl += '/edit';
