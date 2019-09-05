@@ -120,12 +120,12 @@
 						</div>
 					</div>
 					<Form
+						buttons={this.buttons}
 						{...props}
 						unlocked
 						fields={this.props.fields}
 						values={values}
 						onChange={this.onChange}
-						buttons={this.buttons}
 					/>
 				</div>
 			);
