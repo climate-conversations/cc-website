@@ -108,6 +108,8 @@
 			const { pageIndex, title, description } = this.props;
 			const values = this.props.values[pageIndex];
 			const className = `custom-form__step custom-form__step--${pageIndex + 1}`;
+			const inner = { __html: description };
+			const Description = _.isFunction(description) && description
 
 			return (
 				<div className={className}>
@@ -115,9 +117,11 @@
 						{title ? (
 							<h3>{title}</h3>
 						) : ''}
-						<div className="form-description">
-							<p>{description}</p>
-						</div>
+						{ Description ? (
+							<div className="form-description"><Description {...props} /></div>
+						) : (
+							<div className="form-description" dangerouslySetInnerHTML={inner} />
+						)}
 					</div>
 					<Form
 						buttons={this.buttons}
