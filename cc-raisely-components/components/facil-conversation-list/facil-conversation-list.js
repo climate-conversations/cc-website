@@ -52,10 +52,11 @@
 
 			const tooltip = `${conversationType} conversation ${warning ? '(action overdue)' : ''}`;
 
-			let defaultUrl = `/conversations/${conversation.uuid}/view`;
+			const baseUrl = `/conversations/${conversation.uuid}`;
+			let defaultUrl = `${baseUrl}/view`;
 			const processUrl = `${defaultUrl}/process`;
 
-			if (!hasPassed) defaultUrl += '/edit';
+			if (!hasPassed) defaultUrl = `${baseUrl}/edit`;
 
 			return (
 				<li className="conversation-list-item" key={conversation.uuid}>
