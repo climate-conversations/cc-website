@@ -3,6 +3,8 @@
 	const { get, dayjs } = RaiselyComponents.Common;
 	const { api, Spinner, Link } = RaiselyComponents;
 
+	const RaiselyButton = RaiselyComponents.import('raisely-button');
+
 	const icons = {
 		public: 'public',
 		private: 'supervised_user',
@@ -27,9 +29,8 @@
 		render() {
 			const { host, showFacil } = this.props;
 			const url = `/hosts/${host.userUuid}`;
-			let conversationName;
-			if (host.conversation) conversationName = (host.conversation === true) ?
-				'...' : host.conversation.name
+			const conversationName = (host.conversation === true) ?
+				'...' : host.conversation.name;
 
 			return (
 				<li className="" key={host.uuid}>
@@ -43,6 +44,7 @@
 						</div>
 						<div className="host-status">{host.private.status}</div>
 						<Button>contact</Button>
+						<RaiselyButton recordType="user" uuid={host.userUuid} />
 					</Link>
 				</li>
 			);
