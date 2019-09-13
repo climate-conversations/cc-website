@@ -2,7 +2,10 @@
 (RaiselyComponents, React) => {
 	const { get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
+	const { Button } = RaiselyComponents.Atoms;
 	const { getQuery, getData, quickLoad } = api;
+
+	const ReturnButton = RaiselyComponents.import('return-button');
 
 	const HIGH_LEVEL = 8;
 
@@ -74,37 +77,12 @@
 	}
 
 	return class HostReport extends React.Component {
-		state = { loading: true }
-
-		async load() {
-			try {
-				const eventUuid = this.props.conversation ||
-					get(this.props, 'match.params.event') ||
-					getQuery(get(this.props, 'router.location.search')).event;
-
-				const promises = ['cc-pre-survey-2019', 'cc-post-survey-2019'].map(category =>
-					getData(api.interactions.getAll({
-						query: category,
-						recordUuid: eventUuid,
-					})));
-				promises.push(getData(api.eventRsvps.getAll({ query: { eventUuid } })));
-				promises.push(quickLoad({ models: ['event'], required: true, props: this.props })
-					.then(records => this.setState({ event: records.event })));
-
-				const [preSurveys, postSurveys, rsvps] = await Promise.all(promises);
-
-				const actions = this.calculateActions(postSurveys, rsvps);
-				const attitudes = this.calculateAttitudes(preSurveys, postSurveys);
-
-				this.setState({ actions, attitudes, loading: false });
-			} catch (e) {
-				console.error(e);
-				this.setState({ error: e.message });
-			}
-		}
-
-		// eslint-disable-next-line class-methods-use-this
-		calculateActions(postSurveys, rsvps) {
+		/**
+		 * Summarise actions taken at a conversation
+		 * @param {} postSurveys
+		 * @param {*} rsvps
+		 */
+		static calculateActions(postSurveys, rsvps) {
 			const actions = ['host', 'facilitate', 'volunteer'].map(field =>
 				({
 					label: `${field}s`,
@@ -126,7 +104,7 @@
 		 * @param {object[]} postSurveys
 		 */
 		// eslint-disable-next-line class-methods-use-this
-		calculateAttitudes(preSurveys, postSurveys) {
+		static calculateAttitudes(preSurveys, postSurveys) {
 			// Match pre with post
 			const matchedSurveys = postSurveys.map(survey => ({
 				pre: preSurveys.find(s => s.userUuid === survey.uuid),
@@ -143,6 +121,38 @@
 			return attitudes;
 		}
 
+		state = { loading: true }
+		componentDidMount() {
+			this.load();
+		}
+
+		async load() {
+			try {
+				const eventUuid = this.props.conversation ||
+					get(this.props, 'match.params.event') ||
+					getQuery(get(this.props, 'router.location.search')).event;
+
+				const promises = ['cc-pre-survey-2019', 'cc-post-survey-2019'].map(category =>
+					getData(api.interactions.getAll({
+						query: category,
+						recordUuid: eventUuid,
+					})));
+				promises.push(getData(api.eventRsvps.getAll({ query: { eventUuid } })));
+				promises.push(quickLoad({ models: ['event'], required: true, props: this.props })
+					.then(records => this.setState({ event: records.event })));
+
+				const [preSurveys, postSurveys, rsvps] = await Promise.all(promises);
+
+				const actions = this.constructor.calculateActions(postSurveys, rsvps);
+				const attitudes = this.constructor.calculateAttitudes(preSurveys, postSurveys);
+
+				this.setState({ actions, attitudes, loading: false });
+			} catch (e) {
+				console.error(e);
+				this.setState({ error: e.message });
+			}
+		}
+
 		render() {
 			let actions;
 			let attitudes;
@@ -150,6 +160,7 @@
 			const { error, loading, event } = this.state;
 
 			if (!loading) {
+				// Only show actions/attitudes that have at least 1 person
 				actions = this.state.actions
 					.filter(a => a.value);
 				attitudes = this.state.actions
@@ -177,7 +188,7 @@
 							</div>
 						)) : <Spinner /> }
 					</div>
-					<div className="host--report__action">
+					<div className="host--report__attitudes">
 						<div className="">As a result of your conversation ...</div>
 						{attitudes ? attitudes.map(attitude => (
 							<div className="host--report__attitude-item">
@@ -185,8 +196,15 @@
 								<div className="host--report__attitude-item-label">
 									{attitude.value === 1 ? 'person' : 'people' } {attitude.label}
 								</div>
+								<div className="host--report__attitude-item-sublabel">
+									{attitude.sublabel}
+								</div>
 							</div>
 						)) : <Spinner /> }
+					</div>
+					<div className="host--report__buttons">
+						<ReturnButton backTheme="secondary" backLabel="Go back" />
+						<Button theme="primary">Send Report to Host</Button>
 					</div>
 				</div>
 			);
