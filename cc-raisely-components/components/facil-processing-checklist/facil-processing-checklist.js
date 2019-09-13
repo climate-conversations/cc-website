@@ -2,6 +2,7 @@
 	const { Link, Spinner, api } = RaiselyComponents;
 	const { getData, getQuery } = RaiselyComponents.api;
 	const { Icon } = RaiselyComponents.Atoms;
+	// eslint-disable-next-line object-curly-newline
 	const { dayjs, get, pick, set } = RaiselyComponents.Common;
 
 	const ReturnButton = RaiselyComponents.import('return-button');
@@ -65,6 +66,7 @@
 	};
 
 	function CheckListItem({ item }) {
+		// eslint-disable-next-line object-curly-newline
 		const { label, isDone, href, help } = item;
 
 		const className = `checklist--item ${isDone ? 'done' : ''}`;
@@ -108,6 +110,7 @@
 				if (found || item.isDone) {
 					delete checklist.help;
 				} else {
+					// eslint-disable-next-line no-param-reassign
 					item.help = checklistHelp[item.id];
 					found = true;
 				}
@@ -235,13 +238,16 @@
 		}
 
 		mockChecklist() {
-			for (let i = 0; i < checklist.length / 2; i++) {
+			for (let i = 0; i < checklist.length / 2; i += 1) {
 				checklist[i].isDone = true;
 			}
-			this.setState({ checklist, conversation: {
-				name: 'Example Conversation',
-				startAt: '2019-07-02',
-			} });
+			this.setState({
+				checklist,
+				conversation: {
+					name: 'Example Conversation',
+					startAt: '2019-07-02',
+				},
+			});
 		}
 
 		render() {
@@ -256,7 +262,7 @@
 			return (
 				<div className="conversation--checklist__wrapper">
 					<h3>{name}</h3>
-					<div class="conversation--checklist_subtitle">{displayDate}</div>
+					<div className="conversation--checklist_subtitle">{displayDate}</div>
 					{error ? (
 						<div className="cc--error">{error}</div>
 					) : ''}
@@ -277,6 +283,7 @@
 							<Spinner className="spinner" />
 						</div>
 					) : ''}
+					<ReturnButton backTheme="primary" backLabel="Return to Dashboard" />
 				</div>
 			);
 		}
