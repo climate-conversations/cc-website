@@ -10,14 +10,17 @@
 		label: 'Subject',
 		id: 'description',
 		type: 'text',
+		recordType: 'message',
 	}, {
 		label: 'Message',
 		id: 'description',
 		type: 'textarea',
+		recordType: 'message',
 	}, {
 		label: 'Send by',
 		id: 'sendBy',
 		type: 'select',
+		recordType: 'message',
 		options: [
 			{ label: 'WhatsApp', value: 'whatsapp' },
 			{ label: 'Email', value: 'email' },
@@ -42,7 +45,10 @@
 		componentDidMount() {
 			this.initRecipients();
 			this.initContactFields();
-			$('.contact--form__recipients').click((e) => {
+
+			const [parentElement] = document.getElementsByClassName('contact--form__recipients');
+
+			parentElement.click((e) => {
 				this.send(e.target.id);
 			});
 		}
@@ -88,11 +94,12 @@
 		initContactFields() {
 			// Don't mess up the initial fields
 			const contactFields = initialContactFields.map(f => ({ ...f }));
-			const { sendBy, body } = Object.assign({ sendBy: 'whatsapp' }, this.props);
+			const { sendBy, body, subject } = Object.assign({ sendBy: 'whatsapp' }, this.props);
 
 			const contactSettings = {
 				sendBy,
 				body,
+				subject,
 			};
 
 			this.setState({ contactFields, contactSettings }, this.setActiveRecipients);
@@ -178,6 +185,9 @@
 			this.setState({ state: 'email', allSent, recentlySent, bcc });
 		}
 		send = (user) => {
+			if (!user) {
+				console.log('Send called with no user, ignoring');
+			}
 			const { contactSettings } = this.state;
 			const { subject, body } = contactSettings;
 			const url = WhatsAppButton.generateUrl(user.phoneNumber, body);
