@@ -192,7 +192,10 @@
 			if (hasChanged) {
 				set(conversation, 'private.completedSteps', stepsDoneNow);
 				const allDone = checklist.reduce((done, i) => (i.isDone && done), true);
-				if (allDone) set(conversation, 'private.isProcessed', true);
+				if (allDone) {
+					set(conversation, 'private.isProcessed', true);
+					set(conversation, 'private.processedAt', new Date().toISOString());
+				}
 				await getData(api.events.update({
 					id: conversation.uuid,
 					data: { data: pick(conversation, ['private']) },
@@ -246,6 +249,8 @@
 			const startAt = get(conversation, 'startAt');
 			const name = get(conversation, 'name', '...');
 
+			const isProcessed = get(conversation, 'private.isProcessed');
+			const awaitingReview = isProcessed && !get(conversation, 'private.reviewedAt');
 			const displayDate = startAt ? dayjs(startAt).format('DD MMM YYYY') : '';
 
 			return (
@@ -260,6 +265,12 @@
 							<CheckListItem item={item} />
 						))}
 					</ul>
+					{ isProcessed ? (
+						<p>Greate work! {"You've"} finished processing this conversation.</p>
+					) : '' }
+					{ awaitingReview ? (
+						<p>Now your conversation will be reviewed by your team leader</p>
+					) : '' }
 					{loading ? (
 						<div className="conversation--checklist__loading">
 							Checking for completed steps
