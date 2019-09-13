@@ -7,6 +7,8 @@
 		public: 'public',
 		private: 'home',
 		corporate: 'work',
+		overdue: 'warning',
+		inReview: 'check_circle_outline',
 	};
 
 	async function doApi(promise) {
@@ -41,16 +43,23 @@
 
 			const { now, conversation, showFacil } = this.props;
 
-			const { conversationType, isProcessed } = get(conversation, 'private', {});
+			const { conversationType, isProcessed, reviewedAt } = get(conversation, 'private', {});
 
 			const overdue = this.processOverdue.isBefore(now) && !isProcessed;
 			const hasPassed = this.startAt.isBefore(now);
 
-			const warning = overdue || !this.reconciled;
+			let iconType = conversationType;
+			let tooltip = `${conversationType} conversation`;
+			if (hasPassed && !reviewedAt) {
+				iconType = 'inReview';
+				tooltip = 'To be reviewed by your team leader';
+			}
+			if (overdue || !this.reconciled) {
+				iconType = 'overdue';
+				tooltip = overdue ? 'Processing is overdue' : 'Donation amounts do not reconcile';
+			}
 
-			const icon = (warning ? 'warning' : icons[conversationType]) || icons.private;
-
-			const tooltip = `${conversationType} conversation ${warning ? '(action overdue)' : ''}`;
+			const icon = icons[iconType] || icons.private;
 
 			const baseUrl = `/conversations/${conversation.uuid}`;
 			let defaultUrl = `${baseUrl}/view`;
