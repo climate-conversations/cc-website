@@ -2,9 +2,10 @@
 (RaiselyComponents, React) => {
 	const { get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
-	const { Button } = RaiselyComponents.Atoms;
+	const { Modal } = RaiselyComponents.Molecules;
 	const { getQuery, getData, quickLoad } = api;
 
+	const Messenger = RaiselyComponents.import('message-send-and-save');
 	const ReturnButton = RaiselyComponents.import('return-button');
 
 	const HIGH_LEVEL = 8;
@@ -146,11 +147,27 @@
 				const actions = this.constructor.calculateActions(postSurveys, rsvps);
 				const attitudes = this.constructor.calculateAttitudes(preSurveys, postSurveys);
 
-				this.setState({ actions, attitudes, loading: false });
+				const hosts = rsvps
+					.filter(rsvp => rsvp.type === 'host')
+					.map(rsvp => rsvp.user);
+
+				this.setState({ actions, attitudes, rsvps, hosts, loading: false });
 			} catch (e) {
 				console.error(e);
 				this.setState({ error: e.message });
 			}
+		}
+
+		renderSendReport() {
+			const { hosts } = this.state;
+			const body = get(this.props, 'global.campaign.config.conversationHostThankyou', 'ERROR LOADING CONTENT');
+			return (
+				<Messenger
+					to={hosts}
+					subject="Thank you for hosting a Climate Conversation"
+					body={body}
+				/>
+			);
 		}
 
 		render() {
@@ -204,7 +221,11 @@
 					</div>
 					<div className="host--report__buttons">
 						<ReturnButton backTheme="secondary" backLabel="Go back" />
-						<Button theme="primary">Send Report to Host</Button>
+						<Modal
+							button
+							buttonTitle="Send Report to Host"
+							modalContent={this.renderSendReport}
+						/>
 					</div>
 				</div>
 			);
