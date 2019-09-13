@@ -1710,3 +1710,7 @@ ul.list__wrapper, .list__wrapper ul {
      border-radius: $borderRadius;
   }
 }
+
+.dropdown .dropdown__menu { display: none; }
+.dropdown:after { display: none !important; }
+.header__account .dropdown__menu__caret { display: none; }

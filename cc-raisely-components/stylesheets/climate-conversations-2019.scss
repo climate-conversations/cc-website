@@ -1623,3 +1623,7 @@ $selector: row, col, block;
 }
 
 .dropdown .dropdown__menu { display: none; }
+
+.col--8 .profile-grid__item {
+  width: 100%;
+}
