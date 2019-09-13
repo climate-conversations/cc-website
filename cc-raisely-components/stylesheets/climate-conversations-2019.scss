@@ -680,10 +680,18 @@ min-height: 5em;
       }
 
       .postfeed--events & {
+        	.button {
+            &,
+            &:hover,
+            &:focus {
+              font-size: 1em;
+            }
+        	}
 
-          .button,
-          .button:hover,
-          .button:focus {
+          .button--primary {
+            &,
+            &:hover,
+            &:focus {
               border-color: nth($accentColors,$i);
               background: transparent;
               font-size: 1em;
@@ -691,6 +699,7 @@ min-height: 5em;
               &:after {
                   background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10px' height='9px'><path fill='%23#{str-slice('#{nth($accentColors,$i)}',2)}' d='M-7.10542736e-15,4.26325641e-14 C-7.10542736e-15,4.33333333 -7.10542736e-15,6.83333333 -7.10542736e-15,7.5 C-7.10542736e-15,8.5 1,9 2,8 C3.33333333,6.66666667 6,4 10,4.26325641e-14 L-7.10542736e-15,4.26325641e-14 Z'></path></svg>") no-repeat center / 100%;
               }
+            }
           }
       }
     }
@@ -1612,3 +1621,5 @@ $selector: row, col, block;
 .event-card__time {
   margin-left: 1em;
 }
+
+.dropdown .dropdown__menu { display: none; }
