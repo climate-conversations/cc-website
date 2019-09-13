@@ -2,6 +2,7 @@
 (RaiselyComponents, React) => {
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const UserSelect = RaiselyComponents.import('user-select');
+	const RaiselyButton = RaiselyComponents.import('raiely-button');
 
 	const { api } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
@@ -105,7 +106,6 @@
 
 			if (rsvp && rsvp.userUuid) {
 				const name = rsvp.fullName || `${rsvp.firstName} ${rsvp.lastName}`;
-				const adminLink = `https://admin.raisely.com/people/${rsvp.userUuid}`;
 
 				return (
 					<div className="conversation-team__selected_user field-wrapper">
@@ -116,7 +116,7 @@
 							<div className="static-field__title">{name}</div>
 							<div className="static-field__subtitle">{rsvp.email}</div>
 							<Button type="button" onClick={() => this.updateRsvp({})}>Change</Button>
-							<Button href={adminLink} target="raisely">Raisely</Button>
+							<RaiselyButton uuid={rsvp.userUuid} recordType="people" />
 						</div>
 					</div>
 				);
