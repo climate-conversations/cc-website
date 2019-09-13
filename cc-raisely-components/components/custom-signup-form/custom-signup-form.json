@@ -78,7 +78,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 83
+            "value": 84
         },
         "actionText": {
             "id": "actionText",
