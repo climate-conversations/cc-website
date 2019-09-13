@@ -33,7 +33,7 @@
 
 			const { source, order } = this.getValues();
 			if ((source === 'all') || !userUuid) {
-				events = await getData(api.events.getAll({ query: { limit, order } }));
+				events = await getData(api.events.getAll({ query: { limit, order, photoUrl: 'NOT_NULL' } }));
 			} else {
 				if (source === 'team') {
 					const facilitators = await getData(api.users.getAll({ query: { 'private.teamLeaderUuid': userUuid } }));
