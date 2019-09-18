@@ -1,15 +1,13 @@
-import { api } from "../../../raisely-modules/packages/raisely-api/src/api";
-
 (RaiselyComponents, React) => {
-	const { Spinner } = RaiselyComponents;
+	const { api, Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
-	const { quickLoad, getQuery, getData } = RaiselyComponents.api;
 	const { get } = RaiselyComponents.Common;
+	const { quickLoad, getQuery, getData } = api;
 
 	const DisplayRecord = RaiselyComponents.import('display-record');
 	const GuestList = RaiselyComponents.import('conversation-guest-list');
 
-	const fields = ['event.date', 'event.name', 'event.address1', 'event.address2'];
+	const fields = ['event.startAt', 'event.address1', 'event.address2'];
 
 	return class ViewConversation extends React.Component {
 		state = { loading: true };
@@ -36,8 +34,8 @@ import { api } from "../../../raisely-modules/packages/raisely-api/src/api";
 		// eslint-disable-next-line class-methods-use-this
 		getCounters(surveys) {
 			return {
-				hosts: surveys.filter(s => get(s, 'private.host') || get(s, 'private.hostCorporate')),
-				facilitators: surveys.filter(s => get(s, 'private.facilitate')),
+				hosts: surveys.filter(s => get(s, 'private.host') || get(s, 'private.hostCorporate')).length,
+				facilitators: surveys.filter(s => get(s, 'private.facilitate')).length,
 			};
 		}
 
@@ -70,6 +68,7 @@ import { api } from "../../../raisely-modules/packages/raisely-api/src/api";
 					.filter(r => r.type === 'guest');
 
 				const counters = this.getCounters(rsvps, surveys);
+				// eslint-disable-next-line object-curly-newline
 				this.setState({ reflections, surveys, guests, counters });
 
 				// Catch exception
@@ -83,14 +82,9 @@ import { api } from "../../../raisely-modules/packages/raisely-api/src/api";
 		}
 
 		render() {
-			if (!this.state) {
-				return <Spinner />;
-			}
-			const { conversation, loading, error, counters, guests } = this.state;
+			// eslint-disable-next-line object-curly-newline
+			const { loading, error, counters, guests } = this.state;
 
-			if (loading) {
-				return <Spinner />;
-			}
 			if (error) {
 				return (
 					<div className="view-conversation">
@@ -99,21 +93,32 @@ import { api } from "../../../raisely-modules/packages/raisely-api/src/api";
 				);
 			}
 
+			const conversation = this.state.conversation || get(this.props, 'global.current.event');
+			const { uuid } = conversation;
+			const processLink = `/conversations/${uuid}/process`;
+			const reflectionLink = `/conversations/${uuid}/view-reflections`;
+			const reconcileLink = `/conversations/${uuid}/reconcile-donations`;
+			const displayValues = { event: conversation };
+
 			return (
 				<div className="view-conversation">
-					<DisplayRecord event={conversation} fields={fields} />
+					<DisplayRecord {...this.props} values={displayValues} fields={fields} />
 					<div className="view-conversation__stats">
-						<div className="view-conversation__stat">{guests.length} guests</div>
-						<div className="view-conversation__stat">{counters.hosts} new hosts</div>
-						<div className="view-conversation__stat">{counters.facilitators} new facilitators</div>
+						{loading ? <Spinner /> : (
+							<React.Fragment>
+								<div className="view-conversation__stat">{guests.length} guests</div>
+								<div className="view-conversation__stat">{counters.hosts} new hosts</div>
+								<div className="view-conversation__stat">{counters.facilitators} new facilitators</div>
+							</React.Fragment>
+						)}
 					</div>
 					<div className="view-conversation__buttons">
-						<Button>Process Conversation</Button>
-						<Button>Facilitators Reflection</Button>
-						<Button>Reconcile Donations</Button>
+						<Button href={processLink}>Process Conversation</Button>
+						<Button href={reflectionLink}>Facilitators Reflection</Button>
+						<Button href={reconcileLink}>Reconcile Donations</Button>
 					</div>
 					<div className="view-conversation__guest-list">
-						<GuestList conversation={conversation.uuid} />
+						<GuestList conversation={uuid} />
 					</div>
 				</div>
 			);
