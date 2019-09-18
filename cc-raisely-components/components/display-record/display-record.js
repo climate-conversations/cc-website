@@ -1,5 +1,5 @@
 (RaiselyComponents, React) => {
-	const { Spinner } = RaiselyComponents.Atoms;
+	const { Spinner } = RaiselyComponents;
 	const { dayjs, get } = RaiselyComponents.Common;
 	const renderHtml = RaiselyComponents.Common.htmr;
 	const { api } = RaiselyComponents;
@@ -54,10 +54,26 @@
 		componentDidMount() {
 			this.load()
 				.catch(e => console.error(e));
+			// eslint-disable-next-line react/no-did-mount-set-state
+			this.setFields();
+		}
+		componentDidUpdate() {
+			const newValues = get(this, 'props.values', {});
+			const oldValues = get(this, 'state.values', {});
+			const hasChanged = Object.keys(newValues)
+				.find(key => newValues[key] !== oldValues[key]);
+			if (hasChanged) {
+				this.load()
+					.catch(e => console.error(e));
+			}
 		}
 
 		getConfig() {
-			const config = Object.assign({}, this.props);
+			console.log('Configuring display record');
+			const config = Object.assign({
+				models: [],
+				associatins: [],
+			}, this.props);
 			if (this.props.getValues) Object.assign(config, this.props.getValues());
 
 			return config;
@@ -76,7 +92,10 @@
 		 */
 		findField(sourceId) {
 			console.log('CustomForm.findField');
-			const customFields = get(this.props, 'global.campaign.config.customFields');
+			if (!this.props.global) {
+				throw new Error('Developer, please pass do {...this.props}');
+			}
+			const customFields = get(this.props, 'global.campaign.config.customFields', {});
 			const fieldSources = sourceId.split('.');
 			if (fieldSources.length !== 2) throw new Error(`Badly specified field "${sourceId}". Should be in the form recordType.field`);
 			const [record, fieldId] = fieldSources;
@@ -145,17 +164,27 @@
 		}
 
 		async load() {
+			console.log('DisplayFields.load');
 			const { associations, models } = this.getConfig();
 
-			this.setState({ loading: true }, this.setFields);
+			const values = Object.assign(
+				{},
+				get(this.state, 'values', {}),
+				get(this.props, 'values', {})
+			);
 
-			let values;
+			const valueKeys = Object.keys(values);
 			try {
-				values = await api.quickLoad({
-					models,
-					props: this.props,
-					required: true,
-				});
+				const modelsToFetch = models
+					.filter(model => !valueKeys.includes(model));
+
+				if (modelsToFetch.length) {
+					Object.assign(values, await api.quickLoad({
+						models: modelsToFetch,
+						props: this.props,
+						required: true,
+					}));
+				}
 			} catch (e) {
 				console.error(e);
 				this.setState({ error: e.message });
@@ -163,7 +192,10 @@
 			}
 
 			if (Array.isArray(associations)) {
-				const loaded = associations.map(async ({ uuidFrom, recordType }) => {
+				const associationsToLoad = associations
+					.filter(assoc => !valueKeys.includes(assoc));
+
+				const loaded = associationsToLoad.map(async ({ uuidFrom, recordType }) => {
 					const uuid = get(values, uuidFrom);
 					if (uuid) {
 						const model = plural(recordType);
@@ -179,10 +211,26 @@
 		}
 
 		render() {
-			if (this.state.loading) {
+			const { loading, error } = this.state;
+			const { values, fields } = this.state;
+
+			if (!get(this.props, 'global.campaign')) {
+				console.error(`ERROR: ${this.constructor.name} is missing this.props.global.campaign`);
+				return (
+					<div className="error">
+						<p>props.global.campaign property is missing.</p>
+						<p>
+							Did you remember to pass the props into this component? (eg
+							{'<DisplayRecord {...this.props} />'}
+						</p>
+					</div>
+				);
+			}
+
+			if (loading || !fields) {
 				return <Spinner />;
 			}
-			if (this.state.error) {
+			if (error) {
 				return (
 					<div className="error">
 						{this.state.error}
@@ -194,8 +242,6 @@
 			const name = settings.name || '';
 
 			const className = `record-display ${name}`;
-
-			const { values, fields } = this.state;
 
 			return (
 				<div className={className}>
