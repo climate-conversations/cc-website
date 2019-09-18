@@ -3,27 +3,26 @@
 	const { Button } = RaiselyComponents.Atoms;
 	const { get, set } = RaiselyComponents.Common;
 	const { api } = RaiselyComponents;
-	const { quickLoad } = api;
+	const { getData, quickLoad } = api;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
-	const UserSaveHelper = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let UserSaveHelper;
 
 	const preSurvey = 'cc-pre-survey-2019';
 	const postSurvey = 'cc-post-survey-2019';
 	const surveys = [preSurvey, postSurvey];
 
-	/**
-	 * Action fields that a user can opt in to
-	 */
-	const { actionFields } = UserSaveHelper;
+	let actionFields;
+
 	/**
 	 * Actions are stored on the interaction, but key ones are also copied to the
 	 * user record
 	 */
-	const actionFieldsToUser = ['host', 'facilitate', 'volunteer']
+	const actionFieldsToUser = ['host', 'facilitate', 'volunteer'];
 
 	// Show all questions in the pre survey
-	const preSurveyQuestions = [{ interactionCategory: preSurvey, exclude: ['conversationUuid'] }];
+	const preSurveyQuestions = [{ interactionCategory: preSurvey }];
 	// Show all questions in the post survey
 	const postSurveyQuestions = [{
 		interactionCategory: postSurvey,
@@ -74,6 +73,8 @@
 	];
 
 	return class GuestDataEntry extends React.Component {
+		state = { key: new Date().toISOString() }
+
 		load = async () => {
 			const data = await quickLoad({
 				models: ['event.private'],
@@ -86,78 +87,115 @@
 
 		save = async (values, formToData) => {
 			const data = formToData(values);
+			const facilitatorUuid = this.props.global.user.uuid;
+			const campaignUuid = this.props.global.campaign.uuid;
 
 			// Copy interaction host, vol, facil over to user record
 			actionFieldsToUser.forEach((field) => {
-				const value = get(data, `interaction.${preSurvey}.${field}`);
-				if (value || value === false) {
-					set(data, `user.${field}`, value);
+				const value = get(data, `interaction.${postSurvey}.detail.private.${field}`);
+				if (value) {
+					set(data, `user.private.${field}`, value);
 				}
 			});
 
+			console.log('Saving survey. Form data:', data);
+
 			const user = await UserSaveHelper.upsertUser(data.user);
+			// temporary fix for upsert not returning an email
+			if (!user.email) user.email = data.user.email;
+
+			const interactionBase = {
+				recordUuid: this.event.uuid,
+				recordType: 'event',
+				userUuid: user.uuid,
+			};
 
 			// Associate surveys with conversation and user
 			surveys.forEach(survey =>
 				Object.assign(data.interaction[survey], {
-					// Set the interqaction type
-					category: survey,
-					record: this.event.uuid,
-					recordType: 'event',
-					userUuid: user.uuid,
+					...interactionBase,
+					// Set the interaction type
+					categoryUuid: survey,
 				}));
 
 			// Save surveys
 			const promises = [
-				api.interactions.create(data.interaction[preSurvey]),
-				api.interactions.create(data.interaction[postSurvey]),
-			];
+				api.interactions.create({ data: data.interaction[preSurvey] }),
+				api.interactions.create({ data: data.interaction[postSurvey] }),
+			].map(getData);
 
-			Object.assign(data.eventRsvp, {
+			if (data.interaction[postSurvey].detail.private.host) {
+				promises.push(getData(api.interactions.create({
+					data: {
+						...interactionBase,
+						categoryUuid: 'host-interest',
+						detail: {
+							private: {
+								status: 'lead',
+								source: 'conversation',
+								assignedFacilitator: facilitatorUuid,
+							},
+						},
+					},
+				})));
+			}
+
+			if (!data.event_rsvp) data.eventRsvp = {};
+			Object.assign(data.event_rsvp, {
 				userUuid: user.uuid,
 				type: 'guest',
 				eventUuid: this.event.uuid,
 			});
 
-			promises.push(api.eventRsvps.create(data.eventRsvp));
+			promises.push(getData(api.eventRsvps.create({ data: data.event_rsvp })));
 
 			// Save donation / donation intention
-			if (data.donationType === 'cash') {
-				promises.push(api.donations.create({
-					userUuid: user.uuid,
-					mode: 'LIVE',
-					type: 'OFFLINE',
-					method: 'OFFLINE',
-					amount: data.donation.amount,
-					email: user.email,
-					private: {
-						conversationUuid: this.event.uuid,
+			if (get(data, 'event_rsvp.private.donationIntention') === 'cash') {
+				promises.push(getData(api.donations.create({
+					data: {
+						campaignUuid,
+						profileUuid: this.props.global.campaign.profile.uuid,
+						userUuid: user.uuid,
+						mode: 'LIVE',
+						type: 'OFFLINE',
+						method: 'OFFLINE',
+						amount: get(data, 'event_rsvp.private.donationAmount'),
+						email: user.email,
+						private: {
+							conversationUuid: this.event.uuid,
+						},
+						currency: 'SGD',
 					},
-					currency: 'SGD',
-				}));
+				})));
 			}
 
 			// Add the future conversation
 			if (conversationDate) {
 				Object.assign(data.event, {
 					name: `<conversation name here>`,
+					campaignUuid,
 				});
-				api.events.create(data.event)
+				const promise = getData(api.events.create({ data: data.event }))
 					// Add the facil and host to the conversation
 					.then((event) => {
 						return Promise.all([
-							api.eventRsvps.create({
-								type: 'host',
-								userUuid: user.uuid,
-								eventUuid: event.uuid,
-							}),
-							api.eventRsvps.create({
-								type: 'facilitator',
-								userUuid: this.props.global.user.uuid,
-								eventUuid: event.uuid,
-							}),
+							getData(api.eventRsvps.create({
+								data: {
+									type: 'host',
+									userUuid: user.uuid,
+									eventUuid: event.uuid,
+								},
+							})),
+							getData(api.eventRsvps.create({
+								data: {
+									type: 'facilitator',
+									userUuid: facilitatorUuid,
+									eventUuid: event.uuid,
+								},
+							})),
 						]);
 					});
+				promises.push(promise);
 			}
 
 			return Promise.all(promises);
@@ -187,28 +225,38 @@
 			return hasError ? details : (<p>Saving guest details</p>);
 		}
 
-		finalPage({ completeHref }) {
+		finalPage = ({ completeHref }) => {
 			// Changing the key will cause react to re-fresh the component
-			const reset = () => this.setState({ key: 'something new' });
+			const reset = () => this.setState({ key: new Date().toISOString() });
 
 			return (
 				<div>
 					<p>Guest saved!</p>
 					<div>
-						<Button theme="primary" onClick={reset}>Add another profile</Button>
-						<Button theme="secondary" href={completeHref}>Go to dashboard</Button>
+						<Button theme="primary" onClick={reset}>Add another Guest</Button>
+						<Button theme="secondary" href={completeHref}>Go back to dashboard</Button>
 					</div>
 				</div>
 			);
 		}
 
 		render() {
+			if (!UserSaveHelper) {
+				try {
+					UserSaveHelper = UserSaveHelperRef().html;
+					({ actionFields } = UserSaveHelper);
+				} catch (e) {}
+			}
+
+			const { key } = this.state;
+
 			return (
-				<div className="guest-data-entry-wrapper">
+				<div className="guest-data-entry-wrapper" key={key}>
 					<CustomForm
 						{...this.props}
 						steps={allSteps}
 						followNextQuery="1"
+						controller={this}
 					/>
 				</div>
 			);
