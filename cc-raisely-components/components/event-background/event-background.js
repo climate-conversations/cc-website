@@ -14,7 +14,11 @@
 		componentWillUnmount() {
 			if (this.interval) {
 				clearInterval(this.interval);
-				this.interval === null;
+				this.interval = null;
+			}
+			it (this.timeout) {
+				clearTimeout(this.timeout);
+				this.timeout = null;
 			}
 		}
 
@@ -22,7 +26,7 @@
 			this.changeBackground();
 			const { repeat, period } = this.getValues();
 			if (repeat && period && !this.interval) {
-				setInterval(this.changeBackground, period * 1000);
+				this.interval = setInterval(this.changeBackground, period * 1000);
 			}
 		}
 
@@ -52,7 +56,7 @@
 				return;
 			}
 			this.setState({ backgrounds }, () => {
-				setTimeout(this.onTimeout, 3000);
+				this.timeout = setTimeout(this.onTimeout, 3000);
 			});
 		}
 
@@ -110,6 +114,10 @@
 			if (!validOrders.includes(values.order)) values.order = defaults.order;
 			if (!Object.keys(values).includes('repeat')) values.repeat = defaults.repeat;
 			if (!values.period) values.period = defaults.period;
+
+			const { mock } = this.props.global.campaign;
+			// If we're in the editor, this is probably the right choice
+			if (mock) values.className = 'row--0';
 
 			this.values = values;
 
