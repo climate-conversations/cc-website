@@ -25,6 +25,8 @@
 	];
 
 	class FindHost extends React.Component {
+		state = {};
+
 		componentDidMount() {
 			const { host } = this.props;
 			// eslint-disable-next-line react/no-did-mount-set-state
@@ -80,6 +82,7 @@
 		}
 
 		render() {
+			const { props } = this;
 			const { host } = this.state;
 
 			return (
@@ -109,7 +112,7 @@
 						</Button>
 
 						<div className="conversation-team__navigation custom-form__navigation">
-							<ReturnButton backLabel="Go Back" />
+							<ReturnButton {...props} backLabel="Go Back" />
 							<Button
 								type="button"
 								onClick={this.next}
@@ -125,6 +128,8 @@
 	}
 
 	class EditButtons extends React.Component {
+		state = {};
+
 		next = async () => {
 			console.log('FormStep.next');
 			const { save: saveFn, shouldSave } = this.props;
@@ -261,7 +266,7 @@
 		}
 
 		render() {
-			const { form, host } = this.state();
+			const { form, host } = this.state;
 			return (<CustomForm
 				{...this.props}
 				steps={form}

@@ -2,47 +2,61 @@
 (RaiselyComponents, React) => {
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const { api } = RaiselyComponents;
-	const { get } = RaiselyComponents.Common;
+	const { get, pick } = RaiselyComponents.Common;
+	const { getData, save } = api;
+
+	const interactionCategory = 'facilitator-reflection';
 
 	return class FacilReflection extends React.Component {
 		generateForm() {
 			const multiFormConfig = [
-				{ title: 'Facilitator Reflection', interactionCategory: 'facil-reflection', exclude: ['conversationUuid'] },
+				{
+					title: 'Facilitator Reflection',
+					fields: [{ interactionCategory, exclude: ['conversationUuid'] }],
+				},
 			];
 
 			return multiFormConfig;
 		}
 
 		load = async ({ dataToForm }) => {
-			return;
-			const eventUuid = this.props.eventUuid || get(this.props, 'location.router.match.params.event');
+			const eventUuid = this.props.eventUuid || get(this.props, 'match.params.event');
 
 			const query = {
 				record: eventUuid,
 				recordType: 'event',
-				category: 'facil-reflection',
-				user: get(this.props, 'globals.user.uuid'),
+				category: interactionCategory,
+				user: get(this.props, 'global.user.uuid'),
+				private: 1,
 			};
 
-			let interaction;
-
-			interaction = await api.interactions.get({
+			const interactions = await getData(api.interactions.getAll({
 				query,
-			});
+			}));
+			let [interaction] = interactions;
 			if (!interaction) {
 				interaction = query;
 				interaction.categoryUuid = interaction.category;
 				interaction.userUuid = interaction.user;
+				interaction.recordUuid = interaction.record;
 				delete interaction.category;
 				delete interaction.user;
+				delete interaction.record;
+				delete interaction.private;
 			}
 
-			return dataToForm({ interaction });
+			this.setState({ interaction });
+
+			return dataToForm({ interaction: { [interactionCategory]: interaction } });
 		}
 
-		async save(values, formToData) {
+		save = async (values, formToData) => {
 			const data = formToData(values);
-			return api.upsert('interactions', { data: data.interactions['facil-reflection'] });
+			const interaction = data.interaction[interactionCategory];
+			console.log('Saving...' ,values, data);
+			interaction.detail.readOnly = false;
+			Object.assign(interaction, pick(this.state.interaction, ['categoryUuid', 'recordUuid', 'userUuid', 'recordType']));
+			await getData(save('interactions', interaction, { partial: true }));
 		}
 
 		render() {
@@ -52,6 +66,7 @@
 				steps={config}
 				controller={this}
 				followNextQuery="1"
+				redirectToReturnTo="true"
 			/>);
 		}
 	};

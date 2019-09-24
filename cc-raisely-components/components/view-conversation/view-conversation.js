@@ -2,10 +2,12 @@
 	const { api, Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
 	const { get } = RaiselyComponents.Common;
-	const { quickLoad, getQuery, getData } = api;
+	const { getData } = api;
 
 	const DisplayRecord = RaiselyComponents.import('display-record');
 	const GuestList = RaiselyComponents.import('conversation-guest-list');
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 
 	const fields = ['event.startAt', 'event.address1', 'event.address2'];
 
@@ -16,41 +18,28 @@
 			this.load();
 		}
 
-		// eslint-disable-next-line class-methods-use-this
-		async getRsvps(eventUuid) {
-			const rsvps = await getData(api.eventRsvps.getAll({ query: { eventUuid, private: 1 } }));
-			return rsvps;
-		}
 
-		getFacilitator(rsvps) {
-			const facils = rsvps
-				.filter(({ type }) => ['facilitator', 'co-facilitator'].includes(type))
-				.map(rsvp => rsvp.user);
-
-			const userUuid = get(this.props, 'current.user.uuid');
-			const facilitator = facils.find(f => f.uuid === userUuid) || facils[0];
-			return facilitator;
-		}
 		// eslint-disable-next-line class-methods-use-this
-		getCounters(surveys) {
-			return {
+		getCounters() {
+			const { surveys } = this.state;
+			const counters = {
 				hosts: surveys.filter(s => get(s, 'private.host') || get(s, 'private.hostCorporate')).length,
 				facilitators: surveys.filter(s => get(s, 'private.facilitate')).length,
 			};
+			this.setState({ counters });
 		}
 
 		async load() {
 			try {
-				const eventUuid = this.props.conversation ||
-					get(this.props, 'match.params.event') ||
-					getQuery(get(this.props, 'router.location.search')).event;
+				if (!Conversation) Conversation = ConversationRef().html;
 
-
-				const promise = quickLoad({ models: ['event.private'], required: true, props: this.props })
-					.then(({ event: conversation }) => this.setState({ conversation }));
-
-				const rsvps = await this.getRsvps();
-				const facilitator = await this.getFacilitator(rsvps);
+				const eventUuid = Conversation.getUuid(this.props);
+				const promises = [
+					Conversation.loadConversation({ props: this.props, private: 1 })
+						.then(res => this.setState(res)),
+					Conversation.loadRsvps({ props: this.props, type: ['guest', 'facilitator', 'host'] })
+						.then(res => this.setState(res)),
+				];
 
 				const [reflections, surveys] = await Promise.all([
 					getData(api.interactions.getAll({
@@ -64,15 +53,12 @@
 						},
 					})),
 				]);
-				const guests = rsvps
-					.filter(r => r.type === 'guest');
 
-				const counters = this.getCounters(rsvps, surveys);
 				// eslint-disable-next-line object-curly-newline
-				this.setState({ reflections, surveys, guests, counters });
+				this.setState({ reflections, surveys }, this.getCounters);
 
 				// Catch exception
-				await promise;
+				await promises;
 			} catch (e) {
 				this.setState({ error: e.message });
 				console.error(e);
@@ -82,6 +68,8 @@
 		}
 
 		render() {
+			if (!Conversation) Conversation = ConversationRef().html;
+
 			// eslint-disable-next-line object-curly-newline
 			const { loading, error, counters, guests } = this.state;
 
@@ -93,8 +81,8 @@
 				);
 			}
 
-			const conversation = this.state.conversation || get(this.props, 'global.current.event');
-			const { uuid } = conversation;
+			const conversation = this.state.conversation || {};
+			const uuid = Conversation.getUuid(this.props);
 			const processLink = `/conversations/${uuid}/process`;
 			const reflectionLink = `/conversations/${uuid}/view-reflections`;
 			const reconcileLink = `/conversations/${uuid}/reconcile-donations`;
@@ -102,15 +90,17 @@
 
 			return (
 				<div className="view-conversation">
-					<DisplayRecord {...this.props} values={displayValues} fields={fields} />
-					<div className="view-conversation__stats">
-						{loading ? <Spinner /> : (
-							<React.Fragment>
-								<div className="view-conversation__stat">{guests.length} guests</div>
-								<div className="view-conversation__stat">{counters.hosts} new hosts</div>
-								<div className="view-conversation__stat">{counters.facilitators} new facilitators</div>
-							</React.Fragment>
-						)}
+					<div className="view-conversation__info">
+						<DisplayRecord {...this.props} values={displayValues} fields={fields} />
+						<div className="view-conversation__stats">
+							{loading ? <Spinner /> : (
+								<React.Fragment>
+									<div className="view-conversation__stat">{guests.length} guests</div>
+									<div className="view-conversation__stat">{counters.hosts} new hosts</div>
+									<div className="view-conversation__stat">{counters.facilitators} new facilitators</div>
+								</React.Fragment>
+							)}
+						</div>
 					</div>
 					<div className="view-conversation__buttons">
 						<Button href={processLink}>Process Conversation</Button>

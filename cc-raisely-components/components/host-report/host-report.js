@@ -2,16 +2,17 @@
 (RaiselyComponents, React) => {
 	const { get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
-	const { Modal } = RaiselyComponents.Molecules;
 	const { getQuery, getData, quickLoad } = api;
 
 	const Messenger = RaiselyComponents.import('message-send-and-save');
 	const ReturnButton = RaiselyComponents.import('return-button');
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 
 	const HIGH_LEVEL = 8;
 
 	const attitudeConditions = [{
-		label: 'more likely to talk about climate breakdown',
+		label: 'now are more likely to talk about climate breakdown',
 		fn: ({ pre, post }) => increased(pre, post, 'talkativeness'),
 	}, {
 		label: 'view climate breakdown as a higher priority',
@@ -44,7 +45,7 @@
 		if (!fn) fn = value => value;
 
 		return array.reduce((total, current) =>
-			(fn(field ? get(current, ['private', field]) : current) ? total + 1 : total));
+			(fn(field ? get(current, ['private', field]) : current) ? total + 1 : total), 0);
 	}
 
 	/**
@@ -78,12 +79,52 @@
 	}
 
 	return class HostReport extends React.Component {
+		state = { loading: true }
+		componentDidMount() {
+			this.load();
+		}
+
+		async load() {
+			try {
+				if (!Conversation) Conversation = ConversationRef().html;
+
+				const eventUuid = this.props.conversation ||
+					get(this.props, 'match.params.event') ||
+					getQuery(get(this.props, 'router.location.search')).event;
+
+				const eventPromise = Conversation.loadConversation({ props: this.props })
+					.then(r => this.setState(r));
+				const rsvpPromise = Conversation.loadRsvps({ props: this.props, type: ['host', 'guest'] })
+					.then(r => this.setState(r));
+
+				const promises = ['cc-pre-survey-2019', 'cc-post-survey-2019'].map(category =>
+					getData(api.interactions.getAll({
+						query: category,
+						recordUuid: eventUuid,
+					})));
+				promises.push(eventPromise, rsvpPromise);
+
+				const [preSurveys, postSurveys] = await Promise.all(promises);
+
+				const state = { postSurveys, preSurveys };
+				this.setState(state, () => {
+					this.calculateActions();
+					this.calculateAttitudes();
+					this.setState({ loading: false });
+				});
+			} catch (e) {
+				console.error(e);
+				this.setState({ error: e.message });
+			}
+		}
+
 		/**
 		 * Summarise actions taken at a conversation
 		 * @param {} postSurveys
 		 * @param {*} rsvps
 		 */
-		static calculateActions(postSurveys, rsvps) {
+		calculateActions() {
+			const { postSurveys, rsvps } = this.state;
 			const actions = ['host', 'facilitate', 'volunteer'].map(field =>
 				({
 					label: `${field}s`,
@@ -96,7 +137,7 @@
 				value: countIf(rsvps, 'donationIntention', value => value && value !== 'no'),
 			});
 
-			return actions;
+			this.setState({ actions });
 		}
 
 		/**
@@ -105,7 +146,9 @@
 		 * @param {object[]} postSurveys
 		 */
 		// eslint-disable-next-line class-methods-use-this
-		static calculateAttitudes(preSurveys, postSurveys) {
+		calculateAttitudes() {
+			const { postSurveys, preSurveys } = this.state;
+
 			// Match pre with post
 			const matchedSurveys = postSurveys.map(survey => ({
 				pre: preSurveys.find(s => s.userUuid === survey.uuid),
@@ -119,53 +162,25 @@
 					value: countIf(matchedSurveys, null, attitude.fn),
 				}));
 
-			return attitudes;
+			this.setState({ attitudes });
 		}
 
-		state = { loading: true }
-		componentDidMount() {
-			this.load();
-		}
-
-		async load() {
-			try {
-				const eventUuid = this.props.conversation ||
-					get(this.props, 'match.params.event') ||
-					getQuery(get(this.props, 'router.location.search')).event;
-
-				const promises = ['cc-pre-survey-2019', 'cc-post-survey-2019'].map(category =>
-					getData(api.interactions.getAll({
-						query: category,
-						recordUuid: eventUuid,
-					})));
-				promises.push(getData(api.eventRsvps.getAll({ query: { eventUuid } })));
-				promises.push(quickLoad({ models: ['event'], required: true, props: this.props })
-					.then(records => this.setState({ event: records.event })));
-
-				const [preSurveys, postSurveys, rsvps] = await Promise.all(promises);
-
-				const actions = this.constructor.calculateActions(postSurveys, rsvps);
-				const attitudes = this.constructor.calculateAttitudes(preSurveys, postSurveys);
-
-				const hosts = rsvps
-					.filter(rsvp => rsvp.type === 'host')
-					.map(rsvp => rsvp.user);
-
-				this.setState({ actions, attitudes, rsvps, hosts, loading: false });
-			} catch (e) {
-				console.error(e);
-				this.setState({ error: e.message });
-			}
-		}
-
-		renderSendReport() {
+		renderSendReport = () => {
 			const { hosts } = this.state;
-			const body = get(this.props, 'global.campaign.config.conversationHostThankyou', 'ERROR LOADING CONTENT');
+			const defaultMessage = 'Thank you for hosting a Climate Conversation. Attached is a summary of the impact you enabled';
+			const path = get(this.props, 'location.pathname');
+			const url = `https://p.climate.sg/${path}`;
+			let body = get(this.props, 'global.campaign.public.conversationHostThankyou', defaultMessage);
+			body = `${body}
+${url}`;
+
 			return (
 				<Messenger
+					{...this.props}
 					to={hosts}
 					subject="Thank you for hosting a Climate Conversation"
 					body={body}
+					launchButtonLabel="Send Report to Host"
 				/>
 			);
 		}
@@ -174,27 +189,35 @@
 			let actions;
 			let attitudes;
 
-			const { error, loading, event } = this.state;
+			const { props } = this;
+			const { error, loading, conversation } = this.state;
 
 			if (!loading) {
 				// Only show actions/attitudes that have at least 1 person
 				actions = this.state.actions
 					.filter(a => a.value);
-				attitudes = this.state.actions
+				attitudes = this.state.attitudes
 					.filter(a => a.value);
 			}
+
+			actions = [
+				{ label: 'hosts', value: 2 },
+				{ label: 'facilitators', value: 2 },
+				{ label: 'donors', value: 3 },
+			];
+			attitudes = attitudeConditions.map((a, i) => { a.value = i % 3 + 1; return a; });
 
 			if (error) {
 				return <div className="error">Could not load host report: ${error}</div>;
 			}
 
-			const name = get(event, 'name', '');
+			const name = get(conversation, 'name', '');
 
 			return (
 				<div className="host--report__wrapper">
 					<div className="host--report__header">
 						<div className="host--report__header">{name}</div>
-						<div className="">Thank you for hosting a Climate Conversation</div>
+						<h3 className="">Thank you for hosting a Climate Conversation</h3>
 					</div>
 					<div className="host--report__action">
 						<div className="">Your conversation has inspired the following actions...</div>
@@ -212,20 +235,16 @@
 								<div className="host--report__attitude-item-number">{attitude.value}</div>
 								<div className="host--report__attitude-item-label">
 									{attitude.value === 1 ? 'person' : 'people' } {attitude.label}
-								</div>
-								<div className="host--report__attitude-item-sublabel">
-									{attitude.sublabel}
+									<div className="host--report__attitude-item-sublabel">
+										{attitude.sublabel}
+									</div>
 								</div>
 							</div>
 						)) : <Spinner /> }
 					</div>
 					<div className="host--report__buttons">
-						<ReturnButton backTheme="secondary" backLabel="Go back" />
-						<Modal
-							button
-							buttonTitle="Send Report to Host"
-							modalContent={this.renderSendReport}
-						/>
+						<ReturnButton {...props} backTheme="secondary" backLabel="Go back" />
+						{this.renderSendReport()}
 					</div>
 				</div>
 			);

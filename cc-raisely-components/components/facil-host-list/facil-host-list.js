@@ -30,19 +30,19 @@
 			const { host, showFacil } = this.props;
 			const url = `/hosts/${host.userUuid}`;
 			const conversationName = (host.conversation === true) ?
-				'...' : host.conversation.name;
+				'...' : get(host.conversation, 'name', '...');
 
 			return (
 				<li className="" key={host.uuid}>
 					<Link className="list__item host-list-item" href={url}>
 						<div className="list__item--title">
-							{host.user.fullName}
+							{get(host, 'user.fullName', '...')}
 							<div className="list__item--subtitle">
 								{host.conversation ? conversationName : '(no conversation)'}
 								{showFacil ? <div className="host-facil"> - {host.facilitator.preferredName}</div> : ''}
 							</div>
 						</div>
-						<div className="host-status">{host.private.status}</div>
+						<div className="host-status">{get(host, 'private.status', '...')}</div>
 						<Button>contact</Button>
 						<RaiselyButton recordType="user" uuid={host.userUuid} />
 					</Link>
@@ -91,7 +91,7 @@
 						}
 						if (isTeam && !host.facilitator) {
 							// eslint-disable-next-line no-param-reassign
-							host.facilitator = this.facilitators[host.private.facilitatorUuid];
+							host.facilitator = this.facilitators[get(host, 'private.facilitatorUuid')];
 						}
 					});
 			}
@@ -129,22 +129,38 @@
 
 		async load() {
 			try {
-				const userUuid = await this.getUserUuids();
-				this.hosts = await getData(api.interactions.getAll({
-					query: {
-						private: 1,
-						category: 'host-interest',
-						facilitatorUuid: userUuid,
-						join: 'user',
-					},
-				}));
+				// const userUuid = await this.getUserUuids();
+				// this.hosts = await getData(api.interactions.getAll({
+				// 	query: {
+				// 		private: 1,
+				// 		category: 'host-interest',
+				// 		facilitatorUuid: userUuid,
+				// 		join: 'user',
+				// 	},
+				// }));
 
-				await Promise.all(this.hosts.map(async (host) => {
-					if (!host.user) {
-						// eslint-disable-next-line no-param-reassign
-						host.user = await getData(api.users.get({ id: host.userUuid }));
-					}
-				}));
+				// await Promise.all(this.hosts.map(async (host) => {
+				// 	if (!host.user) {
+				// 		// eslint-disable-next-line no-param-reassign
+				// 		host.user = await getData(api.users.get({ id: host.userUuid }));
+				// 	}
+				// }));
+
+				this.hosts = [{
+					userUuid: '9f0175c0-da2c-11e9-8213-bb2b7acc1c0d',
+					conversation: { name: "Chris's Conversation" },
+					user: { fullName: 'Abhinav Andul' },
+					private: { status: 'booked' },
+					facilitator: { preferredName: 'Chris' },
+				},
+				{
+					userUuid: '9f0175c0-da2c-11e9-8213-bb2b7acc1c0d',
+					conversation: { name: "Chris's Conversation" },
+					user: { fullName: 'Harris' },
+					private: { status: 'lead' },
+					facilitator: { preferredName: 'Chris' },
+				}];
+
 			} catch (error) {
 				this.setState({ error, loading: false });
 			}
@@ -159,7 +175,7 @@
 
 		render() {
 			const now = dayjs();
-			const { hosts, filter, loading, error } = this.state;
+			const { filter, loading, error } = this.state;
 
 			if (loading) return <Spinner />;
 
@@ -177,7 +193,7 @@
 					) : ''}
 					{this.hosts.length ? (
 						<ul className="host-list">
-							{hosts.map(host => (
+							{this.hosts.map(host => (
 								<Host
 									{...this.props}
 									now={now}

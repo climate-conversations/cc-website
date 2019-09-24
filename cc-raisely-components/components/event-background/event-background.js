@@ -8,6 +8,7 @@
 
 	return class EventBackground extends React.Component {
 		componentDidMount() {
+			return;
 			this.getEvents()
 				.catch(console.error);
 		}
@@ -16,7 +17,7 @@
 				clearInterval(this.interval);
 				this.interval = null;
 			}
-			it (this.timeout) {
+			if (this.timeout) {
 				clearTimeout(this.timeout);
 				this.timeout = null;
 			}
@@ -31,6 +32,10 @@
 		}
 
 		async getEvents() {
+			// Cache the current page so we know if the page has changed
+			// (so we can stop the background rotation)
+			const path = get(this, 'props.location.pathname');
+
 			const limit = 20;
 			let userUuid = get(this.props, 'current.user.uuid');
 			let events;
@@ -55,12 +60,13 @@
 				console.log('NOTE: bg changer found 0 events with photos');
 				return;
 			}
-			this.setState({ backgrounds }, () => {
+			this.setState({ backgrounds, path }, () => {
 				this.timeout = setTimeout(this.onTimeout, 3000);
 			});
 		}
 
 		setBackground = (url) => {
+			// Duration of transition in seconds
 			const time = 1;
 
 			// Find the background element
@@ -95,6 +101,7 @@
 		}
 
 		getValues() {
+			return;
 			if (this.values) return this.values;
 
 			const defaults = {
@@ -125,6 +132,11 @@
 		}
 
 		changeBackground = () => {
+			return;
+			// Don't change the background if we're on a new page
+			const path = get(this, 'props.location.pathname');
+			if (path !== this.state.path) return;
+
 			const { backgrounds } = this.state;
 			let index = this.state.index || 0;
 			index = (index + 1) % backgrounds.length;

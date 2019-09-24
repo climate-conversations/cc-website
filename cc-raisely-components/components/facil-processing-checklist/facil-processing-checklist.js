@@ -251,6 +251,7 @@
 		}
 
 		render() {
+			const { props } = this;
 			const { error, loading, conversation } = this.state;
 			const startAt = get(conversation, 'startAt');
 			const name = get(conversation, 'name', '...');
@@ -283,7 +284,7 @@
 							<Spinner className="spinner" />
 						</div>
 					) : ''}
-					<ReturnButton backTheme="primary" backLabel="Return to Dashboard" />
+					<ReturnButton {...props} backTheme="primary" backLabel="Return to Dashboard" />
 				</div>
 			);
 		}

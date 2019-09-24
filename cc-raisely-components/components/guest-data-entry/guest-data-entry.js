@@ -111,20 +111,20 @@
 			};
 
 			// Associate surveys with conversation and user
-			surveys.forEach(survey =>
-				Object.assign(data.interaction[survey], {
+			const promises = surveys.map((survey) => {
+				const record = get(data, `interaction.${survey}`);
+				if (!record) return null;
+				return Object.assign(record, {
 					...interactionBase,
 					// Set the interaction type
 					categoryUuid: survey,
-				}));
+				});
+			})
+				.filter(s => s)
+				.map(record => api.interactions.create({ data: record }))
+				.map(getData);
 
-			// Save surveys
-			const promises = [
-				api.interactions.create({ data: data.interaction[preSurvey] }),
-				api.interactions.create({ data: data.interaction[postSurvey] }),
-			].map(getData);
-
-			if (data.interaction[postSurvey].detail.private.host) {
+			if (get(data, `interaction.${postSurvey}.detail.private.host`)) {
 				promises.push(getData(api.interactions.create({
 					data: {
 						...interactionBase,
@@ -170,7 +170,7 @@
 			}
 
 			// Add the future conversation
-			if (conversationDate) {
+			if (get(data, 'event.startAt')) {
 				Object.assign(data.event, {
 					name: `<conversation name here>`,
 					campaignUuid,

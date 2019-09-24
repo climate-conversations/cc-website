@@ -3,7 +3,7 @@
 
 	function RaiselyLogo({ size }) {
 		const sizeMap = {
-			small: 15,
+			small: 30,
 			medium: 27,
 			large: 54,
 		};

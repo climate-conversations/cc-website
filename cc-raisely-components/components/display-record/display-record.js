@@ -42,8 +42,8 @@
 
 		return (
 			<div className="record-display__field">
-				<div className="record-display__field">{field.label}</div>
-				<div className="record-display__field">{value}</div>
+				<div className="record-display__label">{field.label}</div>
+				<div className="record-display__value">{value}</div>
 			</div>
 		);
 	}

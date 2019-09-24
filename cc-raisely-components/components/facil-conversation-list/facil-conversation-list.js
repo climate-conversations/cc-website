@@ -25,10 +25,9 @@
 	class Conversation extends React.Component {
 		setTimes() {
 			// eslint-disable-next-line object-curly-newline
-			const { cashDonationsNotes, cashTransferAmount, cashReceivedAmount, cashCtaAmount, processAt } = get(this.props, 'conversation.private', {});
+			const { cashDonationsNotes, cashTransferAmount, cashReceivedAmount, cashCtaAmount, processAt } = get(this.props, 'conversation.private', {}) || {};
 
 			const startAt = get(this.props, 'conversation.startAt');
-
 
 			this.startAt = dayjs(startAt);
 			this.processOverdue = dayjs(processAt || startAt).add(1, 'day');
@@ -43,7 +42,7 @@
 
 			const { now, conversation, showFacil } = this.props;
 
-			const { conversationType, isProcessed, reviewedAt } = get(conversation, 'private', {});
+			const { conversationType, isProcessed, reviewedAt } = get(conversation, 'private', {}) || {};
 
 			const overdue = this.processOverdue.isBefore(now) && !isProcessed;
 			const hasPassed = this.startAt.isBefore(now);
@@ -63,9 +62,11 @@
 
 			const baseUrl = `/conversations/${conversation.uuid}`;
 			let defaultUrl = `${baseUrl}/view`;
-			const processUrl = `${defaultUrl}/process`;
+			const processUrl = showFacil ? `${baseUrl}/review` : `${baseUrl}/process`;
 
 			if (!hasPassed) defaultUrl = `${baseUrl}/edit`;
+
+			const processLabel = showFacil ? 'review' : 'process'
 
 			return (
 				<li className="conversation-list-item" key={conversation.uuid}>
@@ -74,10 +75,10 @@
 						<div className="conversation-name list__item--title">
 							{conversation.name}
 							<div className="conversation-start list__item--subtitle">{this.displayDate}</div>
-							{showFacil ? <div className="conversation-facil">Chris Jensen</div> : ''}
+							{showFacil ? <div className="conversation-facil">Facil: Chris Jensen</div> : ''}
 						</div>
 						{hasPassed && !isProcessed ? (
-							<Button className="button-small button-secondary" href={processUrl}>process</Button>
+							<Button className="button-small button-secondary" href={processUrl}>{processLabel}</Button>
 						) : ''}
 					</Link>
 				</li>
@@ -141,6 +142,7 @@
 		}
 
 		isTeam() {
+			return false;
 			return this.props.getValues().show === 'team';
 		}
 
@@ -152,7 +154,9 @@
 		render() {
 			const now = dayjs();
 			const { conversations, filter, loading, error } = this.state;
-			const isTeam = this.isTeam();
+			const isTeam = this.props.getValues().show === 'team';
+
+			// this.isTeam();
 
 			if (loading) return <Spinner />;
 

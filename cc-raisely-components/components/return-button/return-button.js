@@ -15,7 +15,7 @@
  *
  * // Then at /conversations/create
  * render() {
- * 		return <ReturnButton saveLabel="Save Booking" />
+ * 		return <ReturnButton {...props} saveLabel="Save Booking" />
  * }
  * // Generates a button that when clicked goes to /conversations/list?done=booked
  *
@@ -119,7 +119,7 @@
 		}
 
 		render() {
-			const values = this.props.getValues();
+			const values = {...this.props, ...this.props.getValues() };
 			const { backLabel, saveLabel, saveTheme, backTheme } = values;
 			const defaultUrl = values.defaultUrl || '/dashboards';
 			const query = getQuery(get(this.props, 'router.location.search'));

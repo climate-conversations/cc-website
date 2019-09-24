@@ -2,15 +2,18 @@
 	const { get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
-	const { getData, getQuery } = api;
+	const { getData } = api;
 
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const WhatsappButton = RaiselyComponents.import('whatsapp-button');
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 
 	class Guest extends React.Component {
 		guestName = () => {
-			const { preferredName, fullName } = get(this.props, 'guest', {});
-			return fullName || preferredName;
+			// eslint-disable-next-line object-curly-newline
+			const { preferredName, fullName, phoneNumber } = get(this.props, 'guest', {});
+			return fullName || preferredName || phoneNumber || '(anonymous)';
 		}
 
 		legend = (s) => {
@@ -35,14 +38,16 @@
 			];
 
 			return (
-				<li key={guest.uuid}>
+				<li key={guest.uuid} className="list__item">
 					<div className="conversation-guest-list__name">{this.guestName()}</div>
 					<div className="conversation-guest-list__email">{guest.email}</div>
-					<WhatsappButton phone={guest.phoneNumber} label={guest.phoneNumber} />
-					{symbols.map(this.legend)}
-					<RaiselyButton recordType="person" uuid={guest.uuid} />
+					<div className="conversation-guest-list__legend">{symbols.map(this.legend)}</div>
+					<div className="conversation-guest-list__buttons">
+						<WhatsappButton phone={guest.phoneNumber} />
+						<RaiselyButton recordType="user" uuid={guest.uuid} />
+					</div>
 				</li>
-			)
+			);
 		}
 	}
 
@@ -64,9 +69,8 @@
 		}
 
 		async load() {
-			const eventUuid = this.props.conversation ||
-				get(this.props, 'match.params.event') ||
-				getQuery(get(this.props, 'router.location.search')).event;
+			if (!Conversation) Conversation = ConversationRef().html;
+			const eventUuid = Conversation.getUuid(this.props);
 
 			// We must be creating a new conversation
 			if (!eventUuid) {
@@ -93,7 +97,7 @@
 
 			return (
 				<div className="conversation-guest-list-wrapper">
-					<ul className="conversation-guest-list">
+					<ul className="conversation-guest-list list__wrapper">
 						{guests.map(guest => <Guest {...this.props} guest={guest} />)}
 					</ul>
 					<Button>Email all Guests</Button>
