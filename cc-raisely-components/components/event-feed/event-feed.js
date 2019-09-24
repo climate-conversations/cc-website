@@ -3,13 +3,22 @@
 	const { getData } = api;
 	const { dayjs } = RaiselyComponents.Common;
 
+	const EventEditRef = RaiselyComponents.import('event-edit', { asRaw: true });
+	let EventEdit;
+
 	function EventCard(props) {
 		const { event } = props;
 		const defaultPhoto = 'https://raisely-images.imgix.net/climate-conversations-2019/uploads/conversation-1-jpg-bc7064.jpg';
 
-		const startAt = dayjs(event.startAt);
-		const date = startAt.format('dddd, MMMM D');
-		const time = startAt.format('h:mm a');
+		if (!EventEdit) EventEdit = EventEditRef().html;
+
+		let date = '';
+		let time = '';
+		if (event.startAt) {
+			const startAt = EventEdit.inSingaporeTime(dayjs(event.startAt));
+			date = startAt.format('dddd, MMMM D');
+			time = startAt.format('h:mm a');
+		}
 
 		const photo = event.photoUrl || defaultPhoto;
 		const link = event.public.signupUrl || `/events/${event.path || event.uuid}/view`;
@@ -55,15 +64,20 @@
 			const now = new Date().toISOString();
 			const { show } = this.props.getValues();
 
-			const searchKey = show === 'past' ? 'startAtLT' : 'startAtGTE';
+			try {
+				const searchKey = show === 'past' ? 'startAtLT' : 'startAtGTE';
 
-			const events = await getData(api.events.getAll({
-				query: {
-					[searchKey]: now,
-				},
-			}));
+				const events = await getData(api.events.getAll({
+					query: {
+						[searchKey]: now,
+					},
+				}));
 
-			this.setState({ loading: false, events });
+				this.setState({ loading: false, events });
+			} catch (e) {
+				console.error(e);
+				this.setState({ loading: false, error: 'Unable to load events' });
+			}
 		}
 
 		render() {
