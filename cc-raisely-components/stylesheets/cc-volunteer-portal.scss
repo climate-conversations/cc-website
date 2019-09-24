@@ -1706,11 +1706,135 @@ ul.list__wrapper, .list__wrapper ul {
 }
 
 .rounded-corners {
+   border-radius: $borderRadius;
   .col__container {
      border-radius: $borderRadius;
   }
 }
 
+.next--action__wrapper {
+  background: white;
+  border-radius: $borderRadius;
+  color: black;
+  padding: 1em;
+}
+
 .dropdown .dropdown__menu { display: none; }
 .dropdown:after { display: none !important; }
 .header__account .dropdown__menu__caret { display: none; }
+
+.header__account .profile-image__photo {
+  background-image: url("https://raisely-images.imgix.net/cc-volunteer-portal/uploads/whatsapp-group-icon-pri-06-transparent-png-099e31.png") !important;
+}
+
+.profile-image__photo[style*="default-profile.svg"]::after {
+  background: none;
+}
+
+.contact--form {
+  border-radius: $borderRadius;
+	border: 2px solid;
+  
+  &__recipients, &__content {
+    @include respond-to('min-tablet') {
+      width: 50%;
+      display: inline-block;
+    }
+
+    .custom-form-wrapper {
+      @include respond-to('min-tablet') {
+        .custom-form__step-header,
+        form {
+          width: 100%;
+        }
+      }
+	    .custom-form {
+        border: none;
+        .custom-form__stages {
+          display: none;
+        }
+      }
+      
+    }
+  }
+}
+
+.conversation-guest-list {
+  &__name, &__email {
+    margin-left: 1rem;
+    flex: 2 2;
+  }
+  &__legend { 
+    flex: 0 0;
+  }
+  &__buttons {
+    flex: initial;
+    margin-right: 1rem;
+  }
+}
+
+.record-display__field {
+  display: flex;
+  flex-direction: row;
+  .record-display__label {
+    flex: 1 1;
+  }
+  .record-display__value {
+    flex: 2 2;
+  }
+}
+
+.view-conversation {
+  @include respond-to('min-tablet') {
+    &__info {
+      width: 70%;
+    	display: inline-block;
+    }
+    &__buttons {
+      width: 30%;
+    	display: inline-block;
+      a.button {
+        display: block;
+        margin-top: 1rem;
+      }
+    }
+  }
+}
+
+.host--report {
+  &__action-item,
+  &__attitude-item {
+    font-size: 1.3rem;
+    &-number {
+      width: 20%;
+      text-align: right;
+      display: inline-block;
+      font-weight: bold;
+      padding-right: 0.25em;
+    }
+    &-label {
+      display: inline-block;
+      width: 70%;
+      padding-top: 0.3rem;
+      margin-bottom: 0.5rem;
+    }
+    &-sublabel {
+      font-size: 1rem;
+      font-style: italic;
+    }
+  }
+}
+
+.host--report {
+  &__attitude-item {
+    font-size: 1.3rem;
+    &-number {
+      width: 10%;
+    }
+}
+}
+
+.conversation-facil {
+  font-size: 1rem;
+  font-style: italic;
+}
