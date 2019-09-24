@@ -25,54 +25,54 @@ describe('proxy', () => {
 	};
 	let raiselyRequest;
 
-	// describe('POST /users', () => {
-	// 	before(() => {
-	// 		results.res = new MockResponse();
-	// 		results.req = new MockRequest({
-	// 			method: 'POST',
-	// 			url: '/proxy/users',
-	// 			headers: {
-	// 				Origin: 'https://climateconversations.raisely.com',
-	// 			},
-	// 			body: {
-	// 				data: mockUser,
-	// 			},
-	// 		});
-	// 		nock('https://api.raisely.com')
-	// 			.post('/v3/users')
-	// 			.reply(200, function userRequest(uri, body) {
-	// 				raiselyRequest = {
-	// 					body,
-	// 					headers: this.req.headers,
-	// 				};
-	// 				return { data: mockUser };
-	// 			});
+	describe('POST /users', () => {
+		before(() => {
+			results.res = new MockResponse();
+			results.req = new MockRequest({
+				method: 'POST',
+				url: '/proxy/users',
+				headers: {
+					Origin: 'https://climateconversations.raisely.com',
+				},
+				body: {
+					data: mockUser,
+				},
+			});
+			nock('https://api.raisely.com')
+				.post('/v3/users')
+				.reply(200, function userRequest(uri, body) {
+					raiselyRequest = {
+						body,
+						headers: this.req.headers,
+					};
+					return { data: mockUser };
+				});
 
-	// 		// Run the controller
-	// 		return proxy(results.req, results.res);
-	// 	});
+			// Run the controller
+			return proxy(results.req, results.res);
+		});
 
-	// 	statusOk(results);
-	// 	it('sends headers to raisely', () => {
-	// 		expect(raiselyRequest.headers).to.containSubset({
-	// 			'x-original-user': '(general public)',
-	// 			'x-cc-proxy-url': '/proxy/users',
-	// 			origin: 'https://climateconversations.raisely.com',
-	// 			'user-agent': 'Climate Conversations Proxy',
-	// 			authorization: 'Bearer MOCK_APP_TOKEN',
-	// 		});
-	// 	});
-	// 	it('passes through correct headers', () => {
-	// 		expect(results.res.headers).to.containSubset({
-	// 			'Access-Control-Allow-Credentials': 'true',
-	// 			'Access-Control-Allow-Origin': 'https://climateconversations.raisely.com',
-	// 		});
-	// 	});
-	// 	it('forwards the body', () => {
-	// 		expect(raiselyRequest.body).to.eql(results.req.body);
-	// 	});
-	// 	itReturnsMinimalUser(results);
-	// });
+		statusOk(results);
+		it('sends headers to raisely', () => {
+			expect(raiselyRequest.headers).to.containSubset({
+				'x-original-user': '(general public)',
+				'x-cc-proxy-url': '/proxy/users',
+				origin: 'https://climateconversations.raisely.com',
+				'user-agent': 'Climate Conversations Proxy',
+				authorization: 'Bearer MOCK_APP_TOKEN',
+			});
+		});
+		it('passes through correct headers', () => {
+			expect(results.res.headers).to.containSubset({
+				'Access-Control-Allow-Credentials': 'true',
+				'Access-Control-Allow-Origin': 'https://climateconversations.raisely.com',
+			});
+		});
+		it('forwards the body', () => {
+			expect(raiselyRequest.body).to.eql(results.req.body);
+		});
+		itReturnsMinimalUser(results);
+	});
 
 	describe('proxies failure', () => {
 		const errorBody = {
