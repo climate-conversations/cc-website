@@ -1,39 +1,6 @@
 {
     "fields": {
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 23
-		},
-		"source": {
-            "id": "source",
-            "type": "select",
-            "label": "Get photos from",
-            "value": "all",
-            "options": [
-                {
-                    "label": "All conversations",
-                    "value": "all"
-                },
-                {
-                    "label": "Facilitators conversations",
-                    "value": "facilitator"
-                },
-                {
-                    "label": "Team conversations",
-                    "value": "team"
-                }
-            ],
-            "singular": null
-		},
-		"className": {
-            "id": "className",
-            "type": "text",
-            "label": "Class Name that contains background to change",
-            "value": "row--1",
-            "singular": null
-        },
-		"order": {
+        "order": {
             "id": "order",
             "type": "select",
             "label": "Select photos from",
@@ -53,15 +20,15 @@
                 }
             ],
             "singular": null
-		},
-		"period": {
+        },
+        "period": {
             "id": "period",
             "type": "text",
             "label": "Change photo every (seconds)",
             "value": "10",
             "singular": null
         },
-		"repeat": {
+        "repeat": {
             "id": "repeat",
             "type": "select",
             "label": "Change photo more than once?",
@@ -74,8 +41,41 @@
                 {
                     "label": "No",
                     "value": false
-				}
-			]
+                }
+            ]
+        },
+        "source": {
+            "id": "source",
+            "type": "select",
+            "label": "Get photos from",
+            "value": "all",
+            "options": [
+                {
+                    "label": "All conversations",
+                    "value": "all"
+                },
+                {
+                    "label": "Facilitators conversations",
+                    "value": "facilitator"
+                },
+                {
+                    "label": "Team conversations",
+                    "value": "team"
+                }
+            ],
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 34
+        },
+        "className": {
+            "id": "className",
+            "type": "text",
+            "label": "Class Name that contains background to change",
+            "value": "row--1",
+            "singular": null
         }
     },
     "uuid": "58ac47c0-d0be-11e9-a2f5-43272699bca1"
