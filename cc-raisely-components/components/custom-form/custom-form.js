@@ -78,7 +78,9 @@
 			const nextText = this.props.shouldSave() ?
 				'Save' : this.props.actionText || 'Next';
 
-			const { back } = this.props;
+			const { back, hideButtons } = this.props;
+
+			if (hideButtons) { return ''; }
 
 			return (
 				<div className="custom-form__navigation">
@@ -106,10 +108,10 @@
 			console.log('FormStep.render');
 			const { props } = this.props;
 			const { pageIndex, title, description } = this.props;
-			const values = this.props.values[pageIndex];
+			const values = get(this, `props.values.${pageIndex}`, {});
 			const className = `custom-form__step custom-form__step--${pageIndex + 1}`;
 			const inner = { __html: description };
-			const Description = _.isFunction(description) && description
+			const Description = description && (typeof description === 'function');
 
 			return (
 				<div className={className}>
@@ -252,7 +254,7 @@
 			}
 			recordType = singular(recordType);
 
-			if (!customFields[recordType]) throw new Error(`Unknown record type "${record}" for custom field "${sourceId}"`);
+			if (!customFields[recordType]) throw new Error(`Unknown record type "${recordType}" for custom field "${sourceId}"`);
 			const field = customFields[recordType].find(f => f.id === fieldId);
 			if (!field) throw new Error(`Cannot find custom field "${fieldId}" for custom field "${sourceId}" (Hint: you need to reload the page after adding a custom field to the campaign)`);
 
@@ -265,6 +267,7 @@
 
 		findNextStep(direction, step) {
 			if (!this.lastStep) this.lastStep = 0;
+			// eslint-disable-next-line no-param-reassign
 			if (!step && step !== 0) step = this.lastStep + direction;
 			let canShow;
 
@@ -304,6 +307,7 @@
 			// Save the last step so we know if this navigation is going backwards or forwards
 			const direction = step >= this.lastStep ? 1 : -1;
 
+			// eslint-disable-next-line no-param-reassign
 			step = this.findNextStep(direction, step);
 
 			const onNavigate = this.props.onNavigate || get(this.props, 'controller.updateStep');
@@ -332,7 +336,7 @@
 				let sourceId = field.sourceFieldId || field;
 				// Happens if sourceFieldId is '', which happens when user is building form
 				if (typeof sourceId !== 'string') sourceId = '';
-				definition = this.findField(sourceId);
+				definition = { ...this.findField(sourceId) };
 
 				// If it's an object, copy over any properties specified
 				if (field.sourceFieldId) {
@@ -362,6 +366,7 @@
 				if (description.exclude) include = description.exclude.indexOf(field) === -1;
 				if (include) fieldList.push(`interaction.${category}.${field}`);
 			});
+			console.log(`Selected interaction category fields (${category})`, fieldList);
 
 			return fieldList;
 		}
@@ -440,7 +445,7 @@
 				toUpdate[step] = { ...oldState[step], ...handleState[step] };
 			});
 
-			if (this.props.updateValues) this.props.updateValues(handleState);
+			// if (this.props.updateValues) this.props.updateValues(handleState);
 
 			return this.setState({ values: toUpdate }, proxyCallback);
 		}
@@ -527,7 +532,7 @@
 				if (ReturnButtonClass) {
 					const { getReturnUrl } = ReturnButtonClass.type;
 					finishedProps.completeRedirect = getReturnUrl(this.props, '/dashboards', true);
-					console.log(`set redirect to ${finishedProps.completeRedirect}`)
+					console.log(`set redirect to ${finishedProps.completeRedirect}`);
 				}
 			}
 
@@ -611,7 +616,7 @@
 					const dataPath = [];
 					if (field.recordType) {
 						dataPath.push(field.recordType);
-						if (field.interactionCategory) dataPath.push(field.interactionCategory);
+						if (field.interactionCategory) dataPath.push(field.interactionCategory, 'detail');
 						if (!field.core) {
 							dataPath.push(field.private ? 'private' : 'public');
 							formPath.push(field.private ? 'private' : 'public');
