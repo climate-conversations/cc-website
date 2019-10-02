@@ -1,7 +1,7 @@
 (RaiselyComponents, React) => {
 	const { api, Link, Spinner } = RaiselyComponents;
 	const { getData } = api;
-	const { dayjs } = RaiselyComponents.Common;
+	const { dayjs, get } = RaiselyComponents.Common;
 
 	const EventEditRef = RaiselyComponents.import('event-edit', { asRaw: true });
 	let EventEdit;
@@ -9,6 +9,8 @@
 	function EventCard(props) {
 		const { event } = props;
 		const defaultPhoto = 'https://raisely-images.imgix.net/climate-conversations-2019/uploads/conversation-1-jpg-bc7064.jpg';
+
+		const { show } = props.getValues();
 
 		if (!EventEdit) EventEdit = EventEditRef().html;
 
@@ -21,7 +23,7 @@
 		}
 
 		const photo = event.photoUrl || defaultPhoto;
-		const link = event.public.signupUrl || `/events/${event.path || event.uuid}/view`;
+		const link = get(event, 'public.signupUrl') || `/events/${event.path || event.uuid}/view`;
 		const edit = `/events/${event.path || event.uuid}/edit`;
 
 		return (
@@ -38,11 +40,13 @@
 							</span>
 							<span className="post__meta__date">{time}</span>
 							<div className="post__meta__description">
-								{event.public.intro}
+								{get(event, 'public.intro')}
 							</div>
 						</div>
 						<Link className="button button--cta post__link show--logged-in" href={edit} >Edit</Link>
-						<Link className="button button--primary post__link" href={link} >Sign up</Link>
+						{show !== 'past' ? (
+							<Link className="button button--primary post__link" href={link} >Sign up</Link>
+						) : ''}
 					</div>
 				</div>
 			</div>
