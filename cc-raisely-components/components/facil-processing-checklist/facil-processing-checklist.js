@@ -201,7 +201,7 @@
 				}
 				await getData(api.events.update({
 					id: conversation.uuid,
-					data: { data: pick(conversation, ['private']) },
+					data: { data: pick(conversation, ['private']), partial: true },
 				}));
 			}
 			this.setDoNext();

@@ -255,7 +255,7 @@
 				const user = await UserSaveHelper.upsertUser(data.user);
 			}
 
-			await save('interaction', data.interaction);
+			await save('interaction', data.interaction, { partial: true });
 		}
 
 		updateStep = (step, values) => {

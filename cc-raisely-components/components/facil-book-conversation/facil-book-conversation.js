@@ -263,7 +263,7 @@
 			} else {
 				const event = { ...data.event };
 				delete event.uuid;
-				record = await doApi(api.events.update({ id: data.event.uuid, data: { data: event } }));
+				record = await doApi(api.events.update({ id: data.event.uuid, data: { data: event, partial: true } }));
 			}
 
 			this.setState({ event: record });
