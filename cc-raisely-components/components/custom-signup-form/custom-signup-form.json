@@ -7,6 +7,13 @@
             "value": "",
             "singular": null
         },
+        "formName": {
+            "id": "formName",
+            "type": "text",
+            "label": "Form Name (to lookup submissions by)",
+            "value": "",
+            "singular": null
+        },
         "colour": {
             "id": "backgroundColour",
             "type": "select",
