@@ -140,7 +140,8 @@
 				})));
 			}
 
-			if (!data.event_rsvp) data.eventRsvp = {};
+			// eslint-disable-next-line camelcase
+			if (!data.event_rsvp) data.event_rsvp = {};
 			Object.assign(data.event_rsvp, {
 				userUuid: user.uuid,
 				type: 'guest',
