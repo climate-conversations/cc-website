@@ -57,7 +57,7 @@
 		 * const { rsvps, hosts, facilitators, error } = this.state;
 		 */
 		static async loadRsvps({ props, type }) {
-			let result = {};
+			const result = {};
 			try {
 				const types = type.map(t => plural(t));
 
@@ -65,7 +65,7 @@
 					get(props, 'match.params.event') ||
 					getQuery(get(props, 'router.location.search')).event;
 
-				result.rsvps = await getData(api.eventRsvps.getAll({ query: { eventUuid, private: 1 } }));
+				result.rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
 				types.forEach((key) => { result[key] = []; });
 				result.rsvps.forEach((rsvp) => {
 					// Work around an api bug
@@ -79,6 +79,12 @@
 				Object.assign(result, { error: e.message, errorObject: e });
 			}
 			return result;
+		}
+
+		static isProcessed(conversation) { return get(conversation, 'private.isProcessed'); }
+		static isReviewed(conversation) { return get(conversation, '!!private.reviewedAt'); }
+		static awaitingReview(conversation) {
+			return this.isProcessed(conversation) && !this.isReviewed(conversation);
 		}
 	};
 };
