@@ -163,7 +163,7 @@
 		buttons = (recipientCount) => {
 			const { to } = this.props;
 			const { props } = this;
-			const { launchButtonLabel } = props;
+			const { launchButtonLabel, closeModal } = props;
 			const { contactSettings, recentlySent, saving } = this.state;
 
 			const isWhatsApp = contactSettings.sendBy === 'whatsapp';
@@ -193,7 +193,11 @@
 							</Button>
 						</React.Fragment>
 					) : '' }
-					<ReturnButton {...props} saveLabel="Done" />
+					{closeModal ? (
+						<Button theme="secondary" onClick={closeModal()}>Done</Button>
+					) : (
+						<ReturnButton {...props} saveLabel="Done" />
+					)}
 				</div>
 			);
 		}
@@ -375,8 +379,8 @@
 		let { launchButtonLabel } = props;
 		const { to } = props;
 
-		function inner() {
-			return <ContactForm {...props} />;
+		function inner(closeModal) {
+			return <ContactForm {...props} closeModal={closeModal} />;
 		}
 
 		if (!to) launchButtonLabel = Spinner;
