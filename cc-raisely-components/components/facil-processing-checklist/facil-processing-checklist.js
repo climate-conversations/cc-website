@@ -6,6 +6,8 @@
 	const { dayjs, get, pick, set } = RaiselyComponents.Common;
 
 	const ReturnButton = RaiselyComponents.import('return-button');
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 
 	/** NOTE: See the checklist definition below which defines items on the checklist */
 
@@ -256,8 +258,8 @@
 			const startAt = get(conversation, 'startAt');
 			const name = get(conversation, 'name', '...');
 
-			const isProcessed = get(conversation, 'private.isProcessed');
-			const awaitingReview = isProcessed && !get(conversation, 'private.reviewedAt');
+			const isProcessed = Conversation.isProcessed(conversation);
+			const awaitingReview = Conversation.awaitingReview(conversation);
 			const displayDate = startAt ? dayjs(startAt).format('DD MMM YYYY') : '';
 
 			return (
@@ -284,7 +286,6 @@
 							<Spinner className="spinner" />
 						</div>
 					) : ''}
-					<ReturnButton {...props} backTheme="primary" backLabel="Return to Dashboard" />
 				</div>
 			);
 		}
