@@ -1,5 +1,5 @@
 (RaiselyComponents, React) => {
-	const { Icon } = RaiselyComponents.Atoms;
+	const { Button } = RaiselyComponents.Atoms;
 
 	function normalizePhoneNumber(phone) {
 		let cleanPhone = phone.replace(/[^0-9]+/g, '');
@@ -21,20 +21,25 @@
 		}
 
 		render() {
-			const { Button } = RaiselyComponents.Atoms;
-
 			const { message, phone } = this.props;
 			let url;
-			let { label } = this.props;
-			if (typeof label !== 'string') label = <Icon name="perm_phone_msg" />;
+			const { label } = this.props;
 
 			if (phone) {
 				url = this.constructor.generateUrl(phone, message);
 			}
+
+			const style = {};
+			const whatsAppLogo = 'https://raisely-images.imgix.net/switchon/uploads/580-b-57-fcd-9996-e-24-bc-43-c-543-png.png';
+			if (!label) style.background = `url(${whatsAppLogo})`;
+
 			return (
-				<Button disabled={!phone} href={url} className="button--whatsapp">
-					{/* {label} */}
-					<Icon name="perm_phone_msg" size="small" />
+				<Button
+					disabled={!phone}
+					href={url}
+					style={style}
+					className="button--whatsapp">
+					{label || ''}
 				</Button>
 			);
 		}
