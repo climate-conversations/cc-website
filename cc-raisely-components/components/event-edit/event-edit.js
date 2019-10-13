@@ -68,7 +68,7 @@
 				{ id: 'startTime', type: 'text', core: true, default: '19:00', recordType: 'event', label: 'Start Time' },
 				'event.endAt',
 				{ id: 'endTime', type: 'text', core: true, default: '21:00', recordType: 'event', label: 'End Time' },
-				'event.additionalDates',
+				'event.multiDates',
 				'event.venue', 'event.address1', 'event.address2', 'event.postcode', 'event.description',
 				'event.intro', 'event.isPrivate',
 				{
