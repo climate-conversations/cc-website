@@ -1,6 +1,6 @@
 (RaiselyComponents, React) => {
 	const { Spinner } = RaiselyComponents;
-	const { dayjs, get } = RaiselyComponents.Common;
+	const { dayjs, get, startCase } = RaiselyComponents.Common;
 	const renderHtml = RaiselyComponents.Common.htmr;
 	const { api } = RaiselyComponents;
 
@@ -24,7 +24,7 @@
 
 		switch (field.type) {
 			case 'select':
-				return field.options[value];
+				return field.options[value] || value;
 			case 'checkbox':
 				return value ? 'Yes' : 'No';
 			case 'rich-description':
@@ -33,6 +33,7 @@
 			case 'date':
 				return dayjs(value).format(field.format);
 			default:
+				if (value === null || (typeof value === 'undefined')) return 'N/A';
 				return value;
 		}
 	}
@@ -54,8 +55,6 @@
 		componentDidMount() {
 			this.load()
 				.catch(e => console.error(e));
-			// eslint-disable-next-line react/no-did-mount-set-state
-			this.setFields();
 		}
 		componentDidUpdate() {
 			const newValues = get(this, 'props.values', {});
@@ -85,6 +84,41 @@
 			this.setState({ fields: resolvedFields });
 		}
 
+		// eslint-disable-next-line class-methods-use-this
+		generateField(recordType, id, isPrivate) {
+			return {
+				id,
+				recordType,
+				private: isPrivate,
+				label: startCase(`${recordType} ${id}`),
+			};
+		}
+
+		explodeModel(model) {
+			const { values } = this.state;
+			const record = values[model];
+			const recordType = singular(model);
+
+			const customFields = get(this.props, `global.campaign.config.customFields.${recordType}`, [])
+				.map(field => ({ ...field }));
+
+			const fieldIds = customFields.map(field => `${field.recordType}.${field.id}`);
+
+			// Append any unknown public fields
+			Object.keys(record.public || {}).forEach((key) => {
+				if (!fieldIds.includes(`${recordType}.${key}`)) {
+					customFields.push(this.generateField(recordType, key, false));
+				}
+			});
+			Object.keys(record.private || {}).forEach((key) => {
+				if (!fieldIds.includes(`${recordType}.${key}`)) {
+					customFields.push(this.generateField(recordType, key, true));
+				}
+			});
+
+			return customFields;
+		}
+
 		/**
 		 * Find a field by a recordType.fieldId identifier
 		 * @param {string} sourceId id of the field (recordType.fieldId)
@@ -95,8 +129,12 @@
 			if (!this.props.global) {
 				throw new Error('Developer, please pass do {...this.props}');
 			}
-			const customFields = get(this.props, 'global.campaign.config.customFields', {});
 			const fieldSources = sourceId.split('.');
+			if (fieldSources[1] === 'all') {
+				return this.explodeModel(fieldSources[0]);
+			}
+
+			const customFields = get(this.props, 'global.campaign.config.customFields', {});
 			if (fieldSources.length !== 2) throw new Error(`Badly specified field "${sourceId}". Should be in the form recordType.field`);
 			const [record, fieldId] = fieldSources;
 			const recordType = singular(record);
@@ -147,23 +185,31 @@
 			console.log('CustomForm.resolveFields');
 			if (!(fields && Array.isArray(fields))) return null;
 
-			const resolvedFields = fields.map((field, fieldIndex) => {
+			const resolvedFields = [];
+
+			fields.forEach((field, fieldIndex) => {
 				try {
-					return this.prepareField(field);
+					const foundField = this.prepareField(field);
+					// If the field was exploded to many fields
+					if (Array.isArray(foundField)) {
+						resolvedFields.push(...foundField.map(f => this.prepareField(f)));
+					} else {
+						resolvedFields.push(foundField);
+					}
 				} catch (e) {
 					console.error(e);
-					return {
+					resolvedFields.push({
 						id: `error-${fieldIndex}`,
 						type: 'rich-description',
 						default: `<p ${errorStyle}>Error: ${e.message}</p>`,
-					};
+					});
 				}
 			});
 
 			return resolvedFields;
 		}
 
-		async load() {
+		load = async () => {
 			console.log('DisplayFields.load');
 			const { associations, models } = this.getConfig();
 
@@ -177,6 +223,8 @@
 			try {
 				const modelsToFetch = models
 					.filter(model => !valueKeys.includes(model));
+
+				console.log('Loading: ', models, 'received: ', valueKeys)
 
 				if (modelsToFetch.length) {
 					Object.assign(values, await api.quickLoad({
@@ -207,12 +255,12 @@
 				await Promise.all(loaded);
 			}
 
-			this.setState({ values, loading: false });
+			this.setState({ values, loading: false }, this.setFields);
 		}
 
 		render() {
-			const { loading, error } = this.state;
-			const { values, fields } = this.state;
+			// eslint-disable-next-line object-curly-newline
+			const { loading, error, values, fields } = this.state;
 
 			if (!get(this.props, 'global.campaign')) {
 				console.error(`ERROR: ${this.constructor.name} is missing this.props.global.campaign`);
