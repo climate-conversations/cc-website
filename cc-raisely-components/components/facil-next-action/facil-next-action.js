@@ -44,7 +44,7 @@
 					.filter(event => dayjs(event.startAt).isAfter(now));
 				const overdueConversations = conversations
 					.filter(event => dayjs(event.startAt).isBefore(now))
-					.filter(event => !event.private.processedAt);
+					.filter(event => !get(event, 'private.processedAt'));
 
 				this.setState(
 					// eslint-disable-next-line object-curly-newline
