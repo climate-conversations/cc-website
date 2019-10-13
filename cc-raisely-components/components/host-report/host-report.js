@@ -30,7 +30,7 @@
 		fn: ({ pre, post }) => crossed(pre, post, 'agency', HIGH_LEVEL),
 	}, {
 		label: 'people would highly recommend Climate Conversations',
-		fn: ({ post }) => get(post, 'private.recommend') >= HIGH_LEVEL,
+		fn: ({ post }) => get(post, 'detail.private.recommend') >= HIGH_LEVEL,
 	}];
 
 	/**
@@ -45,7 +45,7 @@
 		if (!fn) fn = value => value;
 
 		return array.reduce((total, current) =>
-			(fn(field ? get(current, ['private', field]) : current) ? total + 1 : total), 0);
+			(fn(field ? get(current, ['detail', 'private', field]) : current) ? total + 1 : total), 0);
 	}
 
 	/**
@@ -53,10 +53,10 @@
 	 */
 	function increased(pre, post, field) {
 		// Don't false positive if field is missing
-		if (get(pre, ['private', field], 'MISSING') === 'MISSING') return false;
+		if (get(pre, ['detail', 'private', field], 'MISSING') === 'MISSING') return false;
 
-		const before = get(pre, ['private', field], 'MISSING');
-		const after = get(post, ['private', field], 0);
+		const before = get(pre, ['detail', 'private', field], 'MISSING');
+		const after = get(post, ['detail', 'private', field], 0);
 
 		return before < after;
 	}
@@ -72,8 +72,8 @@
 		// Don't false positive if field is missing
 		if (get(pre, ['private', field], 'MISSING') === 'MISSING') return false;
 
-		const before = get(pre, ['private', field], 'MISSING');
-		const after = get(post, ['private', field], 0);
+		const before = get(pre, ['detail', 'private', field], 'MISSING');
+		const after = get(post, ['detail', 'private', field], 0);
 
 		return (before < threshold) && (after >= threshold);
 	}
@@ -99,7 +99,7 @@
 
 				const promises = ['cc-pre-survey-2019', 'cc-post-survey-2019'].map(category =>
 					getData(api.interactions.getAll({
-						query: category,
+						query: { category, private: 1 },
 						recordUuid: eventUuid,
 					})));
 				promises.push(eventPromise, rsvpPromise);
@@ -200,23 +200,16 @@ ${url}`;
 					.filter(a => a.value);
 			}
 
-			actions = [
-				{ label: 'hosts', value: 2 },
-				{ label: 'facilitators', value: 2 },
-				{ label: 'donors', value: 3 },
-			];
-			attitudes = attitudeConditions.map((a, i) => { a.value = i % 3 + 1; return a; });
-
 			if (error) {
 				return <div className="error">Could not load host report: ${error}</div>;
 			}
 
-			const name = get(conversation, 'name', '');
+			const name = get(conversation, 'event.name', '');
 
 			return (
 				<div className="host--report__wrapper">
 					<div className="host--report__header">
-						<div className="host--report__header">{name}</div>
+						<h1 className="host--report__header">{name}</h1>
 						<h3 className="">Thank you for hosting a Climate Conversation</h3>
 					</div>
 					<div className="host--report__action">
