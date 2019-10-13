@@ -6,6 +6,8 @@
 	const { dayjs, get, pick, set } = RaiselyComponents.Common;
 
 	const ReturnButton = RaiselyComponents.import('return-button');
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 
 	/** NOTE: See the checklist definition below which defines items on the checklist */
 
@@ -14,7 +16,6 @@
 		const hasGuest = !!rsvps.find(r => r.type === 'guest');
 		return hasGuest;
 	}
-	const hasPhoto = conversation => !!get(conversation, 'private.photoUrl');
 	async function hasReflection(conversation, rsvps) {
 		const facilitators = ['facilitator', 'co-facilitator'];
 		const reflections = await getData(api.interactions.getAll({
@@ -45,21 +46,28 @@
 
 	/** CHECKLIST DEFINITION */
 	const checklist = [
-		{ id: 'review-reflecton', label: 'Review facilitators Reflection', href: '/conversations/:event/reflection' },
-		{ id: 'donation-review', label: 'Review Cash Donations', href: '/conversations/:event/reconcile-donations' },
-		{ id: 'review-stats', label: 'Review Conversation Outcomes', href: '/conversations/:event/photo/upload' },
+		{ id: 'review-reflection', label: 'Review facilitators Reflection', href: '/conversations/:event/reflections/view', enable: hasReflection },
+		{ id: 'donation-review', label: 'Review Cash Donations', href: '/conversations/:event/reconcile-donations', enable: donationsReported },
+		{ id: 'review-stats', label: 'Review Conversation Outcomes', href: '/conversations/:event/review/outcomes', enable: atLeastOneGuest },
 	];
 	const checklistHelp = {
 		'review-reflection': 'Check and see how your facilitator is feeling about the conversation and if you need to get in touch',
 		'donation-review': 'Help us keep good records of our cash donations by checking the report submitted',
 		'review-stats': 'See what the facilitator achieved in this conversation',
 	};
+	const checklistDisabled = {
+		'review-reflection': 'Facilitator has not completed their reflection yet',
+		'donation-review': 'Facilitator has not entered donations yet',
+		'review-stats': 'Facilitator has not entered any guest details yet',
+	}
 
 	function CheckListItem({ item }) {
 		// eslint-disable-next-line object-curly-newline
-		const { label, isDone, href, help } = item;
+		const { label, isDone, href, help, isEnabled, id } = item;
 
-		const className = `checklist--item ${isDone ? 'done' : ''}`;
+		const className = `checklist--item ${isDone ? 'done' : ''} ${isEnabled ? '' : 'disabled'}`;
+
+		const helpText = isEnabled ? help : checklistDisabled[id];
 
 		return (
 			<li className={className}>
@@ -67,9 +75,13 @@
 					name="done"
 					href={href}
 				/>
-				<Link href={href}>{label}</Link>
-				{help ? (
-					<div className="checklist--item__help">{help}</div>
+				{ isEnabled ? (
+					<Link href={href}>{label}</Link>
+				) : (
+					<p className="checklist--item__disabled">{label}</p>
+				)}
+				{helpText ? (
+					<div className="checklist--item__help">{helpText}</div>
 				) : ''}
 			</li>
 		);
@@ -89,7 +101,7 @@
 		}
 
 		getCompletedSteps = conversation =>
-			get(conversation, 'private.completedSteps', '').split(';').sort();
+			get(conversation, 'private.ftlCompletedSteps', '').split(';').sort();
 
 		/**
 		 * Display help hint for just the next item to do
@@ -152,7 +164,10 @@
 			// Update any if they are now done
 			await Promise.all(checklist.map(async (item) => {
 				if (!completedSteps.includes(item.id)) {
-					if (item.done) {
+					if (item.enable) {
+						// eslint-disable-next-line no-param-reassign
+						item.isEnabled = await item.enable(conversation, rsvps);
+					} else if (item.done) {
 						try {
 							// eslint-disable-next-line no-param-reassign
 							item.isDone = await item.done(conversation, rsvps);
@@ -183,15 +198,15 @@
 			const hasChanged = (stepsDoneNow !== completedSteps.join(';'));
 
 			if (hasChanged) {
-				set(conversation, 'private.completedSteps', stepsDoneNow);
+				set(conversation, 'private.ftlCompletedSteps', stepsDoneNow);
 				const allDone = checklist.reduce((done, i) => (i.isDone && done), true);
 				if (allDone) {
-					set(conversation, 'private.isProcessed', true);
-					set(conversation, 'private.processedAt', new Date().toISOString());
+					set(conversation, 'private.reviewedBy', get(global, 'user.uuid'));
+					set(conversation, 'private.reviewedAt', new Date().toISOString());
 				}
 				await getData(api.events.update({
 					id: conversation.uuid,
-					data: { data: pick(conversation, ['private']) },
+					data: { data: pick(conversation, ['private']), partial: true },
 				}));
 			}
 			this.setDoNext();
@@ -241,13 +256,13 @@
 		}
 
 		render() {
-			const { props } = this;
+			if (!Conversation) Conversation = ConversationRef().html;
+
 			const { error, loading, conversation } = this.state;
 			const startAt = get(conversation, 'startAt');
 			const name = get(conversation, 'name', '...');
 
-			const isProcessed = get(conversation, 'private.isProcessed');
-			const awaitingReview = isProcessed && !get(conversation, 'private.reviewedAt');
+			const isProcessed = Conversation.isProcessed(conversation);
 			const displayDate = startAt ? dayjs(startAt).format('DD MMM YYYY') : '';
 
 			return (
@@ -271,7 +286,6 @@
 							<Spinner className="spinner" />
 						</div>
 					) : ''}
-					<ReturnButton {...props} backTheme="primary" backLabel="Return to Dashboard" />
 				</div>
 			);
 		}
