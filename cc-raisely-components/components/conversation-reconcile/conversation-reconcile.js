@@ -3,8 +3,10 @@
 	const { displayCurrency, get, kebabCase, momentjs } = RaiselyComponents.Common;
 	const { getData, save } = RaiselyComponents.api;
 	const { Button } = RaiselyComponents.Atoms;
+	const { Spinner } = RaiselyComponents;
 
-	const Conversation = RaiselyComponents.import('conversation', { asRaw: true });
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const WhatsappButton = RaiselyComponents.import('whatsapp-button');
@@ -26,14 +28,27 @@
 	const formSteps = [{ fields }];
 
 	return class ReconcileConversation extends React.Component {
-		state = {};
+		state = { step: 0, loading: true };
 
 		componentDidMount() {
+			this.initState();
+		}
+
+		async initState() {
+			if (!Conversation) Conversation = ConversationRef().html;
 			const { props } = this;
-			Conversation.loadEvent({ props, private: 1 })
-				.then(this.setState);
-			Conversation.loadRsvps({ props, type: ['facilitator', 'guest'] })
-				.then(this.setState);
+			try {
+				await Promise.all([
+					Conversation.loadConversation({ props, private: 1 })
+						.then(values => this.setState(values)),
+					Conversation.loadRsvps({ props, type: ['facilitator', 'guest'] })
+						.then(values => this.setState(values)),
+				]);
+				this.setState({ loading: false });
+			} catch (e) {
+				console.error(e);
+				this.setState({ loading: false, error: e.message });
+			}
 		}
 
 		next = () => {
@@ -42,7 +57,7 @@
 			do {
 				step += 1;
 				canShow = !steps[step].show || steps[step](this.state);
-			} while ((!canShow) && (step < steps.length - 1));
+			} while ((!canShow) && (step < (steps.length - 1)));
 			this.setState({ step });
 		}
 
@@ -54,7 +69,7 @@
 		}
 
 		pictureConfirmationStep() {
-			const { step } = steps[this.state.step];
+			const step = steps[this.state.step];
 			const { id, valueField, imageField } = step;
 			const className = kebabCase(id);
 
@@ -64,7 +79,7 @@
 			return (
 				<div className={`reconcile--${className}`}>
 					<img href={url} alt="" />
-					<p>Is the amount shown in the image ${value}?</p>
+					<p>Is the amount shown in the image {value}?</p>
 					<Button onClick={() => this.imageChecked(false)}>No</Button>
 					<Button onClick={() => this.imageChecked(true)}>Yes</Button>
 				</div>
@@ -176,7 +191,19 @@ ${close}`;
 		}
 
 		render() {
-			const { error, step } = this.state;
+			const { error, step, loading } = this.state;
+			const { props } = this;
+
+			if (loading) return <Spinner />;
+
+			if (error) {
+				return (
+					<div className="reconcile--notes">
+						<p className="error">{error}</p>
+					</div>
+				);
+			}
+
 			const amounts = {};
 			amountFields.forEach((key) => {
 				amounts[key] = displayCurrency(get(this.state, `conversation.private.${key}`, 0), 'SGD');
@@ -186,14 +213,6 @@ ${close}`;
 				if (last === true || last === current) return current;
 				return false;
 			}, true);
-
-			if (error) {
-				return (
-					<div className="reconcile--notes">
-						<p className="error">{error}</p>
-					</div>
-				);
-			}
 
 			return (
 				<div className="conversation--reconcile__wrapper">
@@ -211,7 +230,7 @@ ${close}`;
 					{step < 2 ?
 						this.pictureConfirmationStep() :
 						this.reconcileStep({ amounts, inconsistent })}
-					<ReturnButton backLabel="Go back" />
+					<ReturnButton {...props} backLabel="Go back" />
 				</div>
 			);
 		}
