@@ -68,16 +68,17 @@
 			const now = new Date().toISOString();
 			const { show } = this.props.getValues();
 
+			console.log(`Event Feed loading (${show})...`);
+
 			try {
 				const searchKey = show === 'past' ? 'startAtLT' : 'startAtGTE';
 
 				const events = await getData(api.events.getAll({
-					query: {
-						[searchKey]: now,
-					},
+					query: { [searchKey]: now },
 				}));
 
 				this.setState({ loading: false, events });
+				console.log(`Event feed loaded (${show})`, events);
 			} catch (e) {
 				console.error(e);
 				this.setState({ loading: false, error: 'Unable to load events' });
