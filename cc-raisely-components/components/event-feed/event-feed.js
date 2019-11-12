@@ -21,9 +21,15 @@
 			date = startAt.format('dddd, MMMM D');
 			time = startAt.format('h:mm a');
 		}
+		const multiDates = get(event, 'public.multiDates');
 
 		const photo = event.photoUrl || defaultPhoto;
-		const link = get(event, 'public.signupUrl') || `/events/${event.path || event.uuid}/view`;
+		const link = { href: get(event, 'public.signupUrl') };
+		if (link.href) {
+			link.target = '_blank';
+		} else {
+			link.href = `/events/${event.path || event.uuid}/view`;
+		}
 		const edit = `/events/${event.path || event.uuid}/edit`;
 
 		return (
@@ -33,19 +39,27 @@
 						<img src={photo} alt="" />
 					</div>
 					<div className="post__wrapper">
-						<h4 className="post__title"><Link href={link}>{event.name}</Link></h4>
+						<h4 className="post__title"><Link {...link}>{event.name}</Link></h4>
 						<div className="post__meta">
-							<span className="post__meta__author">
-								{date}
-							</span>
-							<span className="post__meta__date">{time}</span>
+							{multiDates ? (
+								<span className="post__meta__author">
+									{multiDates}
+								</span>
+							) : (
+								<React.Fragment>
+									<span className="post__meta__author">
+										{date}
+									</span>
+									<span className="post__meta__date">{time}</span>
+								</React.Fragment>
+							)}
 							<div className="post__meta__description">
 								{get(event, 'public.intro')}
 							</div>
 						</div>
-						<Link className="button button--cta post__link show--logged-in" href={edit} >Edit</Link>
+						<Link className="button button--cta post__link show--logged-in" href={edit}>Edit</Link>
 						{show !== 'past' ? (
-							<Link className="button button--primary post__link" href={link} >Sign up</Link>
+							<Link className="button button--primary post__link" {...link}>Sign up</Link>
 						) : ''}
 					</div>
 				</div>
