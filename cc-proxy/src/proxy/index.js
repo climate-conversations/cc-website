@@ -1,12 +1,10 @@
 const { authorize } = require('./permissions');
 const raisely = require('../raiselyRequest');
 
-module.exports = function proxy(req) {
-	// TODO Authenticate user
-	// TODO Load user tags
+module.exports = async function proxy(req) {
 	const path = req.originalUrl;
 
-	const rule = authorize(req, path);
+	const rule = await authorize(req, path);
 
 	const options = {
 		path,

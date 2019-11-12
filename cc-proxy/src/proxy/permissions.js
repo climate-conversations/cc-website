@@ -1,11 +1,12 @@
+const _ = require('lodash');
 const RestError = require('../restError');
 
 const { minimalUser } = require('./transforms');
-const { onlyUsers, isUserAssignment, isAssignedUser } = require('./conditions');
+const { searchUsers, isUserAssignment, isAssignedUser } = require('./conditions');
+const AUTHENTICATION_TTL = 10 * 60 * 1000;
 
 /**
  * This lists end points that may be escalated to higher privileges
- * The keys are of the form METHOD /path
  * The object values are
  * tags - A list of tags to be matched on the user to allow privilege escalation
  * roles - A list of roles to be matched on the user to allow privilege escalation
@@ -48,15 +49,57 @@ const escalations = [{
 	// path: '/search',
 	tags: ['facilitator', 'team-leader'],
 	// Only allow search for user records
-	condition: onlyUsers,
+	condition: searchUsers,
 	// Transform the results to be the minimum attributes needed on the users
 	transform: minimalUser,
 }];
 
-function authorize(req, path) {
-	const escalation = escalations.find(e => e.path === path && e.method === req.method);
+/**
+ * Get a users roles and tags for use in authentication
+ * @param {} req
+ */
+async function getTagsAndRoles(req) {
+	const bearer = req.get('Authorization')
+	if (!bearer) return { tags: [], roles: [] };
 
-	if (!escalation) {
+	const [prefix, token] = bearer.split(' ');
+	if (((prefix || '').toLowerCase() !== 'bearer') || !token) {
+		throw new RestError({
+			path,
+			status: 400,
+			message: 'Authentication header is malformed',
+			code: 'malformed',
+		});
+	}
+
+	const opt = { cacheKey: token, cacheTTL: AUTHENTICATION_TTL };
+	const [authentication, user] = Promise.all([
+		raiselyRequest({ ...opt, path: '/authenticate', token }, req),
+		raiselyRequest({ ...opt, path: '/users/me?private=1', token }, req),
+	]);
+
+	return {
+		tags: _.get(user, 'body.tags', []).map(t => t.path),
+		roles: _.get(authentication, 'roles', []),
+	}
+}
+
+async function authorize(req, path) {
+	const { tags, roles } = await getTagsAndRoles(req);
+
+	const escalation = escalations.find(e => {
+		const isMatch = e.path === path && e.method === req.method;
+		if (e.tags) isMatch = pathMatch && _.intersection(e.tags, tags).length;
+		if (e.roles) isMatch = pathMatch && _.intersection(e.roles, roles).length;
+		return isMatch;
+	});
+
+	let notAllowed = true;
+	if (_.get(escalation, 'condition')) {
+		nowAllowed = !await escalation.condition(req);
+	}
+
+	if (!escalation || notAllowed) {
 		throw new RestError({
 			path,
 			status: 403,
