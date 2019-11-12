@@ -10,8 +10,10 @@
 	const UserSelect = RaiselyComponents.import('user-select');
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const Messenger = RaiselyComponents.import('message-send-and-save');
-	const ReturnButton = RaiselyComponents.import('return-button', { asRaw: true });
-	const UserSaveHelper = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const ReturnButtonRef = RaiselyComponents.import('return-button', { asRaw: true });
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let ReturnButton;
+	let UserSaveHelper;
 
 	const userFields = [
 		'user.preferredName', 'user.fullName', 'user.phoneNumber', 'user.email',
@@ -63,7 +65,7 @@
 						<div className="user__card">
 							<div className="static-field__title">{name}</div>
 							<div className="static-field__subtitle">{host.email}</div>
-							<RaiselyButton uuid={host.uuid} recordType="people" />
+							<RaiselyButton uuid={host.uuid} recordType="user" />
 							<Button type="button" onClick={() => this.updateHost(null)}>Change</Button>
 						</div>
 					</div>
@@ -85,6 +87,7 @@
 		render() {
 			const { props } = this;
 			const { host } = this.state;
+			if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
 
 			return (
 				<div className="custom-form__step">
@@ -93,10 +96,10 @@
 							<h3>Find a Host</h3>
 							<p>
 								Type the name email or phone number of the host to find them, or
-								click create person if {"they're"} not in our database.
+								click Add new person if {"they're"} not in our database.
 							</p>
 							<p>
-								If the host is an organisation, enter the contact person,
+								If the host is an organisation, enter the contact person as the host,
 								then edit that person in Raisely and make sure {"they're"} associated with
 								the organisation.
 							</p>
@@ -104,23 +107,25 @@
 					</div>
 					{this.renderHost()}
 					<div className="custom-form__step-form">
-						<Button
-							type="button"
-							disabled={this.state.saving}
-							onClick={this.createNew}
-						>
-							Create new Person
-						</Button>
-
 						<div className="conversation-team__navigation custom-form__navigation">
 							<ReturnButton {...props} backLabel="Go Back" />
-							<Button
-								type="button"
-								onClick={this.next}
-								disabled={!host}
-							>
-								Next
-							</Button>
+							{host ? (
+								<Button
+									type="button"
+									onClick={this.next}
+									disabled={!host}
+								>
+									Next
+								</Button>
+							) : (
+								<Button
+									type="button"
+									disabled={this.state.saving}
+									onClick={this.createNew}
+								>
+									Add new Person
+								</Button>
+							)}
 						</div>
 					</div>
 				</div>
@@ -145,12 +150,12 @@
 			this.load();
 		}
 
-		componentDidUpdate(prevProps, prevState, snapshot) {
-			const { interaction: oldInteraction, host: oldHost } = this.prevProps;
-			const { interaction, host } = this.props
+		componentDidUpdate(prevProps) {
+			const { interaction: oldInteraction, host: oldHost } = prevProps;
+			const { interaction, host } = this.props;
 
 			if ((oldInteraction !== interaction) || (oldHost !== host)) {
-				load();
+				this.load();
 			}
 		}
 
@@ -265,10 +270,15 @@
 						set(interaction, 'detail.private.followUpCompletedAt', dayjs().toISOString());
 					}
 
-					if (changed) await updateInteraction(interaction);
+					if (changed) {
+						this.setState({ saving: true });
+						await updateInteraction(interaction);
+					}
 				} catch (error) {
 					console.error(error);
 					this.setState({ error: `Could not update: ${error.message}` });
+				} finally {
+					this.setState({ saving: false });
 				}
 			}
 		}
@@ -289,16 +299,14 @@
 		}
 
 		render() {
+			// eslint-disable-next-line object-curly-newline
 			const { messages, loading, error, nextStep } = this.state;
-			const { host, interaction } = this.props;
+			const { host, interaction, facilitator } = this.props;
 			if (!(host || interaction)) return '';
 			if (loading) return <Spinner />;
 
-			const noun = ? 'You' : facilitator.preferredName;
-			const nextStepMessage = ?
-				`${noun} should send ${host.preferredName} a message around ` :
-				`${noun} should have sent ${host.preferredName} a message around ${}`;
-
+			const noun = get(facilitator, 'uuid', 'n/a') === get(this.props, 'global.user.uuid') ?
+				'You' : facilitator.preferredName || facilitator.fullName;
 
 			return (
 				<div className="host--interactions__wrapper">
@@ -432,6 +440,7 @@
 
 		book = () => {
 			const { host } = this.props;
+			if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
 			const bookingUrl = ReturnButton().forwardReturnTo({
 				props: this.props,
 				url: `/conversations/create?host=${host.uuid}`,
@@ -505,7 +514,7 @@
 			if (mode === 'new') {
 				const newForm = [
 					{ title: 'Find Person', component: FindHost },
-					{ title: 'Add New Person', fields: userFields, condition: values => !get(values, '0.host') },
+					{ title: 'Add New Person (Host)', fields: userFields, condition: values => !get(values, '0.uuid') },
 					{ title: 'Edit Host Status', fields: intentionFields, buttons: EditButtons },
 				];
 
@@ -527,7 +536,7 @@
 				return {};
 			}
 
-			this.setState({ mode: 'edit' });
+			this.setState({ mode: 'edit', interaction });
 
 			const promises = [
 				getData(api.users.get({ id: interaction.userUuid })),
@@ -546,20 +555,43 @@
 
 		save = async (values, formToData) => {
 			const data = formToData(values);
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 
 			if (data.user) {
 				const host = await UserSaveHelper.upsertUser(data.user);
 				this.setState({ host });
 			}
+			const { host } = this.state;
 
-			this.setState({ interaction: data.interaction });
-			await save('interaction', data.interaction, { partial: true });
+			let { interaction: oldInteraction } = this.state;
+
+			const newInteraction = data.interaction;
+			if (!oldInteraction) {
+				const facilitatorUuid = get(this.props, 'global.user.uuid');
+				oldInteraction = {
+					userUuid: host.uuid,
+					categoryUuid: 'host-interest',
+					detail: {
+						private: {
+							assignedFacilitator: facilitatorUuid,
+						},
+					},
+				};
+			}
+			newInteraction.detail.private = {
+				...oldInteraction.detail.private,
+				...newInteraction.detail.private,
+			};
+
+			this.setState({ interaction: newInteraction });
+			await save('interaction', newInteraction, { partial: true });
 		}
 
 		reassign = async (newFacilitator) => {
+			const { host } = this.state;
 			const assignment = [{ recordType: 'user', recordUuid: host.uuid }];
 			const { interaction } = this.state;
-			_.set(interaction, 'detail.private.facilitatorUuid', newFacilitator.uuid);
+			set(interaction, 'detail.private.facilitatorUuid', newFacilitator.uuid);
 
 			await Promise.all([
 				save('interaction', interaction, { partial: true }),
@@ -571,6 +603,11 @@
 			this.setState({ facilitator: newFacilitator });
 		}
 
+		updateInteraction = async (interaction) => {
+			await save('interaction', interaction, { partial: true });
+			this.setState({ interaction });
+		}
+
 		updateStep = (step, values) => {
 			const host = get(values, '0.host');
 			if (host) {
@@ -579,23 +616,34 @@
 		}
 
 		render() {
-			const { form, host } = this.state;
+			// eslint-disable-next-line object-curly-newline
+			const { form, host, interaction, facilitator, mode } = this.state;
+			const { props } = this;
+
+			const formSettings = {
+				host,
+				...this.props,
+				steps: form,
+				controller: this,
+				reassign: this.reassign,
+			};
+
+			if (mode === 'new') {
+				if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
+				formSettings.completeRedirect = ReturnButton.forwardReturnTo({ props, url: `/hosts/${get(interaction, 'uuid')}` });
+			} else {
+				formSettings.redirectToReturnTo = true;
+			}
+
 			return (
 				<div className="host-edit__wrapper">
-					<CustomForm
-						{...this.props}
-						steps={form}
-						controller={this}
-						rsvps={this.state.rsvps}
-						onRsvpChange
-						redirectToReturnTo="true"
-						host={host}
-						reassign={this.reassign}
-					/>
+					<CustomForm {...formSettings} />
 					<HostInteractions
 						{...this.props}
 						host={host}
 						intention={interaction}
+						facilitator={facilitator}
+						updateInteraction={this.updateInteraction}
 					/>
 				</div>
 			);
