@@ -16,11 +16,10 @@
 		id: 'subject',
 		type: 'text',
 		recordType: 'message',
-
 	}, {
 		label: 'Message',
 		id: 'body',
-		type: 'textarea',
+		type: 'html',
 		recordType: 'message',
 	}, {
 		label: 'Send by',
