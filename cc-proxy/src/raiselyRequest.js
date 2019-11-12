@@ -1,9 +1,10 @@
-const request = require('request-promise-native');
+const requestNative = require('request-promise-native');
+const requestCache = require('request-promise-cache');
 const { omit } = require('lodash');
 
 const raiselyUrl = 'https://api.raisely.com/v3';
 
-const internalOptions = ['path', 'query', 'originalUser'];
+const internalOptions = ['path', 'query', 'originalUser', 'cache'];
 
 function createOriginalHeaders(options, req) {
 	const headers = {
@@ -30,7 +31,7 @@ function createOriginalHeaders(options, req) {
  * @param {Request} req The original express request
  */
 async function raisely(options, req) {
-	const token = process.env.APP_TOKEN;
+	const token = options.token || process.env.APP_TOKEN;
 
 	const uri = `${raiselyUrl}${options.path}`;
 
@@ -48,6 +49,7 @@ async function raisely(options, req) {
 		json: true,
 	};
 
+	const request = Object.keys(options.includes('cacheKey')) ? requestCache : requestNative;
 	const result = request(requestOptions);
 
 	return result;
