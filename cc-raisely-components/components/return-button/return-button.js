@@ -88,9 +88,10 @@
 		 * @return {string} The url with returnTo merged into the query
 		 */
 		static forwardReturnTo({ props, url }) {
-			const query = getQuery(get(props, 'router.location.search'));
+			const query = getQuery(get(props, 'router.location.search', {}));
 			const { onDone, returnTo } = query;
-			return this.createReturningLink({ returnTo, done: onDone, url });
+			// eslint-disable-next-line object-curly-newline
+			return this.createReturningLink({ props, returnTo, done: onDone, url });
 		}
 
 		/**
@@ -105,10 +106,11 @@
 		 * @param {string} options.returnTo Page to return to after done (null for current page)
 		 * @return {string} The url to visit with returnTo on the query
 		 */
+		// eslint-disable-next-line object-curly-newline
 		static createReturningLink({ props, url, done, returnTo }) {
 			let thisPage = returnTo;
 			if (!thisPage) {
-				const { pathname, search } = get(props, 'router.location');
+				const { pathname, search } = get(props, 'router.location', {});
 				thisPage = `${pathname}${search.startsWith('?') ? '' : '?'}${search}`;
 			}
 
