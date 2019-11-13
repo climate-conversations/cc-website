@@ -7,13 +7,6 @@
             "value": "",
             "singular": null
         },
-        "formName": {
-            "id": "formName",
-            "type": "text",
-            "label": "Form Name (to lookup submissions by)",
-            "value": "",
-            "singular": null
-        },
         "colour": {
             "id": "backgroundColour",
             "type": "select",
@@ -85,7 +78,14 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 84
+            "value": 86
+        },
+        "formName": {
+            "id": "formName",
+            "type": "text",
+            "label": "Form Name (to lookup submissions by)",
+            "value": "",
+            "singular": null
         },
         "actionText": {
             "id": "actionText",
