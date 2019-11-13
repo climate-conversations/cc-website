@@ -62,7 +62,7 @@
 
 		// eslint-disable-next-line class-methods-use-this
 		async loadGuests(eventUuid) {
-			const rsvps = await getData(api.eventRsvps.getAll({ query: { eventUuid, private: 1 } }));
+			const rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
 			return rsvps
 				.filter(({ type }) => type === 'guest')
 				.map(rsvp => rsvp.user);

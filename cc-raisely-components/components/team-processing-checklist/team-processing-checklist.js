@@ -230,7 +230,7 @@
 				// Fetch rsvps
 				const [records, rsvps] = await Promise.all([
 					eventPromise,
-					getData(api.eventRsvps.getAll({ query: { eventUuid: uuid } })),
+					getData(api.eventRsvps.getAll({ query: { event: uuid } })),
 				]);
 				const { event: conversation } = records;
 

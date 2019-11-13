@@ -234,7 +234,7 @@
 		}
 
 		async loadRsvps(eventUuid) {
-			const rsvps = await doApi(api.eventRsvps.getAll({ query: { eventUuid, private: 1 } }));
+			const rsvps = await doApi(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
 			return rsvps
 				.filter(({ type }) => type !== 'guest');
 			// eslint-disable-next-line object-curly-newline
