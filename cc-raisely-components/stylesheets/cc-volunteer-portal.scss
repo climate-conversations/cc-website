@@ -280,13 +280,6 @@ p {
     }
 }
 
-// hide header logo on home page
-.page--home .header .logo {
-    visibility: hidden;
-    width: 0;
-}
-
-
 //* PROFILE IMAGE *//
 .profile-image {
     overflow: hidden;
@@ -1561,6 +1554,10 @@ ul.list__wrapper, .list__wrapper ul {
       font-size: 1rem;
     }
   }
+  
+  .host-status {
+    margin-right: 0.3rem;
+  }
 }
 
 .field-help {
@@ -1692,6 +1689,12 @@ ul.list__wrapper, .list__wrapper ul {
         color: $secondaryColor;
       }
     }
+    p {
+      display: inline-block;
+    	opacity: 0.7;
+    	font-size: 1.4rem;
+    	color: gray;
+    }
     
     &__help {
       font-size: 1rem;
@@ -1815,7 +1818,7 @@ ul.list__wrapper, .list__wrapper ul {
     &-label {
       display: inline-block;
       width: 70%;
-      padding-top: 0.3rem;
+     // padding-top: 0.3rem;
       margin-bottom: 0.5rem;
     }
     &-sublabel {
@@ -1837,4 +1840,21 @@ ul.list__wrapper, .list__wrapper ul {
 .conversation-facil {
   font-size: 1rem;
   font-style: italic;
+}
+
+.button--whatsapp {
+  &[disabled] {
+    opacity: 0.3;
+  }
+  &, &:hover, &:focus {
+    background: none;
+    background-image: url(https://raisely-images.imgix.net/switchon/uploads/580-b-57-fcd-9996-e-24-bc-43-c-543-png.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    /* background-color: green; */
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    margin-top: -2px;
+  }
 }
