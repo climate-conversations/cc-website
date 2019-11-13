@@ -116,6 +116,9 @@
 										change: (id, value) => this.setState({ searchValue: value }),
 									})}
 									type="TextField"
+									autocomplete="off"
+									id="the-users-name"
+									name="the-users-name"
 								/>
 								{this.state.searchValue ? (
 									<UserSelectList
