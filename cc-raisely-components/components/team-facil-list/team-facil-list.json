@@ -1,0 +1,27 @@
+{
+    "fields": {
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 1
+		},
+        "display": {
+            "id": "display",
+            "type": "select",
+            "label": "Display",
+            "value": "current",
+            "options": [
+                {
+                    "label": "Members of current team",
+                    "value": "current"
+                },
+                {
+                    "label": "All teams and members",
+                    "value": "all"
+                }
+            ],
+            "singular": null
+		}
+	},
+    "uuid": "9974e5e0-05c6-11ea-9236-03f0575574c5"
+}
