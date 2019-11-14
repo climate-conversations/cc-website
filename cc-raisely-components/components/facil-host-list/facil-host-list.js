@@ -28,7 +28,7 @@
 
 		render() {
 			const { host, showFacil } = this.props;
-			const url = `/hosts/${host.userUuid}`;
+			const url = `/hosts/${host.uuid}`;
 			const conversationName = (host.conversation === true) ?
 				'...' : get(host.conversation, 'name', '...');
 
@@ -69,11 +69,11 @@
 			let { hosts } = this;
 			if (this.state.filter) {
 				hosts = this.hosts
-					.filter(h => filterStatus.includes(get(h, 'private.status')))
+					.filter(h => filterStatus.includes(get(h, 'detail.private.status')))
 					// Ensure visible hosts have conversation
 					.forEach((host) => {
 						if (!host.conversation) {
-							const uuid = get(host, 'private.conversationUuid');
+							const uuid = get(host, 'detail.private.conversationUuid');
 							if (uuid) {
 								// Multiple hosts may come from the same conversation
 								// so cache the promise to retrieve so we only fetch it
@@ -129,38 +129,37 @@
 
 		async load() {
 			try {
-				// const userUuid = await this.getUserUuids();
-				// this.hosts = await getData(api.interactions.getAll({
-				// 	query: {
-				// 		private: 1,
-				// 		category: 'host-interest',
-				// 		facilitatorUuid: userUuid,
-				// 		join: 'user',
-				// 	},
-				// }));
+				const userUuid = await this.getUserUuids();
+				this.hosts = await getData(api.interactions.getAll({
+					query: {
+						private: 1,
+						category: 'host-interest',
+						facilitatorUuid: userUuid,
+						join: 'user',
+					},
+				}));
 
-				// await Promise.all(this.hosts.map(async (host) => {
-				// 	if (!host.user) {
-				// 		// eslint-disable-next-line no-param-reassign
-				// 		host.user = await getData(api.users.get({ id: host.userUuid }));
-				// 	}
-				// }));
+				await Promise.all(this.hosts.map(async (host) => {
+					if (!host.user) {
+						// eslint-disable-next-line no-param-reassign
+						host.user = await getData(api.users.get({ id: host.userUuid }));
+					}
+				}));
 
-				this.hosts = [{
-					userUuid: '9f0175c0-da2c-11e9-8213-bb2b7acc1c0d',
-					conversation: { name: "Chris's Conversation" },
-					user: { fullName: 'Abhinav Andul' },
-					private: { status: 'booked' },
-					facilitator: { preferredName: 'Chris' },
-				},
-				{
-					userUuid: '9f0175c0-da2c-11e9-8213-bb2b7acc1c0d',
-					conversation: { name: "Chris's Conversation" },
-					user: { fullName: 'Harris' },
-					private: { status: 'lead' },
-					facilitator: { preferredName: 'Chris' },
-				}];
-
+				// this.hosts = [{
+				// 	userUuid: '9f0175c0-da2c-11e9-8213-bb2b7acc1c0d',
+				// 	conversation: { name: "Chris's Conversation" },
+				// 	user: { fullName: 'Abhinav Andul' },
+				// 	private: { status: 'booked' },
+				// 	facilitator: { preferredName: 'Chris' },
+				// },
+				// {
+				// 	userUuid: '9f0175c0-da2c-11e9-8213-bb2b7acc1c0d',
+				// 	conversation: { name: "Chris's Conversation" },
+				// 	user: { fullName: 'Harris' },
+				// 	private: { status: 'lead' },
+				// 	facilitator: { preferredName: 'Chris' },
+				// }];
 			} catch (error) {
 				this.setState({ error, loading: false });
 			}
