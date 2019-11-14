@@ -9,7 +9,7 @@
 
 	let Conversation;
 
-	return class EmailConversationGuest extends React.Component {
+	return class ConversationMessageGuests extends React.Component {
 		state = { loading: true };
 
 		componentDidMount() {
