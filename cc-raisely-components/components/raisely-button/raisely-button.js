@@ -1,5 +1,14 @@
+/**
+ * Display a button that links to the raisely admin record
+ * @prop {string} recordType the type of record to link to (user, profile)
+ * @prop {string} uuid The uuid of the record to link to (set to null to link to the index page)
+ * @prop {string} size small, medium, large
+ */
 (RaiselyComponents, React) => {
 	const { Link } = RaiselyComponents;
+	const { Button } = RaiselyComponents.Atoms;
+	const { get } = RaiselyComponents.Common;
+	const plural = word => ((word.slice(word.length - 1) === 's') ? word : `${word}s`);
 
 	function RaiselyLogo({ size }) {
 		const sizeMap = {
@@ -16,22 +25,40 @@
 		);
 	}
 
-	return function RaiselyButton({ uuid, recordType, size }) {
+	return function RaiselyButton(props) {
+		const values = (props.getValues && props.getValues()) || {};
+		const settings = Object.assign({
+			size: 'small',
+		}, props, values);
+		// eslint-disable-next-line object-curly-newline
+		const { props: parentProps, label, uuid, recordType, size, href } = settings;
+
 		const typeMap = {
 			user: 'people',
 		};
 
-		// eslint-disable-next-line no-param-reassign
-		size = size || 'small';
-		const recordPath = typeMap[recordType];
-		if (!recordPath) throw Error('Unknown record type passed to Raisely button!');
+		let recordPath;
+		if (recordType) {
+			recordPath = typeMap[recordType] || plural(recordType);
+			if (!recordPath) throw Error('Unknown record type passed to Raisely button!');
+		}
 
+		const prefix = recordPath === 'people' ? '' :
+			`campaigns/${get(parentProps || props, 'global.campaign.path')}/`;
 
-		const url = `https://admin.raisely.com/${recordPath}/${uuid}`;
+		let url;
+		if (href) {
+			url = href.startsWith('https') ? href :
+				`https://admin.raisely.com/${href}`;
+		} else {
+			url = `https://admin.raisely.com/${prefix}${recordPath}/${uuid || ''}`;
+		}
+		const Element = label ? Button : Link;
 		return (
-			<Link href={url} target="raisely">
+			<Element href={url} target="raisely" size={size}>
 				<RaiselyLogo size={size} />
-			</Link>
+				{label || ''}
+			</Element>
 		);
 	};
 };
