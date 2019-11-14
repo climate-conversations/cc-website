@@ -4,7 +4,43 @@
             "type": "number",
             "label": "Current Version of Component",
             "value": 5
-        }
-    },
+		},
+		"href": {
+            "id": "href",
+            "type": "text",
+            "label": "URL to link to",
+            "singular": null
+        },
+        "label": {
+            "id": "label",
+            "type": "text",
+            "label": "Button label"
+		},
+        "recordType": {
+            "id": "recordType",
+            "type": "text",
+            "label": "Record Type"
+		},
+		"size": {
+            "id": "size",
+            "type": "select",
+            "label": "Button Size",
+            "value": "small",
+            "options": [
+                {
+                    "label": "Small",
+                    "value": "small"
+				},
+                {
+                    "label": "Medium",
+                    "value": "medium"
+				},
+                {
+                    "label": "Large",
+                    "value": "large"
+				}
+			]
+		}
+	},
     "uuid": "c27911d0-cf6d-11e9-9f43-c1cb72c4f37f"
 }
