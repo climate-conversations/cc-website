@@ -76,7 +76,7 @@
 				<div className="conversation-team__user-select field-wrapper">
 					<UserSelect
 						api={api}
-						global={global}
+						global={this.props.global}
 						update={({ user }) => this.updateHost(user)}
 						label="Host"
 					/>
@@ -390,7 +390,7 @@
 					<div className="conversation-team__user-select field-wrapper">
 						<UserSelect
 							api={api}
-							global={global}
+							global={this.props.global}
 							update={({ user }) => this.setState({ newFacilitator: user })}
 							label="Assign to"
 						/>
