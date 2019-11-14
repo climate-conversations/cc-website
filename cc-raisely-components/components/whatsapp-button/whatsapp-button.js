@@ -21,11 +21,10 @@
 		}
 
 		render() {
-			const { message, phone } = this.props;
-			let url;
-			const { label } = this.props;
+			const { message, phone, label } = this.props;
+			let { url } = this.props;
 
-			if (phone) {
+			if (phone && !url) {
 				url = this.constructor.generateUrl(phone, message);
 			}
 
@@ -35,7 +34,7 @@
 
 			return (
 				<Button
-					disabled={!phone}
+					disabled={!url}
 					href={url}
 					style={style}
 					className="button--whatsapp">
