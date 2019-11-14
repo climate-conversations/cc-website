@@ -1,6 +1,9 @@
 
 ## Outstanding issues
 
+- [X] Ability to assign team members
+- [X] Ability for coordinator to view teams
+- [X] check interactions are working
 - [X] Conversation page
 - [X] Host report is broken
 - [X] Write to guests
@@ -15,6 +18,7 @@
 
 - [X] See more link below news
 - [ ] Hide mail client select when whatsapp is selected
+- [ ] Automatically save interaction in messaging
 - [ ] Check conversation details always shows hint
 - [ ] Upload photo doesn't result in processing form checkbox update
 - [ ] Set name correctly when creating conversation from guest data entry
@@ -33,5 +37,7 @@
 
 - [ ] Multiselect input
 - [ ] Proxy permissions
+- [ ] Sync reports
 
 - [ ] Host report could do with styling
+- [ ] Host report accessible to logged out users
