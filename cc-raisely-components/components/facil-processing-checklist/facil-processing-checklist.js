@@ -257,6 +257,7 @@
 			const { error, loading, conversation } = this.state;
 			const startAt = get(conversation, 'startAt');
 			const name = get(conversation, 'name', '...');
+			if (!Conversation) Conversation = ConversationRef().html;
 
 			const isProcessed = Conversation.isProcessed(conversation);
 			const awaitingReview = Conversation.awaitingReview(conversation);
