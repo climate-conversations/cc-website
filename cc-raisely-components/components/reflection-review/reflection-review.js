@@ -53,13 +53,13 @@
 
 			const message = {
 				...this.props,
-				sendby: 'whatsapp',
-				body: '',
+				sendBy: 'whatsapp',
+				body: `Hi ${preferredName}, I saw your reflection ...`,
 				to: [reflection.user],
 				subject: conversation.name,
 				launchButtonLabel: `Send a message to ${preferredName}`,
 			};
-			const fields = ['interaction.all'];
+			const fields = ['interaction.facilitator-reflection.all'];
 			const models = ['interaction'];
 
 			return (
