@@ -29,13 +29,13 @@
 			// Find facilitators
 			.filter(rsvp => facilitators.includes(rsvp.type));
 
-		const incomplete = facils
+		const complete = facils
 			// Check if they've done a reflection
 			.filter(rsvp => reflections.find(r => r.userUuid === rsvp.userUuid));
 
 		// If at least 1 facil is assigned to the conversation
 		// and they've all submitted a reflection then we're good
-		return (facils.length && !incomplete.length);
+		return (facils.length && complete.length);
 	}
 	function donationsReported(conversation) {
 		return get(conversation, 'private.cashReceived') === false ||
