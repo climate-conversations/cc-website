@@ -36,8 +36,8 @@
 		static async loadConversation({ props, private: isPrivate }) {
 			try {
 				const models = [`event${isPrivate ? '.private' : ''}`];
-				const conversation = await quickLoad({ models, required: true, props });
-				return { conversation };
+				const { event: conversation } = await quickLoad({ models, required: true, props });
+				return conversation;
 			} catch (e) {
 				console.error(e);
 				return { error: e.message, errorObject: e };
