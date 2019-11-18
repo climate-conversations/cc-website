@@ -16,6 +16,7 @@
 	function renderValue({ values, field }) {
 		const path = [];
 		if (field.recordType) path.push(field.recordType);
+		if (field.recordType === 'interaction') path.push('detail');
 		if (!field.core) path.push(field.private ? 'private' : 'public');
 		path.push(field.id);
 
@@ -94,13 +95,17 @@
 			};
 		}
 
-		explodeModel(model) {
+		explodeModel(model, category) {
 			const { values } = this.state;
 			const record = values[model];
 			const recordType = singular(model);
 
+			const allInteractionFields = get(this.props, 'global.campaign.config.interactionCategoryFields', {})[category];
+
 			const customFields = get(this.props, `global.campaign.config.customFields.${recordType}`, [])
-				.map(field => ({ ...field }));
+				.map(field => ({ ...field, recordType }))
+				// If category is specified, filter by interaction category
+				.filter(f => !category || allInteractionFields.includes(f.id));
 
 			const fieldIds = customFields.map(field => `${field.recordType}.${field.id}`);
 
@@ -127,11 +132,11 @@
 		findField(sourceId) {
 			console.log('CustomForm.findField');
 			if (!this.props.global) {
-				throw new Error('Developer, please pass do {...this.props}');
+				throw new Error('Developer, please pass {...this.props}');
 			}
 			const fieldSources = sourceId.split('.');
-			if (fieldSources[1] === 'all') {
-				return this.explodeModel(fieldSources[0]);
+			if (fieldSources[fieldSources.length - 1] === 'all') {
+				return this.explodeModel(fieldSources[0], (fieldSources.length > 2) && fieldSources[1]);
 			}
 
 			const customFields = get(this.props, 'global.campaign.config.customFields', {});
@@ -224,7 +229,7 @@
 				const modelsToFetch = models
 					.filter(model => !valueKeys.includes(model));
 
-				console.log('Loading: ', models, 'received: ', valueKeys)
+				console.log('Loading: ', models, 'received: ', valueKeys);
 
 				if (modelsToFetch.length) {
 					Object.assign(values, await api.quickLoad({
