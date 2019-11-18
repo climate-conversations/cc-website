@@ -10,15 +10,16 @@
 - [ ] FTL processing check list
 - [ ] Conversation reconcile page needs to recognise an incomplete donation report
 - [ ] Add new hosts
+- [ ] Store message id on interactions
 - [X] FTL page
 - [X] Send host report
 - [X] Set up domain
 - [ ] Add note to facil reconcile form
-- [ ] Interaction filtering by category doesn't seem to work properly
+- [X] Interaction filtering by category doesn't seem to work properly
 
 - [X] See more link below news
 - [ ] Hide mail client select when whatsapp is selected
-- [ ] Automatically save interaction in messaging
+- [X] Automatically save interaction in messaging
 - [ ] Check conversation details always shows hint
 - [ ] Upload photo doesn't result in processing form checkbox update
 - [ ] Set name correctly when creating conversation from guest data entry
