@@ -19,7 +19,7 @@
 	}, {
 		label: 'Message',
 		id: 'body',
-		type: 'html',
+		type: 'textarea',
 		recordType: 'message',
 	}, {
 		label: 'Send by',
@@ -39,7 +39,7 @@
 			{ label: 'Gmail', value: 'gmail' },
 			{ label: 'Yahoo', value: 'yahoo' },
 			// { label: 'Hotmail', value: 'hotmail' },
-			{ label: 'Other', value: 'other' },
+			{ label: 'Other Email App', value: 'other' },
 		],
 	}].map(field => Object.assign(field, { active: true, core: true }));
 
@@ -66,13 +66,21 @@
 
 		onContactChange = (values) => {
 			console.log('Contact Change: ', values);
+			const { to } = this.props;
 			const contactSettings = values[0];
-			const { contactFields } = this.state;
+			let { contactFields } = this.state;
 			// Disable/enable email client if email is selected
-			const emailClient = contactFields.find(f => f.id === 'emailClient');
-			emailClient.type = contactSettings.sendBy === 'email' ? 'select' : 'hidden';
+			if (to.length > 1) {
+				const emailClient = contactFields.find(f => f.id === 'emailClient');
+				const oldClientDisplay = contactSettings.sendBy;
+				emailClient.type = contactSettings.sendBy === 'email' ? 'select' : 'hidden';
+				// If this has changed, force a repaint of the fields
+				if (oldClientDisplay !== emailClient.type) {
+					contactFields = contactFields.map(f => ({ ...f }));
+				}
+			}
 
-			this.setState({ contactSettings }, this.setActiveRecipients);
+			this.setState({ contactSettings, contactFields }, this.setActiveRecipients);
 		}
 		onRecipientChange = (values) => {
 			console.log('Recipients Change: ', values);
@@ -117,7 +125,13 @@
 
 		initContactFields() {
 			// Don't mess up the initial fields
-			const contactFields = initialContactFields.map(f => ({ ...f }));
+			const { to } = this.props;
+			let contactFields = initialContactFields.map(f => ({ ...f }));
+			// Don't show send by filed for 1 recipient
+			if (to.length === 1) {
+				contactFields = contactFields.filter(f => f.id !== 'sendBy');
+			}
+
 			const { sendBy, body, subject } = Object.assign({ sendBy: 'whatsapp' }, this.props);
 
 			const contactSettings = {
@@ -144,7 +158,7 @@
 				let { email } = user;
 				// If the user doesn't really have an email
 				if (email.endsWith('noemail.invalid')) { email = ''; }
-				const label = getLabel(user)
+				const label = getLabel(user);
 				return {
 					label: label || '(uncontactable guest)',
 					id: user.uuid,
@@ -160,9 +174,8 @@
 		}
 
 		buttons = (recipientCount) => {
-			const { to } = this.props;
 			const { props } = this;
-			const { launchButtonLabel, closeModal } = props;
+			const { closeModal, to } = props;
 			const { contactSettings, recentlySent, saving } = this.state;
 
 			const isWhatsApp = contactSettings.sendBy === 'whatsapp';
@@ -178,8 +191,8 @@
 						<p>Click on the {"people's"} names above to send a WhatsApp message</p> :
 						<Button onClick={this.sendAll} target="_blank">Send Email</Button>
 					}
-					{isWhatsApp && (recipientCount === 1) ? (
-						<Button onClick={() => this.send(user)}>Send WhatsApp</Button>
+					{(recipientCount === 1) ? (
+						<Button onClick={() => this.send(user, closeModal)}>Send WhatsApp</Button>
 					) : ''}
 					{ recipientNames ? (
 						<React.Fragment>
@@ -193,7 +206,7 @@
 						</React.Fragment>
 					) : '' }
 					{closeModal ? (
-						<Button theme="secondary" onClick={closeModal()}>Done</Button>
+						<Button theme="secondary" onClick={() => closeModal()}>Done</Button>
 					) : (
 						<ReturnButton {...props} saveLabel="Done" />
 					)}
@@ -222,7 +235,6 @@
 				type: 'email',
 				name: u.preferredName || u.fullName,
 			}));
-			const allSent = (this.state.allSent || []).concat(recentlySent);
 
 			const urlMap = {
 				gmail: `https://mail.google.com/mail/?view=cm&fs=1&tf=1&bcc=${bcc}&su=${subject}&body=${body}`,
@@ -232,9 +244,9 @@
 			// Open the message composer
 			if (url) window.open(url);
 			// eslint-disable-next-line object-curly-newline
-			this.setState({ state: 'email', allSent, recentlySent, emailContent: { bcc, subject, body } });
+			this.setState({ state: 'email', recentlySent, emailContent: { bcc, subject, body } });
 		}
-		send = (user) => {
+		send = (user, closeModal) => {
 			if (!WhatsAppButton) WhatsAppButton = WhatsAppButtonRef().html;
 			if (!user) {
 				console.log('Send called with no user, ignoring');
@@ -243,26 +255,23 @@
 			const { subject, body } = contactSettings;
 			const url = WhatsAppButton.generateUrl(user.phoneNumber, body);
 			window.open(url);
-			const allSent = (this.state.allSent || []).concat([user.uuid]);
-			const recentlySent = (this.state.recentlySent || []);
-			recentlySent.push({
+			const message = {
 				userUuid: user.uuid,
 				subject,
 				body,
-				type: 'email',
+				type: 'whatsapp',
 				name: user.preferredName || user.fullName,
-			});
-			this.setState({ allSent, recentlySent });
+			};
+			this.saveInteraction([message])
+				.then((canClose) => {
+					if (canClose && closeModal) closeModal();
+				});
 		}
-		emailReturn = () => {
-			this.setState({ state: 'step1' });
-		}
-		saveInteraction = async () => {
-			const { recentlySent } = this.state;
-			const { messageType } = this.props;
+		saveInteraction = async (messages) => {
+			const { messageId } = this.props;
 			try {
 				this.setState({ saving: true });
-				const promises = recentlySent.map((message) => {
+				const promises = messages.map((message) => {
 					// eslint-disable-next-line object-curly-newline
 					const { body, subject, userUuid, type, emailClient } = message;
 					const data = {
@@ -270,7 +279,11 @@
 						categoryUuid: type === 'email' ? 'personal.email' : 'personal.message',
 						detail: {
 							readOnly: false,
-							private: { body, subject, messageType },
+							private: {
+								body,
+								subject,
+								messageId,
+							},
 						},
 					};
 					if (type === 'whatsapp') data.detail.private.method = 'WhatsApp';
@@ -278,19 +291,26 @@
 
 					return getData(api.interactions.create({ data }));
 				});
-				await Promise.all(promises);
 
-				this.setState({ saving: false, recentlySent: [], state: 'step1' });
+				const allSent = (this.state.allSent || []).concat(messages);
+
+				this.setState({ saving: false, allSent, state: 'step1' });
 			} catch (e) {
 				console.error(e);
 				this.setState({ saving: false, error: e.message });
+				return false;
 			}
+			return true;
+		}
+
+		emailReturn = () => {
+			this.setState({ state: 'step1' });
 		}
 
 		sendEmailPanel() {
 			const { body, subject, bcc } = this.state.emailContent;
 			const { sendBy } = this.state.contactSettings;
-			const { saving } = this.state;
+			const { recentlySent, saving } = this.state;
 			return (
 				<div className="contact--form__email">
 					{sendBy === 'other' ? (
@@ -305,7 +325,7 @@
 					) : ''}
 					<p>Did you send the email? (Clicking yes will save a record of the email in Raisely)</p>
 					<Button onClick={this.emailReturn}>No</Button>
-					<Button theme="cta" disabled={saving} onClick={this.saveInteraction}>
+					<Button theme="cta" disabled={saving} onClick={this.saveInteraction(recentlySent)}>
 						{saving ? 'Saving' : 'Yes'}
 					</Button>
 				</div>
@@ -324,21 +344,23 @@
 			const recipientSteps = [{ fields: this.state.recipientFields }];
 			const recipientCount = to.length;
 
+			const contactClass = recipientCount < 2 ? '' : 'contact--form__content';
+
 			return (
 				<div className="contact--form">
 					{ state === 'email' ?
 						this.sendEmailPanel() :
 						(
 							<React.Fragment>
-								<div className="contact--form__content">
+								<div className={contactClass}>
 									<CustomForm
 										key={contactSettingsKey}
 										{...props}
 										unlocked
 										steps={contactSteps}
+										hideButtons
 										values={[contactSettings]}
 										updateValues={this.onContactChange}
-										hideButtons
 									/>
 									{recipientCount < 2 && error ? (
 										<div className="error">{ error }</div>
@@ -372,7 +394,7 @@
 				</div>
 			);
 		}
-	};
+	}
 
 	return function ContactFormModalWrapper(props) {
 		let { launchButtonLabel } = props;
