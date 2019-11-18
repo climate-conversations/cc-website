@@ -292,10 +292,7 @@
 
 		shouldSave = () => {
 			const step = this.findNextStep(1);
-			console.log(step, this.props.steps.length)
 			const shouldSave = (step >= this.props.steps.length);
-
-			console.log('CustomForm.shouldSave', shouldSave);
 
 			return shouldSave;
 		}
