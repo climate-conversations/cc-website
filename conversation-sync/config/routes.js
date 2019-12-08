@@ -13,4 +13,6 @@ const config = {
 
 const controllers = Controllers(config);
 
-module.exports = Airblast.routes(controllers);
+module.exports = Airblast.routes(controllers)
+	// Disable other routes for now
+	.filter(r => r.path.includes('eople') || r.path.includes('chimp'));
