@@ -138,6 +138,11 @@ async function upsertPerson(email, data, comms, overwrite) {
 
 	const record = await create('person', _.pick(data, 'Email'));
 
+	if (record.status) {
+		console.log(record);
+		throw new Error(record.message);
+	}
+
 	const updated = await update(record, data, comms, overwrite);
 
 	return updated;
@@ -185,7 +190,7 @@ async function upsertConversation(data) {
 
 		if (status && (conversation[statusField] !== status)) {
 			console.log(`KEPLA: Marking conversation ${status} (${conversation.id})`);
-			saveUrl += conversation.id;
+			saveUrl += `/${conversation.id}`;
 			const body = { [statusField]: status };
 			conversation = await keplaRequest(saveUrl, { body, method: 'PUT' });
 		}
