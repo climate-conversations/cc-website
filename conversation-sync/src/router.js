@@ -1,4 +1,3 @@
-console.log('configuring')
 require('dotenv').config();
 
 const { handler } = require('./helpers/middleware');
