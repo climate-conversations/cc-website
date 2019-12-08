@@ -24,8 +24,7 @@ module.exports = (grunt) => {
 
 		const done = this.async();
 
-		const promises = [deployRoute(routes[0])];
-		// const promises = routes.forEach(deployRoute);
+		const promises = routes.map(deployRoute);
 
 		console.log('May take up to two minutes ...');
 
@@ -61,6 +60,7 @@ async function deployRoute(route) {
 	console.log(`Deploying ${description}`);
 
 	try {
+		// console.log(`  ${command} ${args.join(' ')}`);
 		await spawnChild(command, args, { env: process.env, shell: true });
 	} catch (err) {
 		console.log('Deploy command failed:');
