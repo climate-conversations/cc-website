@@ -42,7 +42,7 @@ async function resubscribe(person, listId) {
 	const hash = personHash(person);
 	console.log(`Mailchimp: Resubscribe ${person.uuid}`);
 
-	return mailchimp.put(`/lists/${listId}/members/${hash}`, {
+	return mailchimp.patch(`/lists/${listId}/members/${hash}`, {
 		status: 'pending',
 	});
 }
@@ -56,12 +56,16 @@ async function setTags(person, personExistingTags, listId) {
 	// Tags are a subset of segments, type static
 	const existingTags = segments.segments
 		.filter(s => s.type === 'static')
-		.map(t => { t.kebabName = _.kebabCase(t.name); });
+		.map(t => {
+			t.kebabName = _.kebabCase(t.name);
+			return t;
+		});
 
 	// Create any missing tags
 	const missingTags = personTags
 		.filter(name => !existingTags.find(t => t.kebabName === name));
-	for (const kebabName in missingTags) {
+	for (const i in missingTags) {
+		const kebabName = missingTags[i];
 		const newTag = await mailchimp.post(`/lists/${listId}/segments`, {
 			name: _.startCase(kebabName),
 			static_segment: [],
@@ -75,8 +79,9 @@ async function setTags(person, personExistingTags, listId) {
 	const tagsToAdd = existingTags
 		.filter(tag =>
 			personTags.find(t => t === tag.kebabName) &&
-			!personExistingTags.find(existing => existing.id === tag.id))
-	for (const tag in tagsToAdd) {
+			!personExistingTags.find(existing => existing === tag.id))
+	for (const i in tagsToAdd) {
+		const tag = tagsToAdd[i];
 		// Add tags to user
 		await mailchimp.post(`/lists/${listId}/segments/${tag.id}/members`, {
 			email_address: person.email,
@@ -87,9 +92,11 @@ async function setTags(person, personExistingTags, listId) {
 	// Delete old tags from user, but only if they're in the sync list
 	const tagsToDelete = personExistingTags
 		.filter(tag =>
-			(tagsToSync.find(name => tag.kebabName) &&
-			!personTags.find(name => name === tag.kebabName)));
-	for (const tag in tagsToDelete) {
+			(tagsToSync.find(name => name === tag) &&
+			!personTags.find(name => name === tag)));
+	for (const i in tagsToDelete) {
+		const tagName = tagsToDelete[i];
+		const tag = existingTags.find(t => t.kebabName === tagName);
 		await mailchimp.delete(`/lists/${listId}/segments/${tag.id}/members/${hash}`);
 	}
 	console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Untagged ${tagsToDelete.map(t => t.name).join(',')}`);
@@ -113,7 +120,7 @@ async function syncPersonToList(person, listId, vip) {
 	}
 	if (shouldUpdate) {
 		// Try and resubscribe it they're not already
-		if (!listEntry.status !== 'subscribed') await resubscribe(person, listId);
+		if (listEntry.status !== 'subscribed') await resubscribe(person, listId);
 		console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Updating merge fields`);
 		await mailchimp.patch(`/lists/${listId}/members/${hash}`, mailchimpPayload(person, vip));
 	}
