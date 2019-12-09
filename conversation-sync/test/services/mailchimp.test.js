@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const MailchimpNock = require('./nock');
+const _ = require('lodash');
 
 process.env.MAILCHIMP_KEY = 'test-us16';
 const service = require('../../src/services/mailchimp');
@@ -8,6 +9,7 @@ const LIST_ID = 'TEST_LIST_ID';
 const EMAIL = 'test@email.test';
 
 const person = {
+	uuid: '2e7eff08-4564-4d3c-a091-a4d95425f545',
 	email: EMAIL,
 	firstName: 'Albert',
 	lastName: 'Einstein',
@@ -27,9 +29,14 @@ const raiselyTags = ['facilitator', 'government', 'scientist'];
 const mailchimpTags = ['facilitator', 'partner', 'scientist', 'letter-writing'];
 const tagsOnList = ['facilitator', 'partner', 'letter-writing'];
 
+const formatRaiselyTags = tags => tags.map(tag => ({
+	path: _.camelCase(tag),
+	name: _.startCase(tag),
+}));
+
 const personWithTags = {
 	...person,
-	tags: raiselyTags,
+	tags: formatRaiselyTags(raiselyTags),
 };
 
 describe('Mailchimp service', () => {
@@ -84,7 +91,7 @@ describe('Mailchimp service', () => {
 				expect(nocks.calls.tags).to.deep.eq({
 					get: 1,
 					create: ['government'],
-					add: ['government', 'scientist'],
+					add: ['scientist', 'government'],
 					remove: ['partner']
 				});
 			});
@@ -95,6 +102,7 @@ describe('Mailchimp service', () => {
 				nocks = new MailchimpNock(LIST_ID, EMAIL);
 				nocks.getUser(200, { tags: [], status: '' });
 				nocks.updateUser(200, {});
+				nocks.getTags(mailchimpTags);
 				await service.syncPersonToList(person, LIST_ID, false);
 			});
 			after(() => nocks.reset());
