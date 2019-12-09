@@ -8,7 +8,7 @@ class MailchimpNock {
 		this.hash = md5(email.toLowerCase());
 		this.scope = nock('https://us16.api.mailchimp.com')
 			.persist()
-			.log(console.log);
+			// .log(console.log);
 		this.calls = {};
 
 		this.increment = (counter, status, body) => {
@@ -20,7 +20,7 @@ class MailchimpNock {
 		}
 		this.noteTag = (counter, status, body) => {
 			return (uri, reqBody) => {
-				const name = reqBody.name || uri.split('/')[4];
+				const name = _.kebabCase(reqBody.name) || uri.split('/')[5];
 				const array = _.get(this.calls, counter);
 				array.push(name);
 				const result = _.isFunction(body) ? body(uri, reqBody) : body
@@ -59,7 +59,7 @@ class MailchimpNock {
 	updateUser() {
 		_.set(this, 'calls.user.update', 0);
 		this.scope
-			.post(`/3.0/lists/${this.listId}/members/${this.hash}`)
+			.patch(`/3.0/lists/${this.listId}/members/${this.hash}`)
 			.reply(this.increment('user.update', 200, { tags: [] }));
 	}
 
@@ -87,10 +87,10 @@ class MailchimpNock {
 			.reply(this.noteTag('tags.add', 200, (uri, body) => this.formatTag(body.name)));
 	}
 	removeTags() {
-		_.set(this, 'calls.tags.delete', []);
+		_.set(this, 'calls.tags.remove', []);
 		this.scope
 			.delete(/lists\/.*\/segments\/.*\/members\/.*/)
-			.reply(this.noteTag('tags.delete', 200, {}));
+			.reply(this.noteTag('tags.remove', 200, {}));
 	}
 }
 
