@@ -70,7 +70,8 @@ class Mailchimp extends AirblastController {
 		// Sync them to all lists they should be on
 		await Promise.all(onLists.forEach((listName) => {
 			const { listId } = lists[listName];
-			return mailchimp.syncPersonToList(person, listId, listName === 'standard' && vip);
+			if (!this.mailchimp) this.mailchimp = new MailchimpService(process.env.MAILCHIMP_KEY);
+			return this.mailchimp.syncPersonToList(person, listId, listName === 'standard' && vip);
 		}));
 	}
 

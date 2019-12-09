@@ -2,8 +2,7 @@ const { expect } = require('chai');
 const MailchimpNock = require('./nock');
 const _ = require('lodash');
 
-process.env.MAILCHIMP_KEY = 'test-us16';
-const service = require('../../src/services/mailchimp');
+const MailchimpService = require('../../src/services/mailchimp');
 
 const LIST_ID = 'TEST_LIST_ID';
 const EMAIL = 'test@email.test';
@@ -41,6 +40,11 @@ const personWithTags = {
 
 describe('Mailchimp service', () => {
 	let nocks;
+	let service;
+	before(() => {
+		service = new MailchimpService('test-us16');
+	})
+
 	describe('syncPersonToList', () => {
 		describe('WHEN new record', () => {
 			before(async () => {
@@ -71,7 +75,7 @@ describe('Mailchimp service', () => {
 		describe('WHEN updated', () => {
 			before(async () => {
 				nocks = new MailchimpNock(LIST_ID, EMAIL);
-				nocks.getUser(200, { tags: tagsOnList, status: 'subscribed' });
+				nocks.getUser(200, { tags: nocks.formatTags(tagsOnList), status: 'subscribed' });
 				nocks.updateUser(200, {});
 				nocks.getTags(mailchimpTags);
 				nocks.createTags();
