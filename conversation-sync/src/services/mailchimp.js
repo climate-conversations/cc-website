@@ -56,7 +56,7 @@ async function setTags(person, personExistingTags, listId) {
 	// Tags are a subset of segments, type static
 	const existingTags = segments.segments
 		.filter(s => s.type === 'static')
-		.forEach(t => { t.kebabName = _.kebabCase(t.name); });
+		.map(t => { t.kebabName = _.kebabCase(t.name); });
 
 	// Create any missing tags
 	const missingTags = personTags
@@ -98,18 +98,20 @@ async function setTags(person, personExistingTags, listId) {
 async function syncPersonToList(person, listId, vip) {
 	const hash = personHash(person);
 	let listEntry;
+	let shouldUpdate = false;
 	try {
 		listEntry = await mailchimp.get(`/lists/${listId}/members/${hash}`);
+		shouldUpdate = true;
 	} catch (e) {
 		// Person is not in the list
 		if (e.statusCode === 404) {
-			await addToList(person, listId, vip);
+			listEntry = await addToList(person, listId, vip);
 		} else {
 			// Unknown error, throw it
 			throw e;
 		}
 	}
-	if (listEntry) {
+	if (shouldUpdate) {
 		// Try and resubscribe it they're not already
 		if (!listEntry.status !== 'subscribed') await resubscribe(person, listId);
 		console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Updating merge fields`);
