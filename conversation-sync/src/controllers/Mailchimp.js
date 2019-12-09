@@ -2,7 +2,7 @@
 const { AirblastController } = require('airblast');
 const _ = require('lodash');
 
-const mailchimp = require('../services/mailchimp');
+const MailchimpService = require('../services/mailchimp');
 
 const options = {
 	wrapInData: true,
@@ -12,16 +12,16 @@ const lists = {
 	standard: {
 		listId: '6741425dab',
 		tags: ['facilitator', 'team-leader'],
-		fields: ['host', 'volunteer', 'newsletter'],
+		fields: ['private.host', 'private.volunteer', 'private.newsletter'],
 
 	},
 	partner: {
 		listId: '56d48ee1bb',
-		fields: ['partner', 'government'],
+		tags: ['partner', 'government'],
 	},
 	vip: {
 		listId: '5dafb75875',
-		fields: ['supportive'],
+		tags: ['supportive'],
 	},
 };
 
@@ -51,13 +51,13 @@ class Mailchimp extends AirblastController {
 			this.log(`(Person ${person.uuid}) has dummy email address (${person.email}). Skipping`);
 			return;
 		}
-		const personTags = person.tags.map(t => t.path);
+		const personTags = _.get(person, 'tags', []).map(t => t.path);
 		const onLists = _.map(lists, (config, name) => {
 			let onList = false;
 			// Do they have a tag
-			if (data.tags) onList = _.intersection(data.tags, personTags);
+			if (config.tags) onList = _.intersection(config.tags, personTags).length;
 			// See if at least one of those fields is truthy
-			if (!onList && data.fields) onList = data.fields.find(field => _.get(person, field));
+			if (!onList && config.fields) onList = config.fields.find(field => _.get(person, field));
 
 			// If they're on the list, sync them
 			return onList ? name : null;
@@ -68,10 +68,10 @@ class Mailchimp extends AirblastController {
 		// Check if this makes them a VIP on the standard list
 		const vip = onLists.filter(l => l !== 'standard').length;
 		// Sync them to all lists they should be on
-		await Promise.all(onLists.forEach((listName) => {
+		await Promise.all(onLists.map((listName) => {
 			const { listId } = lists[listName];
 			if (!this.mailchimp) this.mailchimp = new MailchimpService(process.env.MAILCHIMP_KEY);
-			return this.mailchimp.syncPersonToList(person, listId, listName === 'standard' && vip);
+			return this.mailchimp.syncPersonToList(person, listId, !!((listName === 'standard') && vip));
 		}));
 	}
 
