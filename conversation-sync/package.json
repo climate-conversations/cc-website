@@ -21,7 +21,7 @@
     "@google-cloud/pubsub": "^0.18.0",
     "airblast": "git+https://github.com/raisely/airblast.git",
     "airtable": "^0.5.6",
-    "datastore-env": "^1.2.4",
+    "datastore-env": "^1.2.5",
     "deasync": "^0.1.13",
     "dotenv": "^6.2.0",
     "google-spreadsheet": "^2.0.6",
