@@ -1,14 +1,14 @@
 // FIXME create generator for this file
 
 // Every 10 minutes
-const schedule = '*/10 * * * *';
+const schedule = '*/20 * * * *';
 
 const crons = [{
 	schedule,
-	request: 'ChainTaskRetry',
+	request: 'raiselyPeopleRetry',
 }, {
 	schedule,
-	request: 'MyTaskRetry',
+	request: 'mailchimpRetry',
 }];
 
 module.exports = crons;
