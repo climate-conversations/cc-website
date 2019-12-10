@@ -1,4 +1,9 @@
+
+console.log('before dotenv', process.env)
+
 require('dotenv').config();
+
+console.log('after dotenv', process.env)
 
 const DatastoreEnvironment = require('datastore-env');
 const deasync = require('deasync');
@@ -12,6 +17,8 @@ const env = new DatastoreEnvironment(envVars);
 function asyncLoad(cb) {
 	env.loadEnvironment().then(() => cb()).catch(cb);
 }
+
+console.log('just before', process.env)
 
 // Block execution until loadEnvironment has finished
 deasync(asyncLoad)();

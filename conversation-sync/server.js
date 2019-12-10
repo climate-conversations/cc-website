@@ -1,5 +1,3 @@
-console.log(process.env)
-
 require('./config');
 const routes = require('./config/routes');
 
