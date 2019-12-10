@@ -9,6 +9,13 @@ const options = {
   * to update other services
   */
 class RaiselyPeople extends AirblastController {
+	validate({ data }) {
+		const validEvents = ['user.created', 'user.updated', 'user.deleted', 'user.forgotten'];
+		if (!validEvents.includes(data.type)) {
+			throw new Error(`Invalid event ${data.type}`);
+		}
+	}
+
 	async process({ data }) {
 		// Put data on myTask's job queue
 		this.controllers.mailchimp.enqueue(data);
