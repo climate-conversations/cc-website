@@ -1,6 +1,7 @@
 const Mailchimp = require('mailchimp-api-v3');
 const md5 = require('md5');
 const _ = require('lodash');
+const tzc = require('timezonecomplete');
 
 const tagsToSync = ['Facilitator', 'Team Leader', 'Coordinator', 'Corporate', 'Government', 'Partner', 'Supportive']
 	.map(n => _.kebabCase(n));
@@ -12,11 +13,14 @@ function mailchimpPayload(person, vip) {
 			FNAME: person.firstName,
 			PNAME: person.preferredName,
 			FULLNAME: person.fullName,
-			HOST: _.get(person, 'private.host'),
-			VOLUNTEER: _.get(person, 'private.volunteer'),
-			HOSTCORPORATE: _.get(person, 'private.hostCorporate'),
-			FACILITATE: _.get(person, 'private.facilitate'),
-			NEWSLETTER: _.get(person, 'private.newsleter'),
+			PHONE: person.phoneNumber,
+			BIRTHDAY: new tzc.DateTime(person.private.dateOfBirth).format('YYYY-MM-dd'),
+			ORG: person.private.organisation,
+			// HOST: _.get(person, 'private.host'),
+			// VOLUNTEER: _.get(person, 'private.volunteer'),
+			// HOSTCORPORATE: _.get(person, 'private.hostCorporate'),
+			// FACILITATE: _.get(person, 'private.facilitate'),
+			// NEWSLETTER: _.get(person, 'private.newsleter'),
 		},
 	};
 }
