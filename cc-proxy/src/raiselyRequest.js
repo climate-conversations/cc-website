@@ -49,7 +49,7 @@ async function raisely(options, req) {
 		json: true,
 	};
 
-	const request = Object.keys(options.includes('cacheKey')) ? requestCache : requestNative;
+	const request = options.cacheKey ? requestCache : requestNative;
 	const result = request(requestOptions);
 
 	return result;

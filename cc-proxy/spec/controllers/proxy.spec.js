@@ -25,12 +25,12 @@ describe('proxy', () => {
 	};
 	let raiselyRequest;
 
-	describe('POST /users', () => {
+	describe('POST /interactions', () => {
 		before(() => {
 			results.res = new MockResponse();
 			results.req = new MockRequest({
 				method: 'POST',
-				url: '/proxy/users',
+				url: '/interactions?campaign=campaignUuid',
 				headers: {
 					Origin: 'https://climateconversations.raisely.com',
 				},
@@ -39,11 +39,13 @@ describe('proxy', () => {
 				},
 			});
 			nock('https://api.raisely.com')
-				.post('/v3/users')
+				.log(console.log)
+				.post('/v3/interactions?campaign=campaignUuid')
 				.reply(200, function userRequest(uri, body) {
 					raiselyRequest = {
 						body,
 						headers: this.req.headers,
+						query: uri.split('?')[1],
 					};
 					return { data: mockUser };
 				});
@@ -56,7 +58,7 @@ describe('proxy', () => {
 		it('sends headers to raisely', () => {
 			expect(raiselyRequest.headers).to.containSubset({
 				'x-original-user': '(general public)',
-				'x-cc-proxy-url': '/proxy/users',
+				'x-cc-proxy-url': '/interactions?campaign=campaignUuid',
 				origin: 'https://climateconversations.raisely.com',
 				'user-agent': 'Climate Conversations Proxy',
 				authorization: 'Bearer MOCK_APP_TOKEN',
@@ -71,7 +73,9 @@ describe('proxy', () => {
 		it('forwards the body', () => {
 			expect(raiselyRequest.body).to.eql(results.req.body);
 		});
-		itReturnsMinimalUser(results);
+		it('forwards the query', () => {
+			expect(raiselyRequest.query).to.eql('campaign=campaignUuid');
+		});
 	});
 
 	describe('proxies failure', () => {

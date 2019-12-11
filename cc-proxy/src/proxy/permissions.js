@@ -17,10 +17,12 @@ const AUTHENTICATION_TTL = 10 * 60 * 1000;
  * Endpoints that do not allow for privilege escalation throw a 403
  */
 const escalations = [{
-// 	method: 'POST',
-// 	path: '/users',
-// 	transform: minimalUser,
-// }, {
+	// Let facilitators retrieve the message templates stored on
+	// campaign.private
+	method: 'GET',
+	path: '/campaigns/:campaign',
+	tags: ['team-leader', 'facilitator'],
+}, {
 	// method: 'POST',
 	// path: '/users',
 	// tags: ['team-leader', 'facilitator'],
@@ -59,7 +61,7 @@ const escalations = [{
  * @param {} req
  */
 async function getTagsAndRoles(req) {
-	const bearer = req.get('Authorization')
+	const bearer = req.get('Authorization');
 	if (!bearer) return { tags: [], roles: [] };
 
 	const [prefix, token] = bearer.split(' ');
@@ -81,25 +83,27 @@ async function getTagsAndRoles(req) {
 	return {
 		tags: _.get(user, 'body.tags', []).map(t => t.path),
 		roles: _.get(authentication, 'roles', []),
-	}
+	};
 }
 
 async function authorize(req, path) {
 	const { tags, roles } = await getTagsAndRoles(req);
 
-	const escalation = escalations.find(e => {
-		const isMatch = e.path === path && e.method === req.method;
-		if (e.tags) isMatch = pathMatch && _.intersection(e.tags, tags).length;
-		if (e.roles) isMatch = pathMatch && _.intersection(e.roles, roles).length;
+	const escalation = escalations.find((e) => {
+		let isMatch = e.path === path && e.method === req.method;
+		if (e.tags) isMatch = isMatch && _.intersection(e.tags, tags).length;
+		if (e.roles) isMatch = isMatch && _.intersection(e.roles, roles).length;
 		return isMatch;
 	});
 
-	let notAllowed = true;
+	console.log(path, escalation)
+
+	let deny = false;
 	if (_.get(escalation, 'condition')) {
-		nowAllowed = !await escalation.condition(req);
+		deny = !await escalation.condition(req);
 	}
 
-	if (!escalation || notAllowed) {
+	if (!escalation || deny) {
 		throw new RestError({
 			path,
 			status: 403,
