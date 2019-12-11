@@ -65,6 +65,7 @@ class Mailchimp extends AirblastController {
 		// Filter out lists that they didn't qualify for
 			.filter(l => l);
 
+		console.log(`Syncing ${person.uuid} with lists ${onLists.join(',')} `);
 		// Check if this makes them a VIP on the standard list
 		const vip = onLists.filter(l => l !== 'standard').length;
 		// Sync them to all lists they should be on
