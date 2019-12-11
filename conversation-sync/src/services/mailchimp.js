@@ -128,8 +128,9 @@ class MailchimpService {
 		if (shouldUpdate) {
 			// Try and resubscribe it they're not already
 			if (listEntry.status !== 'subscribed') await this.resubscribe(person, listId);
-			console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Updating merge fields`);
-			await this.mailchimp.patch(`/lists/${listId}/members/${hash}`, mailchimpPayload(person, vip));
+			const payload = mailchimpPayload(person, vip);
+			console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Updating merge fields (birthday ${payload.merge_fields.BIRTHDAY})`);
+			await this.mailchimp.patch(`/lists/${listId}/members/${hash}`, payload);
 		}
 
 		await this.setTags(person, listEntry.tags, listId);
