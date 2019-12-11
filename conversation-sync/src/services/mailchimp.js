@@ -14,7 +14,7 @@ function mailchimpPayload(person, vip) {
 			PNAME: person.preferredName,
 			FULLNAME: person.fullName,
 			PHONE: person.phoneNumber,
-			BIRTHDAY: new tzc.DateTime(person.private.dateOfBirth).format('MM-dd'),
+			BIRTHDAY: new tzc.DateTime(person.private.dateOfBirth).format('MM/dd'),
 			ORG: person.private.organisation,
 			// HOST: _.get(person, 'private.host'),
 			// VOLUNTEER: _.get(person, 'private.volunteer'),
