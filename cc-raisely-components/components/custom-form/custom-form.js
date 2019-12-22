@@ -422,7 +422,7 @@
 			console.log('Update called', handleState);
 
 			const proxyCallback = (...args) => {
-				if (this.props.updateValues) this.props.updateValues(handleState);
+				if (this.props.updateValues) this.props.updateValues(handleState, this.formToData);
 				if (afterUpdateCallback) afterUpdateCallback(...args);
 			};
 
