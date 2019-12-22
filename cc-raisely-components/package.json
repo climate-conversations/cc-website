@@ -24,6 +24,7 @@
 	},
 	"license": "MIT",
 	"dependencies": {
+		"@raisely/cli": "^1.0.4",
 		"babel-eslint": "^8.2.3"
 	},
 	"repository": {
