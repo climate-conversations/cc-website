@@ -1,71 +1,16 @@
 (RaiselyComponents, React) => {
-	const { api, Link, Spinner } = RaiselyComponents;
+	const { api, Spinner } = RaiselyComponents;
 	const { getData } = api;
-	const { dayjs, get } = RaiselyComponents.Common;
 
-	const EventEditRef = RaiselyComponents.import('event-edit', { asRaw: true });
-	let EventEdit;
+	const EventCardRef = RaiselyComponents.import('event-card', { asRaw: true });
+	let EventCard;
+	const CustomSignupForm = RaiselyComponents.import('custom-signup-form');
 
-	function EventCard(props) {
-		const { event } = props;
-		const defaultPhoto = 'https://raisely-images.imgix.net/climate-conversations-2019/uploads/conversation-1-jpg-bc7064.jpg';
-
-		const { show } = props.getValues();
-
-		if (!EventEdit) EventEdit = EventEditRef().html;
-
-		let date = '';
-		let time = '';
-		if (event.startAt) {
-			const startAt = EventEdit.inSingaporeTime(dayjs(event.startAt));
-			date = startAt.format('dddd, MMMM D');
-			time = startAt.format('h:mm a');
-		}
-		const multiDates = get(event, 'public.multiDates');
-
-		const photo = event.photoUrl || defaultPhoto;
-		const link = { href: get(event, 'public.signupUrl') };
-		if (link.href) {
-			link.target = '_blank';
-		} else {
-			link.href = `/events/${event.path || event.uuid}/view`;
-		}
-		const edit = `/events/${event.path || event.uuid}/edit`;
-
-		return (
-			<div className="postfeed__item">
-				<div className="post post--detail-event post--direction-horizontal">
-					<div className="post__image">
-						<img src={photo} alt="" />
-					</div>
-					<div className="post__wrapper">
-						<h4 className="post__title"><Link {...link}>{event.name}</Link></h4>
-						<div className="post__meta">
-							{multiDates ? (
-								<span className="post__meta__author">
-									{multiDates}
-								</span>
-							) : (
-								<React.Fragment>
-									<span className="post__meta__author">
-										{date}
-									</span>
-									<span className="post__meta__date">{time}</span>
-								</React.Fragment>
-							)}
-							<div className="post__meta__description">
-								{get(event, 'public.intro')}
-							</div>
-						</div>
-						<Link className="button button--cta post__link show--logged-in" href={edit}>Edit</Link>
-						{show !== 'past' ? (
-							<Link className="button button--primary post__link" {...link}>Sign up</Link>
-						) : ''}
-					</div>
-				</div>
-			</div>
-		);
-	}
+	const signupFields = [
+		'user.preferredName', 'user.email', 'user.volunteer',
+		{ id: 'user.mailingList', default: 'true', hidden: 'true' },
+		'user.privacyNotice',
+	].map(id => (id.id ? id : { id }));
 
 	return class EventFeed extends React.Component {
 		state = { loading: true };
@@ -99,11 +44,41 @@
 			}
 		}
 
+		// eslint-disable-next-line class-methods-use-this
+		noEvents() {
+			const rsvpProps = {
+				...this.props,
+				backgroundColour: 'orange',
+				title: 'Come to our next event!',
+				description: `
+					Our volunteers are taking a well deserved break. We'll be organising some more events soon.
+					Leave your name and contact and we'll let you know when there's more events coming up.`,
+				fields: signupFields,
+			};
+			return (
+				<div className="no-events">
+					<CustomSignupForm {...{ ...rsvpProps }} />
+				</div>
+			);
+		}
+
 		render() {
 			const { events, loading, error } = this.state;
+			const { show } = this.props.getValues();
 
 			if (loading) {
 				return <Spinner />;
+			}
+
+			if (!EventCard) EventCard = EventCardRef().html;
+
+			const props = {
+				...this.props,
+				disableLink: show === 'past',
+			};
+
+			if ((show !== 'past') && (events.length === 0)) {
+				return this.noEvents();
 			}
 
 			return (
@@ -112,7 +87,7 @@
 						<div className="error">{error}</div>
 					) : ''}
 					<ul className="postfeed postfeed--direction-horizontal postfeed--events">
-						{events.map(e => <EventCard {...this.props} event={e} />)}
+						{events.map(e => <EventCard {...props} event={e} />)}
 					</ul>
 				</React.Fragment>
 			);
