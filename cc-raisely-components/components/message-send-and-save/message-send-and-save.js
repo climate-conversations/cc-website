@@ -8,10 +8,15 @@
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const WhatsAppButtonRef = RaiselyComponents.import('whatsapp-button', { asRaw: true });
 	const ReturnButton = RaiselyComponents.import('return-button');
-
 	let WhatsAppButton;
 
+	const contactDefaults = { sendBy: 'whatsapp', emailClient: 'gmail' };
+
 	const initialContactFields = [{
+		id: 'messageInstructions',
+		type: 'rich-description',
+		default: "Edit the message you want to send below. A copy of this message will be automatically saved on the records of the recipients when you click send. This helps us keep good records of the contact we've had with people.",
+	} ,{
 		label: 'Subject',
 		id: 'subject',
 		type: 'text',
@@ -38,30 +43,93 @@
 		options: [
 			{ label: 'Gmail', value: 'gmail' },
 			{ label: 'Yahoo', value: 'yahoo' },
-			// { label: 'Hotmail', value: 'hotmail' },
+			{ label: 'Hotmail', value: 'hotmail' },
 			{ label: 'Other Email App', value: 'other' },
 		],
 	}].map(field => Object.assign(field, { active: true, core: true }));
 
-	const userHasPhone = user => !!user.phoneNumber;
-	const userHasEmail = user => (user.email && !user.email.endsWith('@noemail.invalid'));
-	const getLabel = user => user.fullName || user.preferredName || user.email || user.phoneNumber;
+	const userHasEmail = user => (user.email && !user.email.endsWith('.invalid'));
+	const getLabel = user => user.fullName || user.preferredName ||
+		(userHasEmail(user) && user.email) || user.phoneNumber;
+
+	function toggleEmailClient(contactFields, contactSettings) {
+		const emailClient = contactFields.find(f => f.id === 'emailClient');
+		emailClient.type = contactSettings.sendBy === 'email' ? 'select' : 'hidden';
+		return emailClient;
+	}
+
+	function Checkbox({ label, onChange, value, disabled }) {
+		const labelClass = `form-field__label-text ${disabled ? 'disabled' : ''}`;
+		return (
+			<div className="field-wrapper">
+				<div className="form-field form-field--checkbox form-field--not-empty form-field--valid">
+					<label onClick={() => !disabled && onChange({ value: !value })}>
+						<input
+							type="checkbox"
+							onChange={(e) => {
+								e.stopPropagation();
+								if (!disabled) {
+									onChange(!value);
+								}
+							}}
+							disabled={disabled}
+							className="form-field--checkbox__inline"
+							checked={value} />
+						<span className={labelClass}>{label}</span>
+					</label>
+				</div>
+			</div>
+		);
+	}
+
+	function WhatsAppLink({ recipient, onClick }) {
+		if (recipient.sent || !recipient.phoneNumber) {
+			return <p>{recipient.label} {recipient.sent ? '(sent)' : ''}</p>;
+		}
+		return (
+			<Button
+				className="link"
+				theme="link"
+				onClick={() => onClick(recipient)}>
+					{recipient.label} ({recipient.phoneNumber})
+			</Button>
+		)
+	}
+
+	function RecipientList({ recipients, sendBy, selectedRecipients, toggleRecipient, onClick }) {
+		if (!Array.isArray(recipients)) return null;
+		const hasWhatsapp = recipients.find(r => r.phoneNumber && !r.email);
+		return (
+			<div className="contact--form__recipients--whatsapp-wrapper">
+				{hasWhatsapp ? (
+					<p>Some recipients do not have an email address. Click on the underlined recipients below to send them a WhatsApp</p>
+				) : ''}
+				<ul className="contact--form__recipients--whatsapp-list">
+					{recipients.map(r => (
+						<li key={r.uuid}>
+							{((sendBy === 'email') && r.email) ? (
+								<Checkbox
+									label={`${r.label} ${r.sent ? '(sent)' : ''}`}
+									onChange={(value) => toggleRecipient(r.uuid, value)}
+									value={selectedRecipients[r.uuid]}
+									disabled={r.disabled || r.sent}
+								/>
+							) : (
+								<WhatsAppLink
+									recipient={r}
+									onClick={onClick} />
+							)}
+						</li>
+					))}
+				</ul>
+			</div>
+		);
+	}
 
 	class ContactForm extends React.Component {
 		componentDidMount() {
 			this.initRecipients();
 			this.initContactFields();
-
-			set(window, '$cc.contactFormSendWhatsapp', (id) => { this.send(id); });
-
-			// setTimeout(() => {
-			// 	const [parentElement] = document.getElementsByClassName('contact--form__recipients');
-
-			// 	parentElement.click((e) => {
-			// 		console.log('Clicked', e);
-			// 		this.send(e.target.id);
-			// 	});
-			// }, 1);
 		}
 
 		onContactChange = (values) => {
@@ -71,74 +139,35 @@
 			let { contactFields } = this.state;
 			// Disable/enable email client if email is selected
 			if (to.length > 1) {
-				const emailClient = contactFields.find(f => f.id === 'emailClient');
-				const oldClientDisplay = contactSettings.sendBy;
-				emailClient.type = contactSettings.sendBy === 'email' ? 'select' : 'hidden';
+				const newContactFields = contactFields.map(f => ({ ...f }));
+				const oldEmailClient = contactFields.find(f => f.id === 'emailClient');
+				const emailClient = toggleEmailClient(newContactFields, contactSettings);
 				// If this has changed, force a repaint of the fields
-				if (oldClientDisplay !== emailClient.type) {
-					contactFields = contactFields.map(f => ({ ...f }));
+				if (oldEmailClient.type !== emailClient.type) {
+					contactFields = newContactFields;
 				}
 			}
 
 			this.setState({ contactSettings, contactFields }, this.setActiveRecipients);
 		}
-		onRecipientChange = (values) => {
-			console.log('Recipients Change: ', values);
-			const selectedRecipients = values[0];
-			this.setState({ selectedRecipients });
-		}
-
-		/**
-		 * Activate/deactive recipients if they have a phoneNumber/email
-		 * depending on selected contact method
-		 */
-		setActiveRecipients = () => {
-			const { recipientFields, contactSettings, allSent } = this.state;
-			const { sendBy } = contactSettings;
-			const { to } = this.props;
-			console.log('Set active recipients', contactSettings)
-			recipientFields.forEach((field) => {
-				const user = to.find(u => u.uuid === field.id);
-				const hasPhone = userHasPhone(user);
-				const hasEmail = userHasEmail(user);
-
-				/* eslint-disable no-param-reassign */
-				if (sendBy === 'whatsapp' || (hasPhone && !hasEmail)) {
-					const sent = (allSent || []).find(s => s.userUuid === user.uuid);
-					field.type = 'rich-description';
-					// window.$cc.contactFormSendWhatsapp(${user.uuid})
-					const label = getLabel(user);
-					field.default = `<div>
-						<a onclick="console.log('clicked!)">
-							${label || '(uncontactable guest)'} (${user.phoneNumber})
-						</a>
-						${sent ? '(sent)' : ''}
-					</div>`;
-				} else {
-					field.type = 'checkbox';
-					field.disabled = !(sendBy === 'whatsapp' ? userHasPhone(user) : userHasEmail(user));
-				}
-				/* eslint-enable no-param-reassign */
-			});
-			this.setState({ recipientFields, recipientFieldsKey: new Date().toISOString() });
-		}
-
 		initContactFields() {
 			// Don't mess up the initial fields
 			const { to } = this.props;
 			let contactFields = initialContactFields.map(f => ({ ...f }));
-			// Don't show send by filed for 1 recipient
+			// Don't show send by field for 1 recipient
 			if (to.length === 1) {
 				contactFields = contactFields.filter(f => f.id !== 'sendBy');
 			}
 
-			const { sendBy, body, subject } = Object.assign({ sendBy: 'whatsapp' }, this.props);
+			const { sendBy, body, subject, emailClient } = Object.assign(contactDefaults, this.props);
 
 			const contactSettings = {
 				sendBy,
 				body,
 				subject,
+				emailClient,
 			};
+			toggleEmailClient(contactFields, contactSettings);
 
 			this.setState({
 				contactFields,
@@ -154,19 +183,18 @@
 			}
 			const selectedRecipients = {};
 			const recipientFields = to.map((user) => {
-				selectedRecipients[user.uuid] = true;
-				let { email } = user;
-				// If the user doesn't really have an email
-				if (email.endsWith('noemail.invalid')) { email = ''; }
-				const label = getLabel(user);
+				const { email, phoneNumber } = user;
+				const hasEmail = userHasEmail(user);
+				selectedRecipients[user.uuid] = hasEmail;
+				let label = getLabel(user) || '';
+				if (!hasEmail && !phoneNumber) label += ' (uncontactable guest)';
 				return {
-					label: label || '(uncontactable guest)',
-					id: user.uuid,
-					type: 'checkbox',
-					active: true,
-					core: true,
-					default: 'true',
+					label,
+					uuid: user.uuid,
 					disabled: !label,
+					email: hasEmail && email,
+					phoneNumber,
+					sent: false,
 				};
 			});
 
@@ -176,35 +204,20 @@
 		buttons = (recipientCount) => {
 			const { props } = this;
 			const { closeModal, to } = props;
-			const { contactSettings, recentlySent, saving } = this.state;
+			const { contactSettings } = this.state;
 
 			const isWhatsApp = contactSettings.sendBy === 'whatsapp';
-			const recipientNames = recentlySent && recentlySent.length ?
-				recentlySent.map(r => r.name).join(', ') :
-				false;
 
 			const user = to[0];
 
 			return (
 				<div className="contact--form__buttons">
-					{isWhatsApp && (recipientCount > 1) ?
-						<p>Click on the {"people's"} names above to send a WhatsApp message</p> :
-						<Button onClick={this.sendAll} target="_blank">Send Email</Button>
-					}
-					{(recipientCount === 1) ? (
+					{isWhatsApp && (recipientCount === 1) ? (
 						<Button onClick={() => this.send(user, closeModal)}>Send WhatsApp</Button>
 					) : ''}
-					{ recipientNames ? (
-						<React.Fragment>
-							<p>
-								Once {"you've"} sent the messages, click the button below to automatically
-								create a note in Raisely that you sent a message to {recipientNames}
-							</p>
-							<Button onClick={this.saveInteraction} target="whatsapp" disabled={saving}>
-								{saving ? 'Saving' : 'Save'} a Record of Messages
-							</Button>
-						</React.Fragment>
-					) : '' }
+					{!isWhatsApp || (recipientCount === 1) ? (
+						<Button onClick={() => this.sendAll(recipientCount === 1 ? closeModal : null)} target="_blank">Send Email</Button>
+					) : ''}
 					{closeModal ? (
 						<Button theme="secondary" onClick={() => closeModal()}>Done</Button>
 					) : (
@@ -214,7 +227,30 @@
 			);
 		}
 
-		sendAll = () => {
+		finalPage = () => {
+			const recipients = this.recipientsRemaining();
+			const { recipientFields } = this.state;
+			const invalidRecipients = recipientFields.filter(r => !(r.phoneNumber || r.email));
+			return (
+				<div className="contact--form">
+					<div className="contact--form__final">
+						{recipients.sent ? <p>Great! {"You've"} sent messages to all valid recipients.</p> : ''}
+						{recipients.invalid ? (
+							<React.Fragment>
+								<p>The folllowing recipients could not be messaged because they have no valid contact details</p>
+								<ul>
+									{invalidRecipients.map(r => (
+										<li key={r.uuid}>{r.label}</li>
+									))}
+								</ul>
+							</React.Fragment>
+						) : ''}
+					</div>
+				</div>
+			)
+		}
+
+		sendAll = (closeModal) => {
 			const { selectedRecipients, recipientFields, contactSettings } = this.state;
 			const { subject, body, emailClient } = contactSettings;
 			const { to } = this.props;
@@ -223,7 +259,7 @@
 				// Filter the selected ones
 				.filter(u => selectedRecipients[u.uuid])
 				// Filter any disabled users (ie they don't have an email)
-				.filter(u => recipientFields.find(f => (f.id === u.uuid) && !f.disabled));
+				.filter(u => recipientFields.find(f => (f.uuid === u.uuid) && !f.disabled));
 			const bcc = recipients
 				.map(u => u.email)
 				.join(';');
@@ -239,12 +275,22 @@
 			const urlMap = {
 				gmail: `https://mail.google.com/mail/?view=cm&fs=1&tf=1&bcc=${bcc}&su=${subject}&body=${body}`,
 				yahoo: `http://compose.mail.yahoo.com/?bcc=${bcc}&subject=${subject}&body=${body}`,
+				hotmail: `https://dub130.mail.live.com/default.aspx?rru=compose&subject=${subject}&body=${body}&bcc=${bcc}#page=Compose`,
 			};
 			const url = urlMap[emailClient];
-			// Open the message composer
-			if (url) window.open(url);
-			// eslint-disable-next-line object-curly-newline
-			this.setState({ state: 'email', recentlySent, emailContent: { bcc, subject, body } });
+			if (url) {
+				console.log(`Opening ${emailClient} composer`);
+				// Open the message composer
+				window.open(url);
+				// Save the interaction immediately and close the modal if necessary
+				this.saveInteraction(recentlySent)
+					.then((canClose) => {
+						if (canClose && closeModal) closeModal();
+					});
+			} else {
+				// eslint-disable-next-line object-curly-newline
+				this.setState({ state: 'email', recentlySent, emailContent: { bcc, subject, body } });
+			}
 		}
 		send = (user, closeModal) => {
 			if (!WhatsAppButton) WhatsAppButton = WhatsAppButtonRef().html;
@@ -264,14 +310,19 @@
 			};
 			this.saveInteraction([message])
 				.then((canClose) => {
+					user.sent = true;
+					const { selectedRecipients } = this.state;
+					selectedRecipients[user.uuid] = false;
+					this.setState({ selectedRecipients });
 					if (canClose && closeModal) closeModal();
 				});
 		}
 		saveInteraction = async (messages) => {
 			const { messageId } = this.props;
+			const { selectedRecipients, recipientFields } = this.state;
 			try {
 				this.setState({ saving: true });
-				const promises = messages.map((message) => {
+				const promises = messages.map(async (message) => {
 					// eslint-disable-next-line object-curly-newline
 					const { body, subject, userUuid, type, emailClient } = message;
 					const data = {
@@ -289,8 +340,14 @@
 					if (type === 'whatsapp') data.detail.private.method = 'WhatsApp';
 					if (type === 'email') data.detail.private.emailClient = emailClient;
 
-					return getData(api.interactions.create({ data }));
+					const result = await getData(api.interactions.create({ data }));
+					// Uncheck the recipient
+					selectedRecipients[userUuid] = false;
+					const recipient = recipientFields.find(r => r.uuid === userUuid);
+					recipient.sent = true;
+					return result;
 				});
+				await Promise.all(promises);
 
 				const allSent = (this.state.allSent || []).concat(messages);
 
@@ -300,6 +357,9 @@
 				this.setState({ saving: false, error: e.message });
 				return false;
 			}
+			// Note whichever recipients were successful, force repaint
+			this.setState({ selectedRecipients: {...selectedRecipients} });
+
 			return true;
 		}
 
@@ -307,44 +367,73 @@
 			this.setState({ state: 'step1' });
 		}
 
+		toggleRecipient = (uuid, value) => {
+			const { selectedRecipients } = this.state;
+			selectedRecipients[uuid] = value;
+			this.setState({ selectedRecipients });
+		}
+
 		sendEmailPanel() {
 			const { body, subject, bcc } = this.state.emailContent;
-			const { sendBy } = this.state.contactSettings;
 			const { recentlySent, saving } = this.state;
 			return (
 				<div className="contact--form__email">
-					{sendBy === 'other' ? (
-						<div className="contact--form__copy-email">
-							<p>Copy and paste the following into an email to send to guests</p>
-							<div className="contact--form__email-content">
-								<div>{bcc}</div>
-								<div>Subject: {subject}</div>
-								<div>{body}</div>
+					<div className="contact--form__copy-email">
+						<p>Copy and paste the following into an email to send to guests</p>
+						<div className="contact--form__email-content">
+							<div>
+								<span className="contact--form__label">BCC:</span>
+								<span className="contact--form__value">{bcc}</span>
+							</div>
+							<div>
+								<span className="contact--form__label">Subject:</span>
+								<span className="contact--form__value">{subject}</span>
+							</div>
+							<div>
+								<span className="contact--form__value">{body}</span>
 							</div>
 						</div>
-					) : ''}
+					</div>
 					<p>Did you send the email? (Clicking yes will save a record of the email in Raisely)</p>
 					<Button onClick={this.emailReturn}>No</Button>
-					<Button theme="cta" disabled={saving} onClick={this.saveInteraction(recentlySent)}>
+					<Button theme="cta" disabled={saving} onClick={() => this.saveInteraction(recentlySent)}>
 						{saving ? 'Saving' : 'Yes'}
 					</Button>
 				</div>
 			);
 		}
 
+		recipientsRemaining() {
+			const { recipientFields } = this.state;
+			const result = {
+				sent: 0,
+				invalid: 0,
+				remaining: 0,
+			};
+			recipientFields.forEach(r => {
+				if (r.sent) result.sent++;
+				else if (r.email || r.phoneNumber) result.remaining++;
+				else result.invalid++;
+			});
+			console.log('Recipients remaining', result)
+			return result;
+		}
+
 		render = () => {
 			const { props } = this;
-			if (!this.state) return '';
+			if (!this.state) return <Spinner />;
 			// eslint-disable-next-line object-curly-newline
-			const { state, selectedRecipients, contactSettings, error, recipientFieldsKey, contactSettingsKey } = this.state;
+			const { state, selectedRecipients, contactSettings, error, recipientFieldsKey, contactSettingsKey, recipientFields } = this.state;
 			const { sendBy } = contactSettings;
 			const { to } = props;
 
 			const contactSteps = [{ fields: this.state.contactFields }];
-			const recipientSteps = [{ fields: this.state.recipientFields }];
 			const recipientCount = to.length;
 
 			const contactClass = recipientCount < 2 ? '' : 'contact--form__content';
+			const recipients = this.recipientsRemaining();
+
+			if (!recipients.remaining) return this.finalPage();
 
 			return (
 				<div className="contact--form">
@@ -353,6 +442,7 @@
 						(
 							<React.Fragment>
 								<div className={contactClass}>
+									<h4>Compose your message</h4>
 									<CustomForm
 										key={contactSettingsKey}
 										{...props}
@@ -373,18 +463,13 @@
 										{ error ? (
 											<div className="error">{ error }</div>
 										) : '' }
-										{sendBy === 'whatsapp' ? (
-											<p>Click on each recipient below to send a WhatsApp to them</p>
-										) : '' }
-
-										<CustomForm
+										<RecipientList
 											key={recipientFieldsKey}
-											{...props}
-											unlocked
-											steps={recipientSteps}
-											values={[selectedRecipients]}
-											updateValues={this.onRecipientChange}
-											hideButtons
+											recipients={recipientFields}
+											sendBy={sendBy}
+											selectedRecipients={selectedRecipients}
+											toggleRecipient={this.toggleRecipient}
+											onClick={this.send}
 										/>
 										{this.buttons(recipientCount)}
 									</div>
