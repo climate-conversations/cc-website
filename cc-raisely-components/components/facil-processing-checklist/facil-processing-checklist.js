@@ -110,7 +110,7 @@
 			let found = false;
 			checklist.forEach((item) => {
 				if (found || item.isDone) {
-					delete checklist.help;
+					delete item.help;
 				} else {
 					// eslint-disable-next-line no-param-reassign
 					item.help = checklistHelp[item.id];
@@ -225,11 +225,12 @@
 				this.setKnownCompletedSteps(eventPromise);
 
 				// Fetch rsvps
-				const [records, rsvps] = await Promise.all([
+				const [records, rsvpsByType] = await Promise.all([
 					eventPromise,
-					getData(api.eventRsvps.getAll({ query: { event: uuid } })),
+					Conversation.loadRsvps({ props: this.props })
 				]);
 				const { event: conversation } = records;
+				const { rsvps } = rsvpsByType;
 
 				const completedSteps = await this.checkCompletedSteps(conversation, rsvps);
 				await this.updateComplete(conversation, completedSteps);
