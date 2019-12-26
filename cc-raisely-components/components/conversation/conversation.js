@@ -61,19 +61,19 @@
 		static async loadRsvps({ props, type }) {
 			const result = {};
 			try {
-				const types = type.map(t => plural(t));
+				const types = Array.isArray(type) ? type.map(t => plural(t)) : type;
 
 				const eventUuid = props.conversation ||
 					get(props, 'match.params.event') ||
 					getQuery(get(props, 'router.location.search')).event;
 
 				result.rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
-				types.forEach((key) => { result[key] = []; });
+				if (types) types.forEach((key) => { result[key] = []; });
 				result.rsvps.forEach((rsvp) => {
 					// Work around an api bug
 					if (rsvp.eventUuid === eventUuid) {
 						const key = plural(rsvp.type);
-						if (types.includes(key)) result[key].push(rsvp.user);
+						if (types && types.includes(key)) result[key].push(rsvp.user);
 					}
 				});
 			} catch (e) {
