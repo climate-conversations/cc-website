@@ -139,6 +139,7 @@
 								status: 'lead',
 								source: 'conversation',
 								assignedFacilitator: facilitatorUuid,
+								conversationUuid: this.event.uuid,
 							},
 						},
 					},
