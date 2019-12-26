@@ -40,7 +40,7 @@
 
 			const params = {
 				...this.props,
-				sendby: 'email',
+				sendBy: 'email',
 				body,
 				to: guests,
 				subject: "Thank you & what's next?",
@@ -57,7 +57,7 @@
 					{error ? <div className="error">{error}</div> : this.renderInner()}
 					<ReturnButton {...props} backLabel="Go Back" backTheme="secondary" />
 				</div>
-			)
+			);
 		}
 	};
 };
