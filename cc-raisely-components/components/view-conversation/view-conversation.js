@@ -57,8 +57,9 @@
 				// eslint-disable-next-line object-curly-newline
 				this.setState({ reflections, surveys }, this.getCounters);
 
-				// Catch exception
-				await promises;
+				const [conversation, rsvpResults] = await Promise.all(promises);
+
+				this.setState({ conversation, ...rsvpResults });
 			} catch (e) {
 				this.setState({ error: e.message });
 				console.error(e);
@@ -108,7 +109,7 @@
 						<Button href={reconcileLink}>Reconcile Donations</Button>
 					</div>
 					<div className="view-conversation__guest-list">
-						<GuestList conversation={uuid} />
+						<GuestList {...this.props} conversation={uuid} />
 					</div>
 				</div>
 			);
