@@ -2,25 +2,17 @@
 	const { Icon, Button } = RaiselyComponents.Atoms;
 	const { get, dayjs } = RaiselyComponents.Common;
 	const { api, Spinner, Link } = RaiselyComponents;
+	const { getData } = api;
 
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
+	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
+	let Facilitator;
 
 	const icons = {
 		public: 'public',
 		private: 'supervised_user',
 		corporate: 'accessibility_new',
 	};
-
-	async function getData(promise) {
-		const response = await promise;
-		const status = response.statusCode();
-		if (status >= 400) {
-			const message = get(response.body().data(), 'errors[0].message', 'An unknown error has occurred');
-			console.error(response.body());
-			throw new Error(message);
-		}
-		return response.body().data().data;
-	}
 
 	class Host extends React.Component {
 		componentDidMount() {
@@ -37,6 +29,10 @@
 				get(host, 'user.email') ||
 				'...';
 
+			const facilName = get(host, 'facilitator.preferredName') ||
+				get(host, 'faciltiator.fullName') ||
+				"(couldn't load facil)";
+
 			return (
 				<li className="" key={host.uuid}>
 					<Link className="list__item host-list-item" href={url}>
@@ -44,7 +40,7 @@
 							{name}
 							<div className="list__item--subtitle">
 								{host.conversation ? conversationName : '(no conversation)'}
-								{showFacil ? <div className="host-facil"> - {host.facilitator.preferredName}</div> : ''}
+								{showFacil ? <div className="host-facil"> - {facilName}</div> : ''}
 							</div>
 						</div>
 						<div className="host-status">{get(host, 'private.status', '...')}</div>
@@ -69,11 +65,12 @@
 		setHosts = () => {
 			const hostStatus = ['lead', 'interested', 'booked', 'hosted', 'not interested'];
 			const filterStatus = ['lead', 'interested', 'booked'];
-			const isTeam = this.isTeam();
+			Facilitator = FacilitatorRef().html;
+			const isTeam = Facilitator.isTeamMode(this.props);
 
 			let { hosts } = this;
 			if (this.state.filter) {
-				hosts = this.hosts
+				hosts = hosts
 					.filter(h => filterStatus.includes(get(h, 'detail.private.status')))
 					// Ensure visible hosts have conversation
 					.forEach((host) => {
@@ -91,7 +88,10 @@
 								}
 								this.conversations[uuid]
 									// eslint-disable-next-line no-param-reassign
-									.then((c) => { host.conversation = c; });
+									.then((c) => {
+										host.conversation = c;
+										this.setState({ hosts });
+									});
 							}
 						}
 						if (isTeam && !host.facilitator) {
@@ -105,31 +105,17 @@
 		}
 
 		async getUserUuids() {
-			const currentUserUuid = get(this.props, 'global.user.uuid');
-			let uuids = currentUserUuid;
-
-			if (this.isTeam()) {
-				const facilitators = await getData(api.users.getAll({
-					query: {
-						'private.teamLeaderUuid': currentUserUuid,
-					},
-				}));
-				uuids = facilitators
-					.map((f) => {
-						// Save the facilitator in the uuid map
-						this.facilitators[f.uuid] = f;
-						// Map it to it's uuid to create the query param
-						return f.uuid;
-					})
-					.join(',');
-			}
-
+			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const facilitators = await Facilitator.getTeamOrFacilitators(this.props);
+			const uuids = facilitators
+				.map((f) => {
+					// Save the facilitator in the uuid map
+					this.facilitators[f.uuid] = f;
+					// Map it to it's uuid to create the query param
+					return f.uuid;
+				})
+				.join(',');
 			return uuids;
-		}
-
-		isTeam = () => {
-			const { show } = this.props.getValues();
-			return show === 'team';
 		}
 
 		async load() {
@@ -144,12 +130,7 @@
 					},
 				}));
 
-				await Promise.all(this.hosts.map(async (host) => {
-					if (!host.user) {
-						// eslint-disable-next-line no-param-reassign
-						host.user = await getData(api.users.get({ id: host.userUuid }));
-					}
-				}));
+				this.setHosts();
 
 				// this.hosts = [{
 				// 	userUuid: '9f0175c0-da2c-11e9-8213-bb2b7acc1c0d',
@@ -166,10 +147,9 @@
 				// 	facilitator: { preferredName: 'Chris' },
 				// }];
 			} catch (error) {
+				console.error(error);
 				this.setState({ error, loading: false });
 			}
-
-			this.setHosts();
 		}
 
 		toggleFilter = () => {
@@ -183,30 +163,35 @@
 
 			if (loading) return <Spinner />;
 
-			const isTeam = this.isTeam();
+			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const isTeam = Facilitator.isTeamMode(this.props);
 
 			return (
 				<div className="host-list__wrapper list__wrapper">
 					{error ? (
 						<div className="error">{error.message}</div>
-					) : ''}
-					{this.hosts.length ? (
-						<Button className="list__toggle" onClick={this.toggleFilter}>
-							{filter ? 'Show All' : 'Hide Complete' }
-						</Button>
-					) : ''}
-					{this.hosts.length ? (
-						<ul className="host-list">
-							{this.hosts.map(host => (
-								<Host
-									{...this.props}
-									now={now}
-									showFacil={isTeam}
-									host={host} />
-							))}
-						</ul>
 					) : (
-						<p>You have no {this.hosts.length ? 'unbooked' : ''} hosts</p>
+						<React.Fragment>
+							{this.hosts.length ? (
+								<Button className="list__toggle" onClick={this.toggleFilter}>
+									{filter ? 'Show All' : 'Hide Complete' }
+								</Button>
+							) : ''}
+							{this.hosts.length ? (
+								<ul className="host-list">
+									{this.hosts.map(host => (
+										<Host
+											key={host.uuid}
+											{...this.props}
+											now={now}
+											showFacil={isTeam}
+											host={host} />
+									))}
+								</ul>
+							) : (
+								<p>You have no {this.hosts.length ? 'unbooked' : ''} hosts</p>
+							)}
+						</React.Fragment>
 					)}
 				</div>
 			);

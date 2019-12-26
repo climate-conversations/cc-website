@@ -2,6 +2,10 @@
 	const { Icon, Button } = RaiselyComponents.Atoms;
 	const { get, dayjs } = RaiselyComponents.Common;
 	const { api, Spinner, Link } = RaiselyComponents;
+	const { getData } = api;
+
+	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
+	let Facilitator;
 
 	const icons = {
 		public: 'public',
@@ -10,17 +14,6 @@
 		overdue: 'warning',
 		inReview: 'check_circle_outline',
 	};
-
-	async function doApi(promise) {
-		const response = await promise;
-		const status = response.statusCode();
-		if (status >= 400) {
-			const message = get(response.body(), 'errors[0].message', 'An unknown error has occurred');
-			console.error(response.body());
-			throw new Error(message);
-		}
-		return response.body().data().data;
-	}
 
 	class Conversation extends React.Component {
 		setTimes() {
@@ -103,27 +96,11 @@
 			this.setState({ conversations, loading: false });
 		}
 
-		async getUserUuids() {
-			const currentUserUuid = get(this.props, 'global.user.uuid');
-			let uuids = currentUserUuid;
-
-			if (this.isTeam()) {
-				const facils = await doApi(api.users.getAll({
-					query: {
-						'private.teamLeaderUuid': currentUserUuid,
-					},
-				}));
-				uuids = facils.map(f => f.uuid).join(',');
-			}
-
-			return uuids;
-		}
-
 		async load() {
 			try {
 				const campaignUuid = this.props.global.uuid;
 				const userUuid = await this.getUserUuids();
-				const rsvps = await doApi(api.eventRsvps.getAll({
+				const rsvps = await getData(api.eventRsvps.getAll({
 					query: {
 						user: userUuid,
 						type: 'facilitator,co-facilitator',
@@ -136,16 +113,22 @@
 					rsvp.event.facilitator = rsvp.user;
 					return rsvp.event;
 				});
+				this.setConversations();
 			} catch (error) {
 				this.setState({ loading: false, error })
 			}
-
-			this.setConversations();
 		}
 
-		isTeam() {
-			return false;
-			return this.props.getValues().show === 'team';
+		async getUserUuids() {
+			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const facilitators = await Facilitator.getTeamOrFacilitators(this.props);
+			const uuids = facilitators
+				.map((f) => {
+					// Map it to it's uuid to create the query param
+					return f.uuid;
+				})
+				.join(',');
+			return uuids;
 		}
 
 		toggleFilter = () => {
@@ -158,15 +141,17 @@
 			const { conversations, filter, loading, error } = this.state;
 			const isTeam = this.props.getValues().show === 'team';
 
-			// this.isTeam();
-
 			if (loading) return <Spinner />;
+			if (error) {
+				return (
+					<div className="conversation-list__wrapper list__wrapper">
+						<div className="error">{error.message}</div>
+					</div>
+				);
+			}
 
 			return (
 				<div className="conversation-list__wrapper list__wrapper">
-					{error ? (
-						<div className="error">{error.message}</div>
-					) : ''}
 					{this.conversations.length ? (
 						<Button className="list__toggle" onClick={this.toggleFilter}>
 							{filter ? 'Show All' : 'Hide Complete' }
@@ -176,6 +161,7 @@
 						<ul className="conversation-list">
 							{conversations.map(conversation => (
 								<Conversation
+									key={conversation.uuid}
 									{...this.props}
 									now={now}
 									showFacil={isTeam}
