@@ -32,11 +32,16 @@
 			const conversationName = (host.conversation === true) ?
 				'...' : get(host.conversation, 'name', '...');
 
+			const name = get(host, 'user.fullName') ||
+				get(host, 'user.preferredName') ||
+				get(host, 'user.email') ||
+				'...';
+
 			return (
 				<li className="" key={host.uuid}>
 					<Link className="list__item host-list-item" href={url}>
 						<div className="list__item--title">
-							{get(host, 'user.fullName', '...')}
+							{name}
 							<div className="list__item--subtitle">
 								{host.conversation ? conversationName : '(no conversation)'}
 								{showFacil ? <div className="host-facil"> - {host.facilitator.preferredName}</div> : ''}
