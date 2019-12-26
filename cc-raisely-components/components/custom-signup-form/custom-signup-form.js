@@ -16,7 +16,13 @@
 			if (!UserSaveClass) return;
 			UserSaveHelper = UserSaveClass.type;
 
-			console.log('CustomSignupForm values:', this.props.getValues());
+			console.log('CustomSignupForm values:', this.getConfig());
+		}
+
+		getConfig() {
+			const settings = this.props.getValues();
+			// Allow override by props
+			return Object.assign({}, settings, this.props);
 		}
 
 		save = async (values, formToData) => {
@@ -26,7 +32,7 @@
 
 			const user = await UserSaveHelper.upsertUser(data.user);
 
-			const settings = this.props.getValues();
+			const settings = this.getConfig();
 			if (settings.interactionCategory) {
 				userOnlyFields.forEach(field => delete detail[field]);
 
@@ -40,7 +46,8 @@
 					recordType: 'user',
 					recordUuid: user.uuid,
 				};
-				await UserSaveHelper.proxy('/interactions', {
+				const campaign = this.props.global.campaign.uuid;
+				await UserSaveHelper.proxy(`/interactions?campaign=${campaign}`, {
 					method: 'post',
 					body: { data: interaction },
 				});
@@ -49,7 +56,7 @@
 
 		buildSteps() {
 			// eslint-disable-next-line object-curly-newline
-			const { fields, title, description, actionText } = this.props.getValues();
+			const { fields, title, description, actionText } = this.getConfig();
 			const step1 = {
 				title,
 				description,
@@ -77,7 +84,7 @@
 				console.log('Custom Signup Steps: ', steps);
 				this.hasLoggedSteps = true;
 			}
-			const settings = this.props.getValues();
+			const settings = this.getConfig();
 			delete settings.fields;
 			// eslint-disable-next-line object-curly-newline
 			const props = { ...this.props, ...settings, steps, controller: this };
