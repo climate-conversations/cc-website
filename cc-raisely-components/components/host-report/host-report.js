@@ -127,7 +127,7 @@
 			const { postSurveys, rsvps } = this.state;
 			const actions = ['host', 'facilitate', 'volunteer'].map(field =>
 				({
-					label: `${field}s`,
+					label: field === 'facilitate' ? 'facilitators' : `${field}s`,
 					value: countIf(postSurveys, field),
 				}));
 
@@ -165,6 +165,10 @@
 			this.setState({ attitudes });
 		}
 
+		onSendReport = () => {
+			this.setState({ hasSent: true });
+		}
+
 		renderSendReport = () => {
 			const { hosts } = this.state;
 			const defaultMessage = 'Thank you for hosting a Climate Conversation. Attached is a summary of the impact you enabled';
@@ -181,6 +185,7 @@ ${url}`;
 					subject="Thank you for hosting a Climate Conversation"
 					body={body}
 					launchButtonLabel="Send Report to Host"
+					onClose={this.onSendReport}
 				/>
 			);
 		}
@@ -190,7 +195,7 @@ ${url}`;
 			let attitudes;
 
 			const { props } = this;
-			const { error, loading, conversation } = this.state;
+			const { error, loading, conversation, hasSent } = this.state;
 
 			if (!loading) {
 				// Only show actions/attitudes that have at least 1 person
@@ -215,7 +220,7 @@ ${url}`;
 					<div className="host--report__action">
 						<div className="">Your conversation has inspired the following actions...</div>
 						{actions ? actions.map(action => (
-							<div className="host--report__action-item">
+							<div className="host--report__action-item" key={action.label}>
 								<div className="host--report__action-item-number">{action.value}</div>
 								<div className="host--report__action-item-label">{action.label}</div>
 							</div>
@@ -224,7 +229,7 @@ ${url}`;
 					<div className="host--report__attitudes">
 						<div className="">As a result of your conversation ...</div>
 						{attitudes ? attitudes.map(attitude => (
-							<div className="host--report__attitude-item">
+							<div className="host--report__attitude-item" key={attitude.label}>
 								<div className="host--report__attitude-item-number">{attitude.value}</div>
 								<div className="host--report__attitude-item-label">
 									{attitude.value === 1 ? 'person' : 'people' } {attitude.label}
@@ -236,7 +241,11 @@ ${url}`;
 						)) : <Spinner /> }
 					</div>
 					<div className="host--report__buttons">
-						<ReturnButton {...props} backTheme="secondary" backLabel="Go back" />
+						{hasSent ? (
+							<ReturnButton {...props} saveTheme="secondary" saveLabel="Done" />
+						) : (
+							<ReturnButton {...props} saveTheme="secondary" saveLabel="Go back" />
+						)}
 						{this.renderSendReport()}
 					</div>
 				</div>
