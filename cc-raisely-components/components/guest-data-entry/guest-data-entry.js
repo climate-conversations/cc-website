@@ -100,6 +100,11 @@
 
 			console.log('Saving survey. Form data:', data);
 
+			// If they've filled out the CTA with their email, put them on the mailing list
+			if (data.user.email) {
+				set(data, 'user.private.mailingList', true);
+			}
+
 			const user = await UserSaveHelper.upsertUser(data.user);
 			// temporary fix for upsert not returning an email
 			if (!user.email) user.email = data.user.email;
