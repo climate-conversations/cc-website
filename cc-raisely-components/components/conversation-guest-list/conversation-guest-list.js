@@ -7,7 +7,9 @@
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const WhatsappButton = RaiselyComponents.import('whatsapp-button');
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const ReturnButtonRef = RaiselyComponents.import('return-button', { asRaw: true });
 	let Conversation;
+	let ReturnButton;
 
 	class Guest extends React.Component {
 		guestName = () => {
@@ -86,6 +88,7 @@
 			if (!this.state) {
 				return <Spinner />;
 			}
+			const eventUuid = Conversation.getUuid(this.props);
 
 			const { guests, error } = this.state;
 
@@ -94,13 +97,16 @@
 					<div className="error">{error}</div>
 				);
 			}
+			if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
+			const returningEmailLink = ReturnButton.createReturningLink({ props: this.props, url: `/conversations/${eventUuid}/email-guests` });
+			console.log('Returning link: ', returningEmailLink)
 
 			return (
 				<div className="conversation-guest-list-wrapper">
 					<ul className="conversation-guest-list list__wrapper">
-						{guests.map(guest => <Guest {...this.props} guest={guest} />)}
+						{guests.map(guest => <Guest key={guest.uuid} {...this.props} guest={guest} />)}
 					</ul>
-					<Button>Email all Guests</Button>
+					<Button href={returningEmailLink}>Email all Guests</Button>
 				</div>
 			);
 		}
