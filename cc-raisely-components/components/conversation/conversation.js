@@ -49,7 +49,9 @@
 		 * NOTE: Rsvps are rsvp records, while the extracted records are user records
 		 *
 		 * @param {object} opts.props Pass in this.props
-		 * @param {string[]} opts.type Array of rsvp types to extract
+		 * @param {string[]} opts.type Array of rsvp types to extract eg ['facilitator', 'guest']
+		 * @returns {object} Containing all rsvps, plus split by type { rsvps, guests, facilitators, error }
+		 * NOTE that keys in the returned object are always plural, but types should be singular
 		 *
 		 * @example
 		 * const { props } = this;
