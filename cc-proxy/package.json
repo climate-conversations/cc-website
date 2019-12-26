@@ -11,8 +11,8 @@
 		"node": ">=10.0.0"
 	},
 	"scripts": {
-		"deploy:upsert": "gcloud functions deploy upsertUser --trigger-http --runtime=nodejs10",
-		"deploy:proxy": "gcloud functions deploy proxy --trigger-http --runtime=nodejs10",
+		"deploy:upsert": "gcloud functions deploy upsertUser --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10",
+		"deploy:proxy": "gcloud functions deploy proxy --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10",
 		"deploy:all": "npm run deploy:proxy && npm run deploy:upsert",
 		"g:r:e": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
 		"generate:required:env": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
