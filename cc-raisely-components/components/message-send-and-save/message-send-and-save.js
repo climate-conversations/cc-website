@@ -430,7 +430,8 @@
 			const contactSteps = [{ fields: this.state.contactFields }];
 			const recipientCount = to.length;
 
-			const contactClass = recipientCount < 2 ? '' : 'contact--form__content';
+			let contactClass = "contact--form__content";
+			if (recipientCount > 1) contactClass += ' split__screen';
 			const recipients = this.recipientsRemaining();
 
 			if (!recipients.remaining) return this.finalPage();
@@ -483,7 +484,7 @@
 
 	return function ContactFormModalWrapper(props) {
 		let { launchButtonLabel } = props;
-		const { to } = props;
+		const { onClose, to } = props;
 
 		function inner(closeModal) {
 			return <ContactForm {...props} closeModal={closeModal} />;
@@ -496,6 +497,7 @@
 				button
 				buttonTitle={launchButtonLabel}
 				modalContent={inner}
+				onClose={onClose}
 			/>
 		) : inner();
 	}
