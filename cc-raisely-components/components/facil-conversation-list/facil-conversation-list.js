@@ -121,12 +121,14 @@
 
 		async load() {
 			try {
+				const campaignUuid = this.props.global.uuid;
 				const userUuid = await this.getUserUuids();
 				const rsvps = await doApi(api.eventRsvps.getAll({
 					query: {
 						user: userUuid,
-						// type: 'facilitator,co-facilitator',
+						type: 'facilitator,co-facilitator',
 						private: 1,
+						campaign: campaignUuid,
 					},
 				}));
 				this.conversations = rsvps.map((rsvp) => {
