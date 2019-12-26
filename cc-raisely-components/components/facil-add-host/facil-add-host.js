@@ -27,6 +27,9 @@
 		{ title: 'Edit Host Status', fields: intentionFields },
 	];
 
+	const getFacilitatorName = (facilitator) => get(facilitator, 'fullName') ||
+		get(facilitator, 'preferredName', '[Loading...]');
+
 	class FindHost extends React.Component {
 		state = {};
 
@@ -96,7 +99,7 @@
 							<h3>Find a Host</h3>
 							<p>
 								Type the name email or phone number of the host to find them, or
-								click Add new person if {"they're"} not in our database.
+								click <strong>Add new person</strong> if {"they're"} not in our database.
 							</p>
 							<p>
 								If the host is an organisation, enter the contact person as the host,
@@ -161,27 +164,26 @@
 
 		load = async () => {
 			const { host } = this.props;
-			const messageCategories = 'meeting,message,email,phone';
+			const messageCategories = 'meeting,personal.message,personal.email,phone';
 
 			try {
 				this.initSteps();
 
 				const messages = await getData(api.interactions.getAll({
 					query: {
-						userUuid: host.uuid,
-						categoryUuid: messageCategories,
+						user: host.uuid,
+						category: messageCategories,
 						limit: 10,
 					},
 				}));
 				this.setState({ messages });
+				await this.checkCompleteSteps();
 			} catch (error) {
 				console.error(error);
 				this.setState({ error: error.message, loading: false });
 			} finally {
 				this.setState({ loading: false });
 			}
-
-			await this.checkCompleteSteps();
 		}
 
 		/**
@@ -194,7 +196,7 @@
 
 			const { interaction } = this.props;
 			const completedSteps = this
-				.deserializeSteps(get(interaction, 'detail.private.followUpSteps', ''));
+				.deserializeCompleteSteps(get(interaction, 'detail.private.followUpSteps', ''));
 
 			// Clone steps and set calculated attributes
 			const steps = get(this.props, 'global.campaign.private.hostMessages', [])
@@ -304,17 +306,23 @@
 			const { host, interaction, facilitator } = this.props;
 			if (!(host || interaction)) return '';
 			if (loading) return <Spinner />;
+			const facilName = getFacilitatorName(facilitator);
 
 			const noun = get(facilitator, 'uuid', 'n/a') === get(this.props, 'global.user.uuid') ?
-				'You' : facilitator.preferredName || facilitator.fullName;
+				'You' : facilName;
 
-			return (
-				<div className="host--interactions__wrapper">
-					{error ? (
+			if (error) {
+				return (
+					<div className="host--interactions__wrapper">
 						<div className="error">
 							<p>{error}</p>
 						</div>
-					) : ''}
+					</div>
+				);
+			}
+
+			return (
+				<div className="host--interactions__wrapper">
 					{nextStep ? (
 						<div className="host--interactions__next-message">
 							{noun} should {nextStep.overdue ? 'have sent' : 'send'} {host.preferredName} a message around
@@ -332,12 +340,12 @@
 						</div>
 					) : ''}
 					<div className="host--interactions__list">
-						{messages.length ? (
+						{messages && messages.length ? (
 							<ol>
-								{messages.map(message => <ViewInteraction interaction={message} />)}
+								{messages.map(message => <ViewInteraction key={message.uuid} interaction={message} />)}
 							</ol>
 						) : (
-							<p>We {"haven't"} recorded any interactions with this host yet</p>
+							<p>We {"haven't"} recorded any messages to this host yet</p>
 						)}
 						View all interactions with the host in Raisely <RaiselyButton recordType="user" uuid={host.uuid} />
 					</div>
@@ -501,12 +509,13 @@
 
 		setForm = () => {
 			const { mode, host, facilitator } = this.state;
+			const facilName = getFacilitatorName(facilitator);
 
 			if (host) {
 				editForm[0].description = (
 					<React.Fragment>
 						<div className="host--form__name">{host.fullName || host.preferredName}</div>;
-						<div className="host--form__facilitator">Assigned to {facilitator.fullName || host.preferredName}</div>
+						<div className="host--form__facilitator">Assigned to {facilName}</div>
 					</React.Fragment>
 				);
 			}
@@ -520,15 +529,14 @@
 
 				this.setState({ form: newForm });
 			} else {
-				this.setState({ form: editForm });
+				this.setState({ form: editForm, showInteractions: true });
 			}
 		}
 
 		load = async ({ dataToForm }) => {
 			// Load event and rsvps
-			const { interaction } = await Promise.all([
-				api.quickLoad({ props: this.props, models: ['interaction.private'], required: false }),
-			]);
+			const results = await api.quickLoad({ props: this.props, models: ['interaction.private'], required: false });
+			const { interaction } = results;
 
 			// We must be creating a new host
 			if (!interaction) {
@@ -536,19 +544,15 @@
 				return {};
 			}
 
-			this.setState({ mode: 'edit', interaction });
+			const host = interaction.user;
+			this.setState({ mode: 'edit', interaction, host });
 
-			const promises = [
-				getData(api.users.get({ id: interaction.userUuid })),
-			];
 			const facilitatorUuid = get(interaction, 'detail.private.facilitatorUuid');
 			if (facilitatorUuid) {
-				promises.push(getData(api.users.get({ id: facilitatorUuid })));
+				getData(api.users.get({ id: facilitatorUuid }))
+					.then(facilitator => this.setState({ facilitator }))
+					.catch(console.error);
 			}
-
-			Promise.all(promises)
-				.then(([host, facilitator]) => this.setState({ host, facilitator }))
-				.catch(console.error);
 
 			return dataToForm({ interaction });
 		}
@@ -583,8 +587,10 @@
 				...newInteraction.detail.private,
 			};
 
-			this.setState({ interaction: newInteraction });
-			await save('interaction', newInteraction, { partial: true });
+			const interaction = await getData(save('interaction', newInteraction, { partial: true }));
+			if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
+			const nextUrl = ReturnButton.forwardReturnTo({ props: this.props, url: `/hosts/${get(interaction, 'uuid')}` });
+			this.props.location.history.push(nextUrl);
 		}
 
 		reassign = async (newFacilitator) => {
@@ -617,8 +623,7 @@
 
 		render() {
 			// eslint-disable-next-line object-curly-newline
-			const { form, host, interaction, facilitator, mode } = this.state;
-			const { props } = this;
+			const { form, host, interaction, facilitator, mode, showInteractions } = this.state;
 
 			const formSettings = {
 				host,
@@ -628,23 +633,29 @@
 				reassign: this.reassign,
 			};
 
-			if (mode === 'new') {
-				if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
-				formSettings.completeRedirect = ReturnButton.forwardReturnTo({ props, url: `/hosts/${get(interaction, 'uuid')}` });
-			} else {
+			if (mode !== 'new') {
 				formSettings.redirectToReturnTo = true;
 			}
 
+			let formClass = `host-edit__form ${showInteractions ? 'split__screen' : ''}`;
+			let interactionsClass = `host-edit__interactions ${showInteractions ? 'split__screen' : ''}`;
+
 			return (
 				<div className="host-edit__wrapper">
-					<CustomForm {...formSettings} />
-					<HostInteractions
-						{...this.props}
-						host={host}
-						intention={interaction}
-						facilitator={facilitator}
-						updateInteraction={this.updateInteraction}
-					/>
+					<div className={formClass}>
+						<CustomForm {...formSettings} />
+					</div>
+					{showInteractions ? (
+						<div className={interactionsClass}>
+							<HostInteractions
+								{...this.props}
+								host={host}
+								interaction={interaction}
+								facilitator={facilitator}
+								updateInteraction={this.updateInteraction}
+							/>
+						</div>
+					) : ''}
 				</div>
 			);
 		}
