@@ -38,7 +38,8 @@ async function raisely(options, req) {
 	const headers = createOriginalHeaders(options, req);
 	Object.assign(headers, {
 		'User-Agent': 'Climate Conversations Proxy',
-		Authorization: `Bearer ${token}`,
+		// Pass through original authorization if the user is not escalated
+		Authorization: options.escalate ? `Bearer ${token}` : req.get('Authorization'),
 	});
 
 	const requestOptions = {

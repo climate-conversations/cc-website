@@ -32,6 +32,7 @@ async function save(record, bodyParams, req) {
 			},
 			transform: minimalUser,
 			transform2xxOnly: true,
+			escalate: true,
 		}, req);
 	}
 
@@ -45,6 +46,7 @@ async function save(record, bodyParams, req) {
 		},
 		transform: minimalUser,
 		transform2xxOnly: true,
+		escalate: true,
 	}, req);
 }
 

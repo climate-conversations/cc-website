@@ -11,9 +11,11 @@ module.exports = async function proxy(req) {
 		query: req.query,
 		body: req.body,
 		method: req.method,
+		// Explicitly request escalation
+		escalate: !!rule,
 	};
 
-	if (rule.transform) {
+	if (rule && rule.transform) {
 		options.transform = rule.transform;
 		options.transform2xxOnly = true;
 	}

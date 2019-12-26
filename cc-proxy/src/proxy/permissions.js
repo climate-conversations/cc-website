@@ -103,13 +103,9 @@ async function authorize(req, path) {
 		deny = !await escalation.condition(req);
 	}
 
+	// Return false and pass through request
 	if (!escalation || deny) {
-		throw new RestError({
-			path,
-			status: 403,
-			message: 'You are not authorized to make that request',
-			code: 'unauthorized',
-		});
+		return false;
 	}
 
 	return escalation;
