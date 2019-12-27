@@ -1,6 +1,7 @@
 const requestNative = require('request-promise-native');
 const requestCache = require('request-promise-cache');
 const { omit } = require('lodash');
+const logger = require('./config/logging');
 
 const raiselyUrl = 'https://api.raisely.com/v3';
 
@@ -49,6 +50,8 @@ async function raisely(options, req) {
 		headers,
 		json: true,
 	};
+
+	logger.log('debug', `Raisely: ${uri}`, options);
 
 	const request = options.cacheKey ? requestCache : requestNative;
 	const result = request(requestOptions);
