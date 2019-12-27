@@ -52,7 +52,7 @@ async function raisely(options, req) {
 	};
 
 	const method = requestOptions.method && requestOptions.method.toLowerCase();
-	if (!method || ['get', 'delete'].includes(method)) delete options.body;
+	if (!method || ['get', 'delete'].includes(method)) delete requestOptions.body;
 
 	logger.log('debug', `Raisely: ${uri}`, requestOptions);
 
