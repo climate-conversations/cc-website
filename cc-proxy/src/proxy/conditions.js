@@ -1,3 +1,6 @@
+const _ = require('lodash');
+const RestError = require('../restError');
+
 function notImplemented() {
 	throw new Error('Not implemented');
 }
