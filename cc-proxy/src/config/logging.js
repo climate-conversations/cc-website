@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'production') {
 // Create a Winston logger that streams to Stackdriver Logging
 // Logs will be written to: "projects/YOUR_PROJECT_ID/logs/winston_log"
 const logger = winston.createLogger({
-	level: 'info',
+	level: 'debug',
 	transports,
 });
 
