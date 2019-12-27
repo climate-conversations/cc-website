@@ -87,7 +87,7 @@ async function getTagsAndRoles(req) {
 }
 
 function matchPath(e, path) {
-	if (e.path.test) {
+	if (e.path && e.path.test) {
 		const result = e.path.test(path);
 		e.lastIndex = 0;
 		return result;
