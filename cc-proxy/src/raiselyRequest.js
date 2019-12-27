@@ -51,6 +51,9 @@ async function raisely(options, req) {
 		json: true,
 	};
 
+	const method = requestOptions.method && requestOptions.method.toLowerCase();
+	if (!method || ['get', 'delete'].includes(method)) delete options.body;
+
 	logger.log('debug', `Raisely: ${uri}`, requestOptions);
 
 	const request = options.cacheKey ? requestCache : requestNative;
