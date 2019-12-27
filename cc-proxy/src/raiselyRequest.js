@@ -5,7 +5,7 @@ const logger = require('./config/logging');
 
 const raiselyUrl = 'https://api.raisely.com/v3';
 
-const internalOptions = ['path', 'query', 'originalUser', 'cache'];
+const internalOptions = ['path', 'query', 'originalUser', 'cache', 'token', 'escalate'];
 
 function createOriginalHeaders(options, req) {
 	const headers = {
@@ -51,7 +51,7 @@ async function raisely(options, req) {
 		json: true,
 	};
 
-	logger.log('debug', `Raisely: ${uri}`, options);
+	logger.log('debug', `Raisely: ${uri}`, requestOptions);
 
 	const request = options.cacheKey ? requestCache : requestNative;
 	const result = request(requestOptions);
