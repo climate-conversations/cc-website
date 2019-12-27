@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const RestError = require('../restError');
+const raiselyRequest = require('../raiselyRequest');
 
 const { minimalUser } = require('./transforms');
 const { searchUsers, isUserAssignment, isAssignedUser } = require('./conditions');
@@ -20,7 +21,7 @@ const escalations = [{
 	// Let facilitators retrieve the message templates stored on
 	// campaign.private
 	method: 'GET',
-	path: '/campaigns/:campaign',
+	path: /\/campaigns\/[a-zA-Z0-9_-]*/,
 	tags: ['team-leader', 'facilitator'],
 }, {
 	// method: 'POST',
@@ -31,20 +32,20 @@ const escalations = [{
 	// condition: onlyCertainCategories
 }, {
 	method: 'POST',
-	path: '/users/:user/assignments',
+	path: /\/users\/[a-zA-Z0-9_-]*\/assignments/,
 	tags: ['team-leader'],
 	// Only allow team-leaders to assign users (not other record types)
 	condition: isUserAssignment,
 }, {
 	method: 'POST',
-	path: '/users/:user/assignments',
+	path: /\/users\/[a-zA-Z0-9_-]*\/assignments/,
 	tags: ['facilitator'],
 	// Only allow facilitators to assign records they are already
 	// themselves assigned to
 	condition: isAssignedUser,
 }, {
 	method: 'POST',
-	path: '/events/:event/eventRsvp',
+	path: /\/events\/[a-zA-Z0-9_-]*\/eventRsvp/,
 	tags: ['facilitator', 'team-leader'],
 }, {
 	method: 'GET',
@@ -67,36 +68,42 @@ async function getTagsAndRoles(req) {
 	const [prefix, token] = bearer.split(' ');
 	if (((prefix || '').toLowerCase() !== 'bearer') || !token) {
 		throw new RestError({
-			path,
 			status: 400,
 			message: 'Authentication header is malformed',
 			code: 'malformed',
 		});
 	}
 
-	const opt = { cacheKey: token, cacheTTL: AUTHENTICATION_TTL };
-	const [authentication, user] = Promise.all([
-		raiselyRequest({ ...opt, path: '/authenticate', token }, req),
-		raiselyRequest({ ...opt, path: '/users/me?private=1', token }, req),
+	const opt = { cacheTTL: AUTHENTICATION_TTL };
+	const [authentication, user] = await Promise.all([
+		raiselyRequest({ ...opt, cacheKey: `/authenticate ${token}`, path: '/authenticate', token }, req),
+		raiselyRequest({ ...opt, cacheKey: `/users/me ${token}`, path: '/users/me?private=1', token }, req),
 	]);
 
 	return {
-		tags: _.get(user, 'body.tags', []).map(t => t.path),
-		roles: _.get(authentication, 'roles', []),
+		tags: _.get(user, 'data.tags', []).map(t => t.path),
+		roles: _.get(authentication, 'data.roles', []),
 	};
+}
+
+function matchPath(e, path) {
+	if (e.path.test) {
+		const result = e.path.test(path);
+		e.lastIndex = 0;
+		return result;
+	}
+	return e.path === path;
 }
 
 async function authorize(req, path) {
 	const { tags, roles } = await getTagsAndRoles(req);
 
 	const escalation = escalations.find((e) => {
-		let isMatch = e.path === path && e.method === req.method;
+		let isMatch = e.method.toLowerCase() === req.method.toLowerCase() && matchPath(e, path);
 		if (e.tags) isMatch = isMatch && _.intersection(e.tags, tags).length;
 		if (e.roles) isMatch = isMatch && _.intersection(e.roles, roles).length;
 		return isMatch;
 	});
-
-	console.log(path, escalation)
 
 	let deny = false;
 	if (_.get(escalation, 'condition')) {
