@@ -22,6 +22,8 @@ function setCORS(req, res) {
 		'raisely.com',
 		'climateconversations.sg',
 		'climate.sg',
+		'portal.climate.sg',
+		'p.climate.sg',
 	];
 
 	const origin = req.get('Origin');
@@ -36,8 +38,7 @@ function setCORS(req, res) {
 	if (req.method === 'OPTIONS') {
 		// Send response to OPTIONS requests
 		res.set('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH');
-		res.set('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers');
-
+		res.set('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization');
 		res.set('Access-Control-Max-Age', '3600');
 		res.status(204).send('');
 		return true;
