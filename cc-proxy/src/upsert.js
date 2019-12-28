@@ -5,11 +5,11 @@ const shortUuid = require('short-uuid');
 const { minimalUser } = require('./proxy/transforms');
 
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
-	'private.facilitate', 'private.newsletter', 'private.organisationName'];
+	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName'];
 const permittedCreateFields = ['fullName', 'firstName', 'preferredName', 'lastName', 'email', 'phoneNumber',
 	'private.alternateEmail', 'private.alternatePhone', ...permittedUpdateFields];
 
-const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newletter'];
+const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newsletter', 'mailingList'];
 
 /**
  * This is a helper when working with new/updated records to generalise
@@ -56,6 +56,7 @@ async function findUserBy(attribute, record, req) {
 	const body = await raisely({
 		query,
 		path: '/users',
+		escalate: true,
 	}, req);
 
 	return body.data;
