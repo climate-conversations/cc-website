@@ -84,7 +84,44 @@ describe('proxy', () => {
 			expect(raiselyRequest.query).to.eql('campaign=campaignUuid');
 		});
 	});
+	describe('POST /event/:event/rsvp', () => {
+		before(() => {
+			results.res = new MockResponse();
+			results.req = new MockRequest({
+				method: 'POST',
+				url: '/events/event-uuid/rsvps?campaign=campaignUuid',
+				headers: {
+					Origin: 'https://climateconversations.sg',
+				},
+				body: {
+					data: { userUuid: 1 },
+				},
+			});
+			raiselyRequest = null;
+			apiNock
+				.post('/v3/events/event-uuid/rsvps?campaign=campaignUuid')
+				.reply(200, function rsvpRequest(uri, body) {
+					raiselyRequest = {
+						body,
+						headers: this.req.headers,
+						query: uri.split('?')[1],
+					};
+					return { data: body };
+				});
 
+			// Run the controller
+			return proxy(results.req, results.res);
+		});
+
+		statusOk(results);
+		it('forwards the query', () => {
+			expect(raiselyRequest).to.not.be.null;
+		});
+		it('escalates auth token', () => {
+			expect(raiselyRequest).to.not.be.null;
+			expect(raiselyRequest.headers.authorization).to.eq('Bearer MOCK_APP_TOKEN');
+		});
+	});
 
 	describe('proxies failure', () => {
 		const errorBody = {
