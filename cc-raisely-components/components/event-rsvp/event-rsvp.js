@@ -60,7 +60,10 @@
 			if (!eventRsvp.type) eventRsvp.type = 'guest';
 			eventRsvp.type = 'guest';
 
-			await getData(api.eventRsvps.create({ data: eventRsvp }));
+			await UserSaveHelper.proxy(`/events/${event.uuid}/rsvps`, {
+				method: 'POST',
+				body: { data: eventRsvp },
+			});
 		}
 
 		// Remove user from the state to create a new user from the RSVP
