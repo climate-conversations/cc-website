@@ -29,6 +29,7 @@
 		}
 		const edit = `/events/${event.path || event.uuid}/edit`;
 		const clone = `/events/create?clone=${event.uuid}`;
+		const rsvps = `/events/${event.path || event.uuid}/rsvps`;
 
 		return (
 			<div className="postfeed__item">
@@ -62,6 +63,7 @@
 								{hideEdit ? '' : (
 									<React.Fragment>
 										<Link className="button button--cta post__link show--logged-in" href={edit}>Edit</Link>
+										<Link className="button button--secondary post__link show--logged-in" href={rsvps}>RSVPs</Link>
 										<Link className="button button--cta post__link show--logged-in" href={clone}>Clone</Link>
 									</React.Fragment>
 								)}
