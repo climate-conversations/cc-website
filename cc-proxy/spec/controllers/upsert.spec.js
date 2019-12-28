@@ -61,6 +61,10 @@ describe('upsertUser', () => {
 		it('posts user without falsey action', () => {
 			expect(raiselyRequest.body).to.eql({ data: filteredCreateUser });
 		});
+		it('sends auth token', () => {
+			expect(raiselyRequest).to.not.be.null;
+			expect(raiselyRequest.headers.authorization).to.eq('Bearer MOCK_APP_TOKEN');
+		});
 	});
 
 	describe('existing user', () => {
