@@ -9,17 +9,25 @@
 	const CCEventRef = RaiselyComponents.import('event', { asRaw: true });
 	let CCEvent;
 
-	function singaporeTimezone(date) {
-		const sgOffset = 480;
+	const sgOffset = 480;
+
+	function offsetLocalToSg() {
 		const localOffset = new Date().getTimezoneOffset();
 		const diff = localOffset + sgOffset;
-
+		return diff;
+	}
+	function singaporeTimezone(date) {
+		const diff = offsetLocalToSg();
+		return dayjs(date).subtract(diff, 'minute');
+	}
+	function fromUTC(date) {
+		const diff = offsetLocalToSg();
 		return dayjs(date).add(diff, 'minute');
 	}
 	function timeFromDate(date) {
-		const adjustedTime = singaporeTimezone(date);
+		const adjustedTime = fromUTC(date, true);
 		return {
-			time: adjustedTime.format('hh:mm'),
+			time: adjustedTime.format('HH:mm'),
 			date: adjustedTime.format('YYYY-MM-DD'),
 		};
 	}
@@ -39,7 +47,7 @@
 		state = {};
 
 		static inSingaporeTime(date) {
-			return singaporeTimezone(dayjs(date));
+			return fromUTC(dayjs(date));
 		}
 		static singaporeTimeAndDate(date) {
 			return timeFromDate(date);
