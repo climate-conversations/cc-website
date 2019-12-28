@@ -25,6 +25,11 @@ module.exports = [{
 	method: 'POST',
 	path: '/interactions',
 	// condition: onlyCertainCategories
+}, {
+	// Let the public RSVP
+	method: 'POST',
+	path: /\/events\/[a-zA-Z0-9_-]*\/rsvps/,
+	// condition: onlyCertainCategories
 },
 // Let team leaders view interactions from any user
 {
