@@ -20,7 +20,9 @@ module.exports = [{
 	method: 'GET',
 	path: /\/campaigns\/[a-zA-Z0-9_-]*/,
 	tags: ['team-leader', 'facilitator'],
-}, {
+},
+/***** Let the public sign up for things ****** */
+{
 	// Let the public signup
 	method: 'POST',
 	path: '/interactions',
@@ -31,7 +33,7 @@ module.exports = [{
 	path: /\/events\/[a-zA-Z0-9_-]*\/rsvps/,
 	// condition: onlyCertainCategories
 },
-// Let team leaders view interactions from any user
+/***** Let the public sign up for things ****** */
 {
 	method: 'GET',
 	path: /\/interactions\/.*/,
@@ -42,7 +44,15 @@ module.exports = [{
 	tags: ['team-leader'],
 	// Only allow team-leaders to assign users (not other record types)
 	condition: isUserAssignment,
-}, {
+},
+/****** Allow facilitators to retrieve contact details for their team profile */
+{
+	method: 'GET',
+	path: /\/profiles\/[a-zA-Z0-9_-]*/,
+	tags: ['facilitator'],
+	// condition: isAssignedUser,
+},
+{
 	method: 'POST',
 	path: /\/users\/[a-zA-Z0-9_-]*\/assignments/,
 	tags: ['facilitator'],
