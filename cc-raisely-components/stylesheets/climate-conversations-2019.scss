@@ -665,6 +665,7 @@ min-height: 5em;
 //* POST FEED *//
 .postfeed {
   margin-bottom: -1.5rem;
+  padding-left: 0;
 
   @for $i from 1 through length($accents) {
     &__item:nth-of-type(#{$i}) {
@@ -1626,4 +1627,95 @@ $selector: row, col, block;
 
 .col--8 .profile-grid__item {
   width: 100%;
+}
+
+span.post__meta__date {
+	margin-left: 5px;
+}
+
+.post__buttons--wrapper .button {
+    display: inline-block !important;
+}
+
+.custom-form--event-edit__wrapper {
+  form,
+  .custom-form__step-header {
+    width: 100% !important;
+  }
+}
+
+ul.list__wrapper, .list__wrapper ul {
+  font-size: 0.85rem;
+  list-style: none;
+  border: #333 solid 2px;
+  padding-left: 0;
+  border-radius: 1em;
+
+  li {
+    >div {
+      display: inline-block;
+    }
+  }
+}
+
+
+.flex-table-row {
+  display: flex;
+  flex-direction: row;
+  padding: 0.2em;
+  text-decoration: none;
+  border-radius: 1em;
+  align-items: center;
+  
+  &:hover {
+    text-decoration: none;
+    background-color: $secondaryLighter;
+  }
+
+  .row-field,
+  .row-buttons {
+    display: flex;
+    font-size: 1.2rem;
+    font-weight: normal;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    color: black;    
+    flex-direction: column;
+    flex: 2 2;
+    
+    .form-field--checkbox {
+      text-align: center;
+    }
+  }
+
+  .small-field,
+  .index-field {
+    flex: 1 1;
+  }
+
+  .row-buttons {
+    flex: 3 3;
+    flex-direction: row;
+    .button {
+      margin-right: 0.5rem;
+    }
+  }
+
+  .button {
+    max-height: 2.2rem;
+  }
+}
+
+.flex-table-header-row {
+  .row-field,
+  .row-buttons {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+}
+
+#editor-root[data-theme-id="peerToPeer-basic"] {
+  .form-field--checkbox {
+    border: none,
+  }
 }
