@@ -6,7 +6,8 @@
 	const Messenger = RaiselyComponents.import('message-send-and-save');
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
-
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let UserSaveHelper;
 	let Conversation;
 
 	return class ConversationMessageGuests extends React.Component {
@@ -18,13 +19,21 @@
 		load = async () => {
 			if (!Conversation) Conversation = ConversationRef().html;
 			const { props } = this;
-			const results = await Conversation.loadRsvps({ props, type: ['guest'] });
+			const campaignUuid = get(this.props, 'global.campaign.uuid');
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 
-			this.setState({ ...results, loading: false });
+			const [results, privateCampaign] = await Promise.all([
+				Conversation.loadRsvps({ props, type: ['guest'] }),
+				UserSaveHelper.proxy(`/campaigns/${campaignUuid}?private=1`, {
+					method: 'get',
+				})
+			]);
+
+			this.setState({ ...results, privateCampaign, loading: false });
 		}
 
 		renderInner() {
-			const { loading, guests } = this.state;
+			const { loading, guests, privateCampaign } = this.state;
 			if (loading) {
 				return <Spinner />;
 			}
@@ -36,7 +45,7 @@
 			}
 
 			const defaultMessage = 'Thank you for attending the Climate Conversation!';
-			const body = get(this.props, 'global.campaign.public.conversationGuestThankyou', defaultMessage);
+			const body = get(privateCampaign, 'private.conversationGuestThankyou', defaultMessage);
 
 			const params = {
 				...this.props,
