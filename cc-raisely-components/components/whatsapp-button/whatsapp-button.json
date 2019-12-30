@@ -1,25 +1,25 @@
 {
     "fields": {
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 28
-		},
-		"label": {
+        "url": {
+            "id": "url",
+            "type": "text",
+            "label": "Link",
+            "value": "Send WhatsApp",
+            "singular": null
+        },
+        "label": {
             "id": "label",
             "type": "text",
             "label": "Button Label",
             "value": "",
             "singular": null
         },
-		"url": {
-            "id": "url",
-            "type": "text",
-            "label": "Link",
-            "value": "Send WhatsApp",
-            "singular": null
-		},
-		"showIcon": {
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 35
+        },
+        "showIcon": {
             "id": "title",
             "type": "checkbox",
             "label": "Show Icon",

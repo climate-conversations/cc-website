@@ -1,11 +1,6 @@
 {
     "fields": {
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 1
-		},
-		"title": {
+        "title": {
             "id": "title",
             "type": "text",
             "label": "Fallback Title",
@@ -79,6 +74,11 @@
                 }
             ],
             "singular": "Field"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 31
         },
         "formName": {
             "id": "formName",

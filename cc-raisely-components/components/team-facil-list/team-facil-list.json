@@ -1,10 +1,5 @@
 {
     "fields": {
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 1
-		},
         "display": {
             "id": "display",
             "type": "select",
@@ -21,7 +16,12 @@
                 }
             ],
             "singular": null
-		}
-	},
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 67
+        }
+    },
     "uuid": "9974e5e0-05c6-11ea-9236-03f0575574c5"
 }

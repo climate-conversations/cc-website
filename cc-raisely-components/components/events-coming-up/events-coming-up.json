@@ -3,41 +3,41 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 1
-		},
-		"categories": {
-			"id": "categories",
-			"type": "repeater",
-			"label": "Event Categories to Display",
-			"value": "",
-			"options": [
-				{
-					"id": "type",
-					"type": "text",
-					"label": "Type of event (eg Volunteer Jam or Public Conversation)",
-					"defaultValue": "other"
-				},
-				{
-					"id": "fallbackTitle",
-					"type": "text",
-					"label": "Text to display if no events are available (blank to hide)",
-					"defaultValue": ""
-				},
-				{
-					"id": "fallbackLink",
-					"type": "text",
-					"label": "Link to use if no events are available",
-					"defaultValue": ""
-				},
-				{
-					"id": "fallbackPhotoUrl",
-					"type": "text",
-					"label": "Photo to use if no events are available",
-					"defaultValue": ""
-				}
-			],
-			"singular": "Category"
-		}
+            "value": 30
+        },
+        "categories": {
+            "id": "categories",
+            "type": "repeater",
+            "label": "Event Categories to Display",
+            "value": "",
+            "options": [
+                {
+                    "id": "type",
+                    "type": "text",
+                    "label": "Type of event (eg Volunteer Jam or Public Conversation)",
+                    "defaultValue": "other"
+                },
+                {
+                    "id": "fallbackTitle",
+                    "type": "text",
+                    "label": "Text to display if no events are available (blank to hide)",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "fallbackLink",
+                    "type": "text",
+                    "label": "Link to use if no events are available",
+                    "defaultValue": ""
+                },
+                {
+                    "id": "fallbackPhotoUrl",
+                    "type": "text",
+                    "label": "Photo to use if no events are available",
+                    "defaultValue": ""
+                }
+            ],
+            "singular": "Category"
+        }
     },
     "uuid": "884b6de0-100f-11ea-b92d-574a5da4fffc"
 }

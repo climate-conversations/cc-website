@@ -1,27 +1,12 @@
 {
     "fields": {
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 5
-		},
-		"href": {
+        "href": {
             "id": "href",
             "type": "text",
             "label": "URL to link to",
             "singular": null
         },
-        "label": {
-            "id": "label",
-            "type": "text",
-            "label": "Button label"
-		},
-        "recordType": {
-            "id": "recordType",
-            "type": "text",
-            "label": "Record Type"
-		},
-		"size": {
+        "size": {
             "id": "size",
             "type": "select",
             "label": "Button Size",
@@ -30,17 +15,32 @@
                 {
                     "label": "Small",
                     "value": "small"
-				},
+                },
                 {
                     "label": "Medium",
                     "value": "medium"
-				},
+                },
                 {
                     "label": "Large",
                     "value": "large"
-				}
-			]
-		}
-	},
+                }
+            ]
+        },
+        "label": {
+            "id": "label",
+            "type": "text",
+            "label": "Button label"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 30
+        },
+        "recordType": {
+            "id": "recordType",
+            "type": "text",
+            "label": "Record Type"
+        }
+    },
     "uuid": "c27911d0-cf6d-11e9-9f43-c1cb72c4f37f"
 }
