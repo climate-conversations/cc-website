@@ -2,7 +2,7 @@
 (RaiselyComponents, React) => {
 	const { api, Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
-	const { dayjs, get, set } = RaiselyComponents.Common;
+	const { dayjs, get, pick, qs, set, startCase } = RaiselyComponents.Common;
 	const { getData, save } = api;
 	const { Modal } = RaiselyComponents.Molecules;
 
@@ -28,7 +28,7 @@
 	];
 
 	const getFacilitatorName = (facilitator) => get(facilitator, 'fullName') ||
-		get(facilitator, 'preferredName', '[Loading...]');
+		get(facilitator, 'preferredName', 'The facilitator');
 
 	class FindHost extends React.Component {
 		state = {};
@@ -138,7 +138,7 @@
 
 	function ViewInteraction({ interaction }) {
 		const date = dayjs(interaction.createdAt).format('DD/MM/YYYY');
-		const { subject } = get(interaction, 'detail.private.subject');
+		const subject = get(interaction, 'detail.private.subject');
 		return (
 			<li className="interaction--tile">
 				<div className="interaction--tile__date">{date}</div>
@@ -167,20 +167,25 @@
 			const messageCategories = 'meeting,personal.message,personal.email,phone';
 
 			try {
-				this.initSteps();
+				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+				const query = qs.stringify( {
+					user: host.uuid,
+					category: messageCategories,
+					limit: 10,
+					private: 1,
+				});
 
-				const messages = await getData(api.interactions.getAll({
-					query: {
-						user: host.uuid,
-						category: messageCategories,
-						limit: 10,
-					},
-				}));
+				const [messages] = await Promise.all([
+					UserSaveHelper.proxy(`/interactions?${query}`, {
+						method: 'get',
+					}),
+					this.initSteps(),
+				]);
 				this.setState({ messages });
 				await this.checkCompleteSteps();
 			} catch (error) {
 				console.error(error);
-				this.setState({ error: error.message, loading: false });
+				this.setState({ error: error.message || 'Loading failed', loading: false });
 			} finally {
 				this.setState({ loading: false });
 			}
@@ -190,7 +195,13 @@
 		 * Copy messaging steps from campaign
 		 * Note which steps are complete and overdue
 		 */
-		initSteps() {
+		async initSteps() {
+			const campaignUuid = get(this.props, 'global.campaign.uuid');
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const privateCampaign = await UserSaveHelper.proxy(`/campaigns/${campaignUuid}?private=1`, {
+				method: 'get',
+			});
+
 			const grace = 48; // hours
 			const now = dayjs();
 
@@ -199,16 +210,17 @@
 				.deserializeCompleteSteps(get(interaction, 'detail.private.followUpSteps', ''));
 
 			// Clone steps and set calculated attributes
-			const steps = get(this.props, 'global.campaign.private.hostMessages', [])
+			const steps = get(privateCampaign, 'private.hostMessages', [])
 				.map((s) => {
 					const step = { ...s };
 					const field = step.sendAfter.field || 'createdAt';
 					step.dueBy = dayjs(get(interaction, field))
-						.add(step.value, step.period)
+						.add(step.sendAfter.value, step.sendAfter.period)
 						// Give a grace for completing the step
 						.add(grace, 'hours');
 					step.complete = !!completedSteps[step.id];
 					step.overdue = !step.complete && step.dueBy.isBefore(now);
+					step.about = startCase(step.id);
 					return step;
 				});
 			this.setState({ steps, completedSteps });
@@ -243,7 +255,7 @@
 
 					messages.forEach((message) => {
 						const type = get(message, 'detail.private.forInteraction');
-						const stepId = get(message, 'detail.private.actionStepId');
+						const stepId = get(message, 'detail.private.messageId');
 						if ((type === 'host-interest') && stepId && !completedSteps[stepId]) {
 							changed = true;
 							const occurredAt = dayjs(message.createdAt);
@@ -280,18 +292,20 @@
 					console.error(error);
 					this.setState({ error: `Could not update: ${error.message}` });
 				} finally {
-					this.setState({ saving: false });
+					this.setState({ saving: false }, this.nextStep);
 				}
 			}
 		}
 
-		nextStep() {
+		nextStep = () => {
 			const { steps } = this.state;
 			const remaining = steps
 				.filter(step => !step.complete)
-				.sort((a, b) => (a.isBefore(b) ? 1 : -1));
+				.sort((a, b) => (a.dueBy.isBefore(b.dueBy) ? 1 : -1));
 
+			// Choose the next remaining step
 			let nextStep = remaining[0];
+			// If multiple steps are overdue, select the last
 			remaining.find((step) => {
 				if (step.overdue) return true;
 				nextStep = step;
@@ -306,10 +320,17 @@
 			const { host, interaction, facilitator } = this.props;
 			if (!(host || interaction)) return '';
 			if (loading) return <Spinner />;
-			const facilName = getFacilitatorName(facilitator);
+			let nextStepMeta;
+			if (nextStep) {
+				nextStepMeta = {
+					forInteraction: 'host-interest',
+					actionStepId: nextStep.id,
+				}
+				pick(nextStep, ['']);
+			}
 
 			const noun = get(facilitator, 'uuid', 'n/a') === get(this.props, 'global.user.uuid') ?
-				'You' : facilName;
+				'You' : getFacilitatorName(facilitator);
 
 			if (error) {
 				return (
@@ -325,9 +346,8 @@
 				<div className="host--interactions__wrapper">
 					{nextStep ? (
 						<div className="host--interactions__next-message">
-							{noun} should {nextStep.overdue ? 'have sent' : 'send'} {host.preferredName} a message around
-							{nextStep.dueBy.format('MMM D (dddd)')} about
-							{nextStep.about}
+							{noun} should {nextStep.overdue ? 'have sent' : 'send'} {host.preferredName} a message
+							around {nextStep.dueBy.format('MMM D (dddd)')} about {nextStep.about}
 							<Messenger
 								{...this.props}
 								to={[host]}
@@ -335,11 +355,22 @@
 								body={nextStep.body}
 								sendBy={nextStep.sendBy}
 								launchButtonLabel="Send Now"
+								onClose={this.load}
+								messageMeta={nextStepMeta}
 							/>
 							<Button>{"I've"} already done this</Button>
 						</div>
-					) : ''}
+					) : <Messenger
+						{...this.props}
+						to={[host]}
+						subject='Hosting'
+						body='Hi'
+						sendBy='whatsapp'
+						launchButtonLabel="Message Host"
+						onClose={this.load}
+					/>}
 					<div className="host--interactions__list">
+						<h4>Recent Messages</h4>
 						{messages && messages.length ? (
 							<ol>
 								{messages.map(message => <ViewInteraction key={message.uuid} interaction={message} />)}
@@ -597,15 +628,23 @@
 			const { host } = this.state;
 			const assignment = [{ recordType: 'user', recordUuid: host.uuid }];
 			const { interaction } = this.state;
-			set(interaction, 'detail.private.facilitatorUuid', newFacilitator.uuid);
 
 			await Promise.all([
-				save('interaction', interaction, { partial: true }),
+				UserSaveHelper.proxy(`/interactions/${interaction.uuid}`, {
+					method: 'PATCH',
+					body: {
+						data: {
+							detail: { private: { facilitatorUuid: newFacilitator.uuid } },
+						},
+						partial: true,
+					}
+				}),
 				UserSaveHelper.proxy(`/users/${newFacilitator.uuid}/assignments`, {
 					method: 'post',
 					body: { data: assignment },
 				}),
 			]);
+			set(interaction, 'detail.private.facilitatorUuid', newFacilitator.uuid);
 			this.setState({ facilitator: newFacilitator });
 		}
 
@@ -637,25 +676,34 @@
 				formSettings.redirectToReturnTo = true;
 			}
 
+			const hostName = get(host, 'fullName') ||
+				get(host, 'preferredName') ||
+				get(host, 'phoneNumber') ||
+				get(host, 'email');
 			let formClass = `host-edit__form ${showInteractions ? 'split__screen' : ''}`;
 			let interactionsClass = `host-edit__interactions ${showInteractions ? 'split__screen' : ''}`;
 
 			return (
 				<div className="host-edit__wrapper">
-					<div className={formClass}>
-						<CustomForm {...formSettings} />
+					<div className="host-edit__header">
+						<h4>{hostName}</h4>
 					</div>
-					{showInteractions ? (
-						<div className={interactionsClass}>
-							<HostInteractions
-								{...this.props}
-								host={host}
-								interaction={interaction}
-								facilitator={facilitator}
-								updateInteraction={this.updateInteraction}
-							/>
+					<div className="host-edit__content">
+						<div className={formClass}>
+							<CustomForm {...formSettings} />
 						</div>
-					) : ''}
+						{(showInteractions && host) ? (
+							<div className={interactionsClass}>
+								<HostInteractions
+									{...this.props}
+									host={host}
+									interaction={interaction}
+									facilitator={facilitator}
+									updateInteraction={this.updateInteraction}
+								/>
+							</div>
+						) : ''}
+					</div>
 				</div>
 			);
 		}
