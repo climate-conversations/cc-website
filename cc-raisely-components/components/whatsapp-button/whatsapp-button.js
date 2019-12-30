@@ -20,9 +20,14 @@
 			return url;
 		}
 
+		config() {
+			if (this.props.getValues) return this.props.getValues();
+			return this.props;
+		}
+
 		render() {
-			const { message, phone, label } = this.props;
-			let { url } = this.props;
+			const { message, phone, label } = this.config();
+			let { url } = this.config();
 
 			if (phone && !url) {
 				url = this.constructor.generateUrl(phone, message);
