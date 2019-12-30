@@ -4,6 +4,23 @@
             "type": "number",
             "label": "Current Version of Component",
             "value": 1
+		},
+		"mode": {
+            "id": "mode",
+            "type": "select",
+            "label": "Show",
+            "value": "facilitator",
+            "options": [
+                {
+                    "label": "Team",
+                    "value": "team"
+                },
+                {
+                    "label": "Facilitator",
+                    "value": "facilitator"
+                }
+            ],
+            "singular": null
         }
     },
     "uuid": "6795a5b0-2a8c-11ea-a505-cf1f238de3bf"
