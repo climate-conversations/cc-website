@@ -1,3 +1,14 @@
+/**
+ * Component for displaying hosts, used in facil, team leader and coordinator dashboards
+ * Filters:
+ * * Unassigned (without a host interest interaction)
+ * * Incomplete
+ * * Abandoned
+ * Scopes
+ * * Facilitator
+ * * Team
+ * * All
+ */
 (RaiselyComponents, React) => {
 	const { Icon, Button } = RaiselyComponents.Atoms;
 	const { get, dayjs } = RaiselyComponents.Common;
