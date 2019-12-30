@@ -1734,31 +1734,30 @@ ul.list__wrapper, .list__wrapper ul {
   background: none;
 }
 
+.split__screen {
+  @include respond-to('min-tablet') {
+    width: 50%;
+    display: inline-block;
+    vertical-align: top;
+  }
+  .custom-form-wrapper {
+    @include respond-to('min-tablet') {
+      .custom-form__step-header,
+      form {
+        width: 100%;
+      }
+    }
+  }
+}
+
 .contact--form {
   border-radius: $borderRadius;
 	border: 2px solid;
   
   &__recipients, &__content {
-    @include respond-to('min-tablet') {
-      width: 50%;
-      display: inline-block;
-    }
-
-    .custom-form-wrapper {
-      @include respond-to('min-tablet') {
-        .custom-form__step-header,
-        form {
-          width: 100%;
-        }
-      }
 	    .custom-form {
         border: none;
-        .custom-form__stages {
-          display: none;
-        }
-      }
-      
-    }
+      }      
   }
 }
 
@@ -1779,11 +1778,14 @@ ul.list__wrapper, .list__wrapper ul {
 .record-display__field {
   display: flex;
   flex-direction: row;
+  border-bottom: 1px solid lightgray;
+  padding: 0.5rem;
   .record-display__label {
     flex: 1 1;
   }
   .record-display__value {
     flex: 2 2;
+    font-weight: bold;
   }
 }
 
@@ -1857,4 +1859,78 @@ ul.list__wrapper, .list__wrapper ul {
     border: none;
     margin-top: -2px;
   }
+}
+
+.message-template-editor__wrapper {
+  .field-wrapper--interval,
+  .field-wrapper--direction,
+  .field-wrapper--period {
+    width: 30%;
+    display: inline-block;
+    margin-right: 1%;
+  }
+}
+
+.contact--form__email {
+  padding: 1rem;
+  .contact--form__copy-email {
+    .contact--form__value {
+      border: 1px solid black;
+      padding: 0.2rem;
+      border-radius: 0.5rem;
+      display: block;
+      margin-bottom: 1rem;
+      overflow-wrap: break-word;
+    }
+    .contact--form__label {
+      font-weight: bold;
+    }
+  }
+}
+
+.contact--form__recipients,
+.contact--form__content {
+  .custom-form {
+    border: none;
+  }
+  .custom-form__step-header {
+    display: none;
+  }
+  form {
+    padding-top: 0;
+  }
+  .custom-form__stages {
+     display: none;
+  }
+}
+.contact--form__content h4 {
+  padding-left: 2rem;
+}
+.contact--form__recipients {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+.contact--form__final {
+	padding: 2rem;
+}
+
+.contact--form__recipients--whatsapp-list li {
+    margin-top: 1rem;
+}
+
+.form-field__label-text.disabled {
+  color: #999;
+  font-weight: normal;
+}
+
+.button.link {
+    background: none;
+    border: none;
+    padding-left: 0;
+    text-decoration: underline;
+}
+
+ul.contact--form__recipients--whatsapp-list {
+    list-style: none;
+    padding-left: 0;
 }
