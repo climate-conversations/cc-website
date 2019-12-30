@@ -24,7 +24,7 @@
 	}, {
 		label: 'Message',
 		id: 'body',
-		type: 'textarea',
+		type: 'html',
 		recordType: 'message',
 	}, {
 		label: 'Send by',
@@ -318,7 +318,7 @@
 				});
 		}
 		saveInteraction = async (messages) => {
-			const { messageId } = this.props;
+			let messageMeta = this.props.messageMeta || {};
 			const { selectedRecipients, recipientFields } = this.state;
 			try {
 				this.setState({ saving: true });
@@ -333,7 +333,7 @@
 							private: {
 								body,
 								subject,
-								messageId,
+								...messageMeta,
 							},
 						},
 					};
@@ -484,7 +484,7 @@
 
 	return function ContactFormModalWrapper(props) {
 		let { launchButtonLabel } = props;
-		const { onClose, to } = props;
+		const { onClose, to, messageMeta } = props;
 
 		function inner(closeModal) {
 			return <ContactForm {...props} closeModal={closeModal} />;
@@ -498,6 +498,7 @@
 				buttonTitle={launchButtonLabel}
 				modalContent={inner}
 				onClose={onClose}
+				messageMeta={messageMeta}
 			/>
 		) : inner();
 	}
