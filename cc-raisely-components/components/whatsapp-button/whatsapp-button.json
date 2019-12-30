@@ -4,6 +4,27 @@
             "type": "number",
             "label": "Current Version of Component",
             "value": 28
+		},
+		"label": {
+            "id": "label",
+            "type": "text",
+            "label": "Button Label",
+            "value": "",
+            "singular": null
+        },
+		"url": {
+            "id": "url",
+            "type": "text",
+            "label": "Link",
+            "value": "Send WhatsApp",
+            "singular": null
+		},
+		"showIcon": {
+            "id": "title",
+            "type": "checkbox",
+            "label": "Show Icon",
+            "value": "false",
+            "singular": null
         }
     },
     "uuid": "54ceb790-cf8e-11e9-9f43-c1cb72c4f37f"
