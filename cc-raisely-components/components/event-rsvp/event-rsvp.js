@@ -13,7 +13,7 @@
 	const CustomForm = RaiselyComponents.import('custom-form');
 
 	class NativeRsvp extends React.Component {
-		state = {};
+		state = { loading: true };
 
 		componentDidMount() {
 			const { example } = this.props;
@@ -36,7 +36,7 @@
 				fields: rsvpFields,
 			};
 
-			this.setState({ steps: [step1] });
+			this.setState({ steps: [step1], loading: false });
 		}
 
 		save = async (values, formToData) => {
@@ -70,10 +70,10 @@
 		signOut = () => this.setState({ user: null }, this.buildSteps);
 
 		render() {
-			const { steps, user } = this.state;
+			const { steps, user, loading } = this.state;
 			const { example, event } = this.props;
 
-			if (!event) {
+			if (!(event || loading)) {
 				return (
 					<div className="error">Cannot load event for rsvp form!</div>
 				);
@@ -84,7 +84,7 @@
 			return (
 				<div className="custom-form--event-rsvp event-rsvp__wrapper block--purple">
 					<h3>
-						{example ? '' : `Register for ${event.name}`}
+						{(example || !event) ? '' : `Register for ${event.name}`}
 					</h3>
 					{user ? (
 						<div className="event-rsvp-user">
@@ -99,6 +99,13 @@
 	}
 
 	function staticGetEvent(props) {
+		const { mock } = props.global.campaign;
+		if (mock) {
+			return {
+				name: 'Example Event',
+			};
+		}
+
 		return get(props, 'event') ||
 			get(props, 'global.current.event');
 	}
