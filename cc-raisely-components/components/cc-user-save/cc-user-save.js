@@ -1,4 +1,6 @@
-() => {
+(RaiselyComponents) => {
+	const { getCurrentToken } = RaiselyComponents.api;
+
 	const proxyUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/proxy';
 	const upsertUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/upsertUser';
 
@@ -16,6 +18,10 @@
 		}, options);
 
 		try {
+			// Send the users token for authorization
+			const token = getCurrentToken();
+			if (token) opts.headers.Authorization = `Bearer ${token.replace(/"/g, '')}`;
+
 			console.log('Doing fetch', url, opts);
 			if (opts.body && typeof opts.body !== 'string') {
 				opts.body = JSON.stringify(opts.body);
