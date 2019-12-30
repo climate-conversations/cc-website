@@ -1,5 +1,5 @@
 (RaiselyComponents, React) => {
-	const { api, Common } = RaiselyComponents;
+	const { api, Common, Spinner } = RaiselyComponents;
 	const { get } = Common;
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save');
 	const WhatsAppButton = RaiselyComponents.import('whatsapp-button');
@@ -10,8 +10,12 @@
 		async load() {
 			try {
 				const { profile } = await api.quickLoad({ props: this.props, models: ['profile.private'], required: true });
-				this.setState({ profile, facilitator: profile.user });
 
+				if (profile.type === 'GROUP') {
+					this.setState({ teamProfile: profile });
+				}
+
+				this.setState({ profile, facilitator: profile.user });
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 				const { teamProfile } = await UserSaveHelper.proxy(`/profiles/${profile.parentUuid}?private=1`, {
 					method: 'get',
@@ -50,11 +54,18 @@
 						Note: This will add you to the group chat if you are not already a member
 					</div>
 				</div>
-			)
+			);
+		}
+		mode() {
+			const { show } = this.props.getValues();
+			return show;
 		}
 
 		render() {
-			const { teamProfile, facilitator, teamLeader } = this.state;
+			const { teamProfile, facilitator, teamLeader, loading } = this.state;
+			if (loading) return <Spinner />
+			if (this.mode() === 'team') return this.renderForTeam();
+
 			const { you, your } = this.nouns(facilitator);
 			const leaderName = get(teamLeader, 'preferredName') || get(teamLeader, 'fullName');
 			return (
