@@ -5,11 +5,12 @@ const shortUuid = require('short-uuid');
 const { minimalUser } = require('./proxy/transforms');
 
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
-	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName'];
+	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName'
+	'private.attendedConversation'];
 const permittedCreateFields = ['fullName', 'firstName', 'preferredName', 'lastName', 'email', 'phoneNumber',
 	'private.alternateEmail', 'private.alternatePhone', ...permittedUpdateFields];
 
-const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newsletter', 'mailingList'];
+const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newsletter', 'mailingList', 'attendedConversation'];
 
 /**
  * This is a helper when working with new/updated records to generalise
