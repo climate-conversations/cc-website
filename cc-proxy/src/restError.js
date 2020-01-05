@@ -1,5 +1,3 @@
-const _ = require('lodash');
-
 class RestError extends Error {
 	constructor(options) {
 		super(options.message);
