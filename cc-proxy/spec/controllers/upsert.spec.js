@@ -67,6 +67,16 @@ describe('upsertUser', () => {
 		});
 	});
 
+	describe('malformed body', () => {
+		before(() => {
+			prepareRequest(results, { data: { data: { email: 'fake@cc.test' } } });
+			return upsertUser(results.req, results.res);
+		});
+		it('should return 400', () => {
+			expect(results.res.statusCode).to.eq(400);
+		});
+	});
+
 	describe('existing user', () => {
 		before(() => {
 			setup(results);
@@ -98,17 +108,20 @@ describe('upsertUser', () => {
 	});
 });
 
-
-function setup(results) {
+function prepareRequest(results, body) {
 	results.res = new MockResponse();
 	results.req = new MockRequest({
+		body,
 		method: 'POST',
 		url: '/',
 		headers: {
 			Origin: 'https://climateconversations.raisely.com',
 		},
-		body: {
-			data: createUser,
-		},
+	});
+}
+
+function setup(results) {
+	return prepareRequest(results,  {
+		data: createUser,
 	});
 }

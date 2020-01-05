@@ -1,6 +1,7 @@
 const raisely = require('./raiselyRequest');
 const { get, pick, set } = require('lodash');
 const shortUuid = require('short-uuid');
+const RestError = require('./restError');
 
 const { minimalUser } = require('./proxy/transforms');
 
@@ -125,6 +126,18 @@ function prepareUserForSave(existing, user) {
  */
 async function upsertUser(req) {
 	const record = req.body.data;
+	if (!record) {
+		throw new RestError({
+			message: 'Request malformed. No body.data',
+			status: 400,
+		});
+	}
+	if (record.data) {
+		throw new RestError({
+			message: 'Request malformed. Data nested too deep (body.data.data)',
+			status: 400,
+		});
+	}
 
 	let existing;
 	if (!record.uuid) {
