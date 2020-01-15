@@ -1,5 +1,7 @@
 const { AirblastController } = require('airblast');
+const { raiselyEvents } = require('../../config/orchestrator');
 
+// Airblas options
 const options = {
 	wrapInData: true,
 };
@@ -8,20 +10,22 @@ const options = {
   * This controller will receive create, update, delete hooks from raisely
   * to update other services
   */
-class RaiselyPeople extends AirblastController {
-	validate({ data }) {
-		const validEvents = ['user.created', 'user.updated', 'user.deleted', 'user.forgotten'];
-		if (!validEvents.includes(data.type)) {
-			throw new Error(`Invalid event ${data.type}`);
-		}
-	}
-
+class RaiselyEvents extends AirblastController {
 	async process({ data }) {
-		// Put data on myTask's job queue
-		this.controllers.mailchimp.enqueue(data);
+		const validEvents = Object.keys(raiselyEvents);
+		if (!validEvents.includes(data.type)) {
+			this.log(`Invalid event ${data.type} (ignoring)`);
+			return;
+		}
+
+		// Defer to the orchestrator to decide which controllers should process
+		// the event
+		raiselyEvents[data.type].forEach(controller => {
+			this.controllers[controller].enqueue(data);
+		});
 	}
 }
 
-RaiselyPeople.options = options;
+RaiselyEvents.options = options;
 
-module.exports = RaiselyPeople;
+module.exports = RaiselyEvents;
