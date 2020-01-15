@@ -15,6 +15,45 @@ async function setAuth(document, credentialsPath) {
 	return instancePromisify(document, 'useServiceAccountAuth')(creds);
 }
 
+async function findOrCreateWorksheet(document, worksheetTitle, headers) {
+	const info = await instancePromisify(document, 'getInfo')();
+	let isNew = false;
+	let sheet = info.worksheets.find(w => w.title === worksheetTitle);
+	if (!sheet) {
+		sheet = await instancePromisify(document, 'addWorksheet')({ title: worksheetTitle });
+		await instancePromisfy(sheet, 'setHeaderRow')(headers)
+		isNew = true;
+	}
+	return { sheet, isNew };
+}
+
+/**
+ * Insert or update a row in the spreadsheet
+ * @param {GoogleWorksheet} sheet The worksheet
+ * @param {string} query A query that returns exactly 1 row
+ * @param {object} row
+ */
+async function upsertRow(sheet, query, row) {
+	const rows = await instancePromisify(sheet, 'getRows')({ query });
+	if (rows.length > 1) {
+		throw new Error('upsert found more than one row, aborting upsert');
+	} else if (rows.length) {
+		// Update
+		Object.assign(rows[0], row);
+		return instancePromisify(rows[0], 'save')();
+	} else {
+		// Insert
+		return instancePromisify(sheet, 'addRow')(row);
+	}
+}
+
+async function getSpreadsheet(key) {
+	const { GOOGLE_PROJECT_CREDENTIALS } = process.env;
+	const document = new GoogleSpreadsheet(key);
+	await setAuth(document, GOOGLE_PROJECT_CREDENTIALS);
+	return document;
+}
+
 async function fetchRows(count) {
 	const { SPREADSHEET_KEY, WORKSHEET_TITLE, GOOGLE_PROJECT_CREDENTIALS } = process.env;
 
@@ -69,5 +108,8 @@ async function getTrueLength(sheet) {
 }
 
 module.exports = {
+	getSpreadsheet,
 	fetchRows,
+	findOrCreateWorksheet,
+	upsertRow,
 };
