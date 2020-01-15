@@ -119,7 +119,9 @@ function setupNocks(profiles) {
 	patchBody = null;
 
 	const n = nockRaisely()
-	nockCollection(n, /\/eventRsvps.*/, [rsvp]);
+
+	// FIXME test the exact date as it looks like it's wrong
+	nockCollection(n, '/eventRsvps.*', [rsvp]);
 	nockCollection(n, `/events/${rsvp.eventUuid}/rsvps`, [{ type: 'facilitator', user: facil }]);
 	nockCollection(n, `/users/${facil.uuid}/profiles?type=INDIVIDUAL`, profiles);
 	n
