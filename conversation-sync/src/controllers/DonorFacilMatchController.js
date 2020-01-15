@@ -13,7 +13,7 @@ const options = {
 // Attribute a donation to a facilitator if it
 // occurs within X days of the guest attending their
 // conversation
-const ATTRIBUTION_WINDOW = new tzc.Duration(14, 'days');
+const ATTRIBUTION_WINDOW = new tzc.Duration(14, tzc.TimeUnit.Day);
 
 class DonorFacilMatch extends AirblastController {
 	async process({ data }) {
@@ -32,7 +32,7 @@ class DonorFacilMatch extends AirblastController {
 			return;
 		}
 
-		const eventWindow = new tzc.DateTime().subLocal(ATTRIBUTION_WINDOW).toIsoString();
+		const eventWindow = tzc.DateTime.nowUtc().sub(ATTRIBUTION_WINDOW).format('yyyy-MM-dd');
 
 		const rsvps = await raiselyRequest({
 			path: '/eventRsvps',

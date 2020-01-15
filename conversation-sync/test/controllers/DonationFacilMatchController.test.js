@@ -120,8 +120,11 @@ function setupNocks(profiles) {
 
 	const n = nockRaisely()
 
+	const days = 1000 * 60 * 60 * 24;
+	const date = new Date(new Date() - 14 * days).toISOString().slice(0,10);
+
 	// FIXME test the exact date as it looks like it's wrong
-	nockCollection(n, '/eventRsvps.*', [rsvp]);
+	nockCollection(n, `/eventRsvps?startAtGTE=${date}&user.email=${encodeURIComponent(baseDonation.email)}`, [rsvp]);
 	nockCollection(n, `/events/${rsvp.eventUuid}/rsvps`, [{ type: 'facilitator', user: facil }]);
 	nockCollection(n, `/users/${facil.uuid}/profiles?type=INDIVIDUAL`, profiles);
 	n
