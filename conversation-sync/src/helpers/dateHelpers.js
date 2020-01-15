@@ -41,7 +41,21 @@ function isoDateToKeplaDate(isoDate) {
 	return (new TZC.DateTime(isoDate)).withZone(TZC.zone('Singapore')).toUtcString() + 'Z';
 }
 
+/**
+ * Converts in ISO8601 date to date and time in SG timezone
+ * @param {string} isoDate
+ * @returns {object} { date: 'yyyy-MM-dd', time: 'HH:mm' }
+ */
+function isoToSgDateAndTime(isoDate) {
+	const sgZone = TZC.TimeZone.zone('Singapore/Singapore');
+	const startAt = new TZC.DateTime(isoDate).convert(sgZone);
+	const date = startAt.format('yyyy-MM-dd');
+	const time = startAt.format('HH:mm');
+	return { date, time };
+}
+
 module.exports = {
+	isoToSgDateAndTime,
 	isoDateToKeplaDate,
 	sheetsToIsoDate,
 	dateKeys,
