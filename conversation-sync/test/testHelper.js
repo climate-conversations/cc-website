@@ -1,3 +1,5 @@
+require('../config');
+
 const nock = require('nock');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
