@@ -50,11 +50,9 @@ function headersToMap() {
 class DonationSpreadsheet extends AirblastController {
 	async process({ data }) {
 		const { DONATION_SPREADSHEET } = process.env;
-		const year = new tzc.DateTime().format('yyyy');
-		const sheetTitle = `Donations ${year}`;
 
 		const validEvents = ['event.created', 'event.updated'];
-		if (validEvents.includes(data.type)) throw new Error(`Unrecognised event ${data.type}`);
+		if (!validEvents.includes(data.type)) throw new Error(`Unrecognised event ${data.type}`);
 
 		const conversation = _.cloneDeep(data.data);
 
@@ -76,6 +74,9 @@ class DonationSpreadsheet extends AirblastController {
 		record.event.date = isoToSgDateAndTime(record.event.startAt).date;
 		const transferDate = getField(record, 'event.cashTransferredAt');
 		if (transferDate) record.event.cashTransferDate = isoToSgDateAndTime(transferDate).date;
+		// Get the year of the event and find the according sheet
+		const year = record.event.date.substring(0, 4);
+		const sheetTitle = `Donations ${year}`;
 
 		currencyKeys.forEach(key => {
 			const value = _.get(conversation, key);

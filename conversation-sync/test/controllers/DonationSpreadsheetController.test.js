@@ -155,7 +155,7 @@ describe('Donation Spreadsheet Controller', () => {
 		({ facilitator, host } = nockEventTeam());
 		data = person;
 		const result = await controller.process({
-			data: { type: 'guest.created', data },
+			data: { type: 'event.updated', data },
 		});
 		return result;
 	}
