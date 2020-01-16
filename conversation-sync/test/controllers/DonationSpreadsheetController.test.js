@@ -60,7 +60,6 @@ describe('Donation Spreadsheet Controller', () => {
 
 	describe('WHEN sheet exists', () => {
 		before(() => {
-			nockEventTeam();
 			mockSheet = setup([{ title: 'Donations 2020', rows: [] }]);
 			return process(baseEvent);
 		});
@@ -111,7 +110,6 @@ describe('Donation Spreadsheet Controller', () => {
 	});
 	describe('WHEN row exists', () => {
 		before(() => {
-			nockEventTeam();
 			mockSheet = setup([{
 				title: 'Donations 2020',
 				rows: [{
