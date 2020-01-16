@@ -47,7 +47,7 @@ function isoDateToKeplaDate(isoDate) {
  * @returns {object} { date: 'yyyy-MM-dd', time: 'HH:mm' }
  */
 function isoToSgDateAndTime(isoDate) {
-	const sgZone = TZC.TimeZone.zone('Singapore/Singapore');
+	const sgZone = TZC.TimeZone.zone('Asia/Singapore');
 	const startAt = new TZC.DateTime(isoDate).convert(sgZone);
 	const date = startAt.format('yyyy-MM-dd');
 	const time = startAt.format('HH:mm');
