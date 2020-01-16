@@ -1,4 +1,4 @@
-const { nockRaisely } = require('../testHelper');
+const { nockRaisely, nockCollection, nockEventTeam } = require('../testHelper');
 const { expect } = require('chai');
 const nock = require('nock');
 
@@ -9,11 +9,6 @@ const baseDonation = {
 	email: 'donor@cc.test',
 	profile: { path: process.env.WEBSITE_PATH },
 };
-const facil = {
-	uuid: 'facilitator-uuid',
-	fullName: 'Test Facilitator',
-	photoUrl: '/photo.jpg'
-};
 
 let patchBody = null;
 let movedProfileUuid = null;
@@ -22,7 +17,7 @@ let createdProfile = null;
 describe('Donation Facilitator Matching', () => {
 	let controller;
 	let data;
-	let sandbox;
+	let facilitator;
 	before(() => {
 		controller = new DonationFacilMatchController({
 			log: console.log,
@@ -56,15 +51,15 @@ describe('Donation Facilitator Matching', () => {
 	});
 	describe('WHEN profile does not exist', () => {
 		before(() => {
-			setupNocks([]);
+			({ facilitator } = setupNocks([]));
 			nockCreateProfile();
 			return process(baseDonation);
 		});
 		it('creates a profile', () => {
 			expect(createdProfile).to.containSubset({
-				userUuid: facil.uuid,
-				name: facil.fullName,
-				photoUrl: facil.photoUrl,
+				userUuid: facilitator.uuid,
+				name: facilitator.fullName,
+				photoUrl: facilitator.photoUrl,
 				goal: 20000,
 			});
 		})
@@ -109,10 +104,6 @@ describe('Donation Facilitator Matching', () => {
 	}
 });
 
-function nockCollection(n, path, result) {
-	return n.get(path).reply(200, { data: result })
-}
-
 function setupNocks(profiles) {
 	const rsvp = { uuid: 'mocked-rsvp', eventUuid: 'mock-event-uuid', private: { donationIntention: 'creditcard' } }
 	movedProfileUuid = null;
@@ -125,8 +116,9 @@ function setupNocks(profiles) {
 
 	// FIXME test the exact date as it looks like it's wrong
 	nockCollection(n, `/eventRsvps?startAtGTE=${date}&user.email=${encodeURIComponent(baseDonation.email)}`, [rsvp]);
-	nockCollection(n, `/events/${rsvp.eventUuid}/rsvps`, [{ type: 'facilitator', user: facil }]);
-	nockCollection(n, `/users/${facil.uuid}/profiles?type=INDIVIDUAL`, profiles);
+	const team = nockEventTeam();
+	const { facilitator } = team;
+	nockCollection(n, `/users/${facilitator.uuid}/profiles?type=INDIVIDUAL`, profiles);
 	n
 		.patch(`/donations/${baseDonation.uuid}/move`)
 		.reply((uri, body) => {
@@ -138,6 +130,7 @@ function setupNocks(profiles) {
 			patchBody = body;
 			return [200, {}];
 		});
+	return team;
 }
 
 function nockCreateProfile() {
