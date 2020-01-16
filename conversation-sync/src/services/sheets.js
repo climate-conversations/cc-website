@@ -1,4 +1,4 @@
-const GoogleSpreadsheet = require('google-spreadsheet');
+const GoogleSpreadsheet = require('./sheetsProvider');
 const { promisify } = require('util');
 const path = require('path');
 
@@ -21,7 +21,7 @@ async function findOrCreateWorksheet(document, worksheetTitle, headers) {
 	let sheet = info.worksheets.find(w => w.title === worksheetTitle);
 	if (!sheet) {
 		sheet = await instancePromisify(document, 'addWorksheet')({ title: worksheetTitle });
-		await instancePromisfy(sheet, 'setHeaderRow')(headers)
+		await instancePromisify(sheet, 'setHeaderRow')(headers)
 		isNew = true;
 	}
 	return { sheet, isNew };
@@ -49,7 +49,7 @@ async function upsertRow(sheet, query, row) {
 
 async function getSpreadsheet(key) {
 	const { GOOGLE_PROJECT_CREDENTIALS } = process.env;
-	const document = new GoogleSpreadsheet(key);
+	const document = GoogleSpreadsheet.load(key);
 	await setAuth(document, GOOGLE_PROJECT_CREDENTIALS);
 	return document;
 }
@@ -59,7 +59,7 @@ async function fetchRows(count) {
 
 	console.log(`Authenticating to spreadsheet ${SPREADSHEET_KEY}`);
 	// spreadsheet key is the long id in the sheets URL
-	const document = new GoogleSpreadsheet(SPREADSHEET_KEY);
+	const document = GoogleSpreadsheet.load(SPREADSHEET_KEY);
 	await setAuth(document, GOOGLE_PROJECT_CREDENTIALS);
 
 	const info = await instancePromisify(document, 'getInfo')();
