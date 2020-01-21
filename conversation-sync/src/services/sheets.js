@@ -20,8 +20,7 @@ async function findOrCreateWorksheet(document, worksheetTitle, headers) {
 	let isNew = false;
 	let sheet = info.worksheets.find(w => w.title === worksheetTitle);
 	if (!sheet) {
-		sheet = await instancePromisify(document, 'addWorksheet')({ title: worksheetTitle });
-		await instancePromisify(sheet, 'setHeaderRow')(headers)
+		sheet = await instancePromisify(document, 'addWorksheet')({ title: worksheetTitle, headers });
 		isNew = true;
 	}
 	return { sheet, isNew };
