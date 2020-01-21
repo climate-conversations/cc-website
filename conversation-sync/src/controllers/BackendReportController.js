@@ -80,7 +80,8 @@ class BackendReport extends AirblastController {
 		if (data.type !== 'guest.created') throw new Error(`Unrecognised event ${data.type}`);
 
 		const surveyVersion = '2020';
-		const sheetTitle = `Surveys ${surveyVersion}`;
+		let sheetTitle = `Surveys ${surveyVersion}`;
+		if (process.env.NODE_ENV === 'test') sheetTitle += ' TEST';
 		const { BACKEND_SPREADSHEET } = process.env;
 
 		const guestData = data.data;
@@ -94,7 +95,7 @@ class BackendReport extends AirblastController {
 		]);
 		const { headers, headerMap } = headerInfo;
 
-const document = await getSpreadsheet(BACKEND_SPREADSHEET);
+		const document = await getSpreadsheet(BACKEND_SPREADSHEET);
 
 		// Find tab in spreadsheet that matches 'Surveys 2020'
 		const { sheet } = await findOrCreateWorksheet(document, sheetTitle, headers);
