@@ -26,6 +26,8 @@ const baseEvent = {
 	},
 }
 
+const WITH_MOCK = !process.env.LIVE_TEST;
+
 describe('Donation Spreadsheet Controller', () => {
 	let controller;
 	let data;
@@ -66,10 +68,14 @@ describe('Donation Spreadsheet Controller', () => {
 		after(() => {
 			sandbox.restore();
 		});
-		it('does not create sheet', () => {
-			expect(mockSheet.calls).to.not.haveOwnProperty('addSheet');
-		});
-		itCreatesRow();
+		if (WITH_MOCK) {
+			it('does not create sheet', () => {
+				expect(mockSheet.calls).to.not.haveOwnProperty('addSheet');
+			});
+			itCreatesRow();
+		} else {
+			itHasNoErrors();
+		}
 	});
 	describe('WHEN sheet does not exist', () => {
 		before(() => {
@@ -79,34 +85,38 @@ describe('Donation Spreadsheet Controller', () => {
 		after(() => {
 			sandbox.restore();
 		});
-		it('creates sheet', () => {
-			mockSheet.assertCall('addWorksheet', [{
-				title: 'Donations 2020',
-			}]);
-		});
-		it('sets header', () => {
-			expect(mockSheet.calls).to.haveOwnProperty('setHeaderRow');
-			expect(mockSheet.calls.setHeaderRow).to.deep.eq([[
-				"Host",
-				"Facilitator",
-				"ConversationId",
-				"Date",
-				"Total from CTA forms",
-				"Total reported bank transfers",
-				"Scanned Report Total",
-				"Cash Transferred (according to screenshot)",
-				"Screenshot of transfer (url)",
-				"Date of Transfer (in screenshot)",
-				"Transfer Reference",
-				"Cash donation report (url)",
-				"Cash Received in Bank Account",
-				"Bank Reconcilliation",
-				"Facilitator Notes",
-				"Team Leader Notes",
-				"Other Notes",
-			]]);
-		});
-		itCreatesRow();
+		if (WITH_MOCK) {
+			it('creates sheet', () => {
+				mockSheet.assertCall('addWorksheet', [{
+					title: 'Donations 2020',
+				}]);
+			});
+			it('sets header', () => {
+				expect(mockSheet.calls).to.haveOwnProperty('setHeaderRow');
+				expect(mockSheet.calls.setHeaderRow).to.deep.eq([[
+					"Host",
+					"Facilitator",
+					"ConversationId",
+					"Date",
+					"Total from CTA forms",
+					"Total reported bank transfers",
+					"Scanned Report Total",
+					"Cash Transferred (according to screenshot)",
+					"Screenshot of transfer (url)",
+					"Date of Transfer (in screenshot)",
+					"Transfer Reference",
+					"Cash donation report (url)",
+					"Cash Received in Bank Account",
+					"Bank Reconcilliation",
+					"Facilitator Notes",
+					"Team Leader Notes",
+					"Other Notes",
+				]]);
+			});
+			itCreatesRow();
+		} else {
+			itHasNoErrors();
+		}
 	});
 	describe('WHEN row exists', () => {
 		before(() => {
@@ -121,9 +131,14 @@ describe('Donation Spreadsheet Controller', () => {
 		after(() => {
 			sandbox.restore();
 		});
-		it('updates row', () => {
-			mockSheet.assertCall('save', [getExpectedRow()]);
-		})
+		if (WITH_MOCK) {
+			it('updates row', () => {
+				mockSheet.assertCall('save', [getExpectedRow()]);
+			})
+		} else {
+			itHasNoErrors();
+		}
+
 	});
 	describe('WHEN event is not a conversation', () => {
 		before(() => {
@@ -133,10 +148,18 @@ describe('Donation Spreadsheet Controller', () => {
 		after(() => {
 			sandbox.restore();
 		});
-		it('does nothing', () => {
-			expect(mockSheet.calls).to.not.haveOwnProperty('getInfo');
-		});
+		if (WITH_MOCK) {
+			it('does nothing', () => {
+				expect(mockSheet.calls).to.not.haveOwnProperty('getInfo');
+			});
+		} else {
+			itHasNoErrors();
+		}
 	});
+
+	function itHasNoErrors() {
+		it('has no errors');
+	}
 
 	function itCreatesRow() {
 		it('creates row', () => {
@@ -146,7 +169,8 @@ describe('Donation Spreadsheet Controller', () => {
 
 	function setup(document) {
 		sandbox = sinon.createSandbox();
-		return mockSheets(sandbox, document);
+		if (!WITH_MOCK) console.log('CONNECTING TO LIVE SPREADSHEETS');
+		return WITH_MOCK ? mockSheets(sandbox, document) : null;
 	}
 
 	async function process(person) {
