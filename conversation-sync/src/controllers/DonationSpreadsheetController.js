@@ -23,11 +23,11 @@ const headers = [
 	{ id: 'event.private.statCache.donations.cash', label: 'Total from CTA forms' },
 	{ id: 'event.private.statCache.donations.transfer', label: 'Total reported bank transfers' },
 	{ id: 'event.cashReceivedAmount', label: 'Scanned Report Total' },
-	{ id: 'event.cashTransferAmount', label: 'Cash Transferred (according to screenshot)' },
-	{ id: 'event.cashTransferScreenshot', label: 'Screenshot of transfer (url)' },
-	{ id: 'event.cashTransferDate', label: 'Date of Transfer (in screenshot)' },
+	{ id: 'event.cashTransferAmount', label: 'Cash Transferred According to screenshot' },
+	{ id: 'event.cashTransferScreenshot', label: 'Screenshot of transfer URL' },
+	{ id: 'event.cashTransferDate', label: 'Date of Transfer in screenshot' },
 	{ id: 'event.cashTransferReference', label: 'Transfer Reference' },
-	{ id: 'event.cashReportScan', label: 'Cash donation report (url)' },
+	{ id: 'event.cashReportScan', label: 'Cash donation report URL' },
 	{ id: null, label: 'Cash Received in Bank Account' },
 	{ id: null, label: 'Bank Reconcilliation' },
 	{ id: 'event.cashDonationsFacilitatorNotes', label: 'Facilitator Notes' },
@@ -76,7 +76,8 @@ class DonationSpreadsheet extends AirblastController {
 		if (transferDate) record.event.cashTransferDate = isoToSgDateAndTime(transferDate).date;
 		// Get the year of the event and find the according sheet
 		const year = record.event.date.substring(0, 4);
-		const sheetTitle = `Donations ${year}`;
+		let sheetTitle = `Donations ${year}`;
+		if (process.env.NODE_ENV === 'test') sheetTitle += ' TEST';
 
 		currencyKeys.forEach(key => {
 			const value = _.get(conversation, key);
