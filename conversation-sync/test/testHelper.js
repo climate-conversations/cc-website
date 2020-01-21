@@ -1,3 +1,5 @@
+process.env.NODE_ENV='test';
+
 require('../config');
 
 const nock = require('nock');
@@ -9,12 +11,14 @@ chai.use(chaiSubset);
 const facilitator = {
 	uuid: 'facilitator-uuid',
 	fullName: 'Test Facilitator',
-	photoUrl: '/photo.jpg'
+	photoUrl: '/photo.jpg',
+	email: 'facilitator@cc.test',
 };
 const host = {
 	uuid: 'host-uuid',
 	fullName: 'Test Host',
-	photoUrl: '/host-photo.jpg'
+	photoUrl: '/host-photo.jpg',
+	email: 'host@cc.test',
 }
 
 function nockRaisely() {
