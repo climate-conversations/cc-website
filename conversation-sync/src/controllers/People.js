@@ -1,16 +1,17 @@
 const { AirblastController } = require('airblast');
 const { raiselyEvents } = require('../../config/orchestrator');
 
-// Airblas options
+// Airblast options
 const options = {
 	wrapInData: true,
+	corsHosts: ['portal.climate.sg', 'p.climate.sg', 'portal.climateconversations.sg'],
 };
 
 /**
   * This controller will receive create, update, delete hooks from raisely
   * to update other services
   */
-class RaiselyEvents extends AirblastController {
+class RaiselyPeople extends AirblastController {
 	async process({ data }) {
 		const validEvents = Object.keys(raiselyEvents);
 		if (!validEvents.includes(data.type)) {
@@ -26,6 +27,6 @@ class RaiselyEvents extends AirblastController {
 	}
 }
 
-RaiselyEvents.options = options;
+RaiselyPeople.options = options;
 
-module.exports = RaiselyEvents;
+module.exports = RaiselyPeople;
