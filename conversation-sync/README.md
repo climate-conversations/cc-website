@@ -1,3 +1,9 @@
+## Synchonisation service for Climate Conversations
+Syncs raisely events to:
+- Mailchimp
+- Conversation Survey Backend Spreadsheet
+- Cash Donations Spreadsheet
+
 ## Handling Mailchimp Unsubscribes
 For compiance reasons, Mailchimp makes it harder to re-subscribe someone once they're off the list.
 
