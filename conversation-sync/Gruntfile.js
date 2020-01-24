@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const childProcess = require('child_process');
 const readline = require('readline');
 const _ = require('lodash');
@@ -60,7 +61,7 @@ async function deployRoute(route) {
 	console.log(`Deploying ${description}`);
 
 	try {
-		// console.log(`  ${command} ${args.join(' ')}`);
+		console.log(`  ${command} ${args.join(' ')}`);
 		await spawnChild(command, args, { env: process.env, shell: true });
 	} catch (err) {
 		console.log('Deploy command failed:');
