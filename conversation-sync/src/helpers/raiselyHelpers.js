@@ -65,7 +65,9 @@ function raiselyToRow(data, headerMap) {
 async function raiselyRequest(options) {
 	const token = options.token || process.env.RAISELY_TOKEN;
 
-	const uri = `${raiselyUrl}${options.path}`;
+	const uri = options.path.startsWith('http') ?
+		options.path :
+		`${raiselyUrl}${options.path}`;
 
 	const headers = Object.assign({
 		'User-Agent': 'Climate Conversations Message Pipe',
@@ -91,7 +93,7 @@ async function raiselyRequest(options) {
 	const request = options.cacheKey ? requestCache : requestNative;
 	const result = await request(requestOptions);
 
-	return result.data;
+	return options.fullResult ? result : result.data;
 }
 
 
