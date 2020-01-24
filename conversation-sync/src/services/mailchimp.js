@@ -7,15 +7,18 @@ const tagsToSync = ['Facilitator', 'Team Leader', 'Coordinator', 'Corporate', 'G
 	.map(n => _.kebabCase(n));
 
 function mailchimpPayload(person, vip) {
-	return {
+	const fieldMap = {
+		FNAME: 'firstName',
+		PNAME: 'preferredName',
+		FULLNAME: 'fullName',
+		ORG: 'private.organisation',
+		PHONE: 'phoneNumber',
+	};
+
+	const values = {
 		vip,
+
 		merge_fields: {
-			FNAME: person.firstName,
-			PNAME: person.preferredName,
-			FULLNAME: person.fullName,
-			PHONE: person.phoneNumber,
-			BIRTHDAY: new tzc.DateTime(person.private.dateOfBirth).format('MM/dd'),
-			ORG: person.private.organisation,
 			// HOST: _.get(person, 'private.host'),
 			// VOLUNTEER: _.get(person, 'private.volunteer'),
 			// HOSTCORPORATE: _.get(person, 'private.hostCorporate'),
@@ -23,6 +26,14 @@ function mailchimpPayload(person, vip) {
 			// NEWSLETTER: _.get(person, 'private.newsleter'),
 		},
 	};
+
+	_.forEach(fieldMap, (path, key) => {
+		const value = _.get(person, path);
+		if (value) values.merge_fields[key] = value;
+	});
+	if (_.get(person, )) values.merge_fields.BIRTHDAY = new tzc.DateTime(person.private.dateOfBirth).format('MM/dd');
+
+	return values;
 }
 
 const personHash = (person) => md5(person.email.toLowerCase());
@@ -34,12 +45,14 @@ class MailchimpService {
 
 	async addToList(person, listId, vip) {
 		const payload = mailchimpPayload(person, vip);
-		console.log(`Mailchimp: Add ${person.uuid} to list ${listId}`);
+		const signupDate = new tzc.DateTime(person.createdAt).convert(tzc.TimeZone.utc()).format('yyyy-MM-dd HH:mm:ss')
+
+		console.log(`Mailchimp: Add ${person.uuid} to list ${listId}`, signupDate, payload.merge_fields.PHONE);
 		return this.mailchimp.post(`/lists/${listId}/members?skip_merge_validation=true`, Object.assign({
 			email_address: person.email,
 			email_type: 'html',
 			status: 'subscribed',
-			timestamp_signup: person.createdAt,
+			timestamp_signup: signupDate,
 		}, payload));
 	}
 
@@ -59,7 +72,7 @@ class MailchimpService {
 		personExistingTags.forEach(t => { t.kebabName = _.kebabCase(t.name) });
 		const personTags = person.tags.map(t => _.kebabCase(t.path));
 		// Get tag list
-		const segments = await this.mailchimp.get(`/lists/${listId}/segments`);
+		const segments = await this.mailchimp.get(`/lists/${listId}/segments?type=static&count=100`);
 		// Tags are a subset of segments, type static
 		const existingTags = segments.segments
 			.filter(s => s.type === 'static')
@@ -79,8 +92,8 @@ class MailchimpService {
 			});
 			newTag.kebabName = kebabName;
 			existingTags.push(newTag);
+			console.log(`Mailchimp list ${listId}: Created missing mailchimp tag ${kebabName}`);
 		}
-		console.log(`Mailchimp list ${listId}: Created missing mailchimp tags ${missingTags.join(',')}`);
 
 		// Add tags to user
 		const tagsToAdd = existingTags
@@ -94,7 +107,7 @@ class MailchimpService {
 				email_address: person.email,
 			});
 		}
-		console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Tagged ${tagsToAdd.map(t => t.name).join(',')}`);
+		console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Tagged ${tagsToAdd.map(t => t.name).join(',') || '(none)'}`);
 
 		// Delete old tags from user, but only if they're in the sync list
 		const tagsToDelete = personExistingTags
@@ -106,7 +119,7 @@ class MailchimpService {
 			// const tag = existingTags.find(t => t.kebabName === tagName);
 			await this.mailchimp.delete(`/lists/${listId}/segments/${tag.id}/members/${hash}`);
 		}
-		console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Untagged ${tagsToDelete.map(t => t.name).join(',')}`);
+		console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Untagged ${tagsToDelete.map(t => t.name).join(',') || '(none)'}`);
 	}
 
 	async syncPersonToList(person, listId, vip) {
@@ -118,7 +131,7 @@ class MailchimpService {
 			shouldUpdate = true;
 		} catch (e) {
 			// Person is not in the list
-			if (e.statusCode === 404) {
+			if (e.status == 404) {
 				listEntry = await this.addToList(person, listId, vip);
 			} else {
 				// Unknown error, throw it
