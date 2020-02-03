@@ -7,7 +7,7 @@ const { minimalUser } = require('./proxy/transforms');
 
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
 	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName',
-	'private.attendedConversation'];
+	'private.attendedConversation', 'private.nycConsent'];
 const permittedCreateFields = ['fullName', 'firstName', 'preferredName', 'lastName', 'email', 'phoneNumber',
 	'private.alternateEmail', 'private.alternatePhone', 'private.source', ...permittedUpdateFields];
 
