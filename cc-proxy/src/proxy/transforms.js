@@ -1,4 +1,4 @@
-const { pick } = require('lodash');
+const { get, pick, set } = require('lodash');
 
 /**
  * These functions transform the response from the proxy
@@ -9,13 +9,22 @@ const { pick } = require('lodash');
  * @param {object} body Response body
  * @return {object} Transformed body
  */
-function minimalUser(body) {
+function minimalUser(body, original = {}) {
 	const { data } = body;
 
 	const permitted = ['uuid', 'preferredName'];
+	const optional = ['fullName', 'email', 'phoneNumber'];
+
+	const user = pick(data, permitted)
+	optional.forEach(key => {
+		const value = get(data, key);
+		if ((typeof value !== 'undefined') && (get(original, key) === value)) {
+			set(user, key, value);
+		}
+	})
 
 	return {
-		data: pick(data, permitted),
+		data: user,
 	};
 }
 
