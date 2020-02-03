@@ -44,9 +44,9 @@ async function raisely(options, req) {
 	});
 
 	const requestOptions = {
+		qs: options.query,
 		...omit(options, internalOptions),
 		uri,
-		qs: options.query,
 		headers,
 		json: true,
 	};
