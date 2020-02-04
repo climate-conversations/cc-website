@@ -9,7 +9,7 @@
         },
         "text": {
             "id": "text",
-            "type": "text",
+            "type": "textarea",
             "label": "Text",
             "value": "",
             "singular": null
