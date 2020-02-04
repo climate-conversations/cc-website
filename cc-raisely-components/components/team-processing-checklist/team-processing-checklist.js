@@ -20,7 +20,7 @@
 		const facilitators = ['facilitator', 'co-facilitator'];
 		const reflections = await getData(api.interactions.getAll({
 			query: {
-				recordUuid: conversation.uuid,
+				reference: conversation.uuid,
 				category: 'facilitator-reflection',
 			},
 		}));
@@ -48,7 +48,7 @@
 	const checklist = [
 		{ id: 'review-reflection', label: 'Review facilitators Reflection', href: '/conversations/:event/reflections/view', enable: hasReflection },
 		{ id: 'donation-review', label: 'Review Cash Donations', href: '/conversations/:event/reconcile-donations', enable: donationsReported },
-		{ id: 'review-stats', label: 'Review Conversation Outcomes', href: '/conversations/:event/review/outcomes', enable: atLeastOneGuest },
+		{ id: 'review-stats', label: 'Review Conversation Outcomes', href: '/conversations/:event/outcomes', enable: atLeastOneGuest },
 	];
 	const checklistHelp = {
 		'review-reflection': 'Check and see how your facilitator is feeling about the conversation and if you need to get in touch',
@@ -75,11 +75,7 @@
 					name="done"
 					href={href}
 				/>
-				{ isEnabled ? (
-					<Link href={href}>{label}</Link>
-				) : (
-					<p className="checklist--item__disabled">{label}</p>
-				)}
+				<Link href={href}>{label}</Link>
 				{helpText ? (
 					<div className="checklist--item__help">{helpText}</div>
 				) : ''}
@@ -167,10 +163,11 @@
 					if (item.enable) {
 						// eslint-disable-next-line no-param-reassign
 						item.isEnabled = await item.enable(conversation, rsvps);
-					} else if (item.done) {
+					}
+					if (item.done) {
 						try {
 							// eslint-disable-next-line no-param-reassign
-							item.isDone = await item.done(conversation, rsvps);
+							item.isDone = item.isEnabled && await item.done(conversation, rsvps);
 
 							if (item.isDone) {
 								// Update items as they're resolved
@@ -178,7 +175,7 @@
 							}
 						} catch (e) {
 							console.error(`Checking done status failed for ${item.id}`, e);
-							this.setState({ error: e.message });
+							this.setState({ error: e.message || 'Unknown error' });
 						}
 					}
 				}
@@ -201,7 +198,7 @@
 				set(conversation, 'private.ftlCompletedSteps', stepsDoneNow);
 				const allDone = checklist.reduce((done, i) => (i.isDone && done), true);
 				if (allDone) {
-					set(conversation, 'private.reviewedBy', get(global, 'user.uuid'));
+					set(conversation, 'private.reviewedBy', get(this.props, 'global.user.uuid'));
 					set(conversation, 'private.reviewedAt', new Date().toISOString());
 				}
 				await getData(api.events.update({
@@ -238,7 +235,7 @@
 				await this.updateComplete(conversation, completedSteps);
 			} catch (e) {
 				console.error(e);
-				this.setState({ error: e.message, loading: false });
+				this.setState({ error: e.message || 'Unknown error', loading: false });
 			}
 		}
 
@@ -262,7 +259,7 @@
 			const startAt = get(conversation, 'startAt');
 			const name = get(conversation, 'name', '...');
 
-			const isProcessed = Conversation.isProcessed(conversation);
+			const isReviewed = Conversation.isReviewed(conversation);
 			const displayDate = startAt ? dayjs(startAt).format('DD MMM YYYY') : '';
 
 			return (
@@ -274,10 +271,10 @@
 					) : ''}
 					<ul className="conversation--checklist">
 						{checklist.map(item => (
-							<CheckListItem item={item} />
+							<CheckListItem key={item.id} item={item} />
 						))}
 					</ul>
-					{ isProcessed ? (
+					{ isReviewed ? (
 						<p>Greate work! {"You've"} finished reviewing this conversation.</p>
 					) : '' }
 					{loading ? (
