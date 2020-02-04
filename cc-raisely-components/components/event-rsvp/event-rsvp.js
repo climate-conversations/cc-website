@@ -1,12 +1,12 @@
 /* eslint-disable class-methods-use-this */
 (RaiselyComponents, React) => {
-	const { api } = RaiselyComponents;
-	const { getData } = api;
-	const { get } = RaiselyComponents.Common;
+	const { dayjs, get } = RaiselyComponents.Common;
 	const { Button } = RaiselyComponents.Atoms;
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const EventCard = RaiselyComponents.import('event-card');
 	const CCEventRef = RaiselyComponents.import('event', { asRaw: true });
+	const EventEditRef = RaiselyComponents.import('event-edit', { asRaw: true });
+	let EventEdit;
 	let UserSaveHelper;
 	let CCEvent;
 
@@ -14,6 +14,11 @@
 
 	class NativeRsvp extends React.Component {
 		state = { loading: true };
+
+		componentDidUpdate() {
+			const event = staticGetEvent(this.props);
+			if (event !== this.state.event) this.setState({ event }, this.buildSteps);
+		}
 
 		componentDidMount() {
 			const { example } = this.props;
@@ -44,10 +49,12 @@
 			const { event } = this.props;
 			const existingUser = this.state.user || {};
 			let user = existingUser;
+			const source = get(eventRsvp, 'private.source');
 			if (userUpdate && Object.keys(userUpdate).length) {
 				const userToSave = {
 					...existingUser,
 					...userUpdate,
+					source,
 				};
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 				user = await UserSaveHelper.upsertUser(userToSave);
@@ -81,11 +88,21 @@
 			// eslint-disable-next-line object-curly-newline
 			const props = { ...this.props, steps, controller: this };
 
+			let eventDate = '';
+			if (event.startAt) {
+				if (!EventEdit) EventEdit = EventEditRef().html;
+				const startAt = EventEdit.inSingaporeTime(dayjs(event.startAt));
+				const date = startAt.format('dddd, MMMM D');
+				const time = startAt.format('h:mm a');
+				eventDate = `${date} ${time}`;
+			}
+
 			return (
 				<div className="custom-form--event-rsvp event-rsvp__wrapper block--purple">
 					<h3>
 						{(example || !event) ? '' : `Register for ${event.name}`}
 					</h3>
+					<h4>{eventDate}</h4>
 					{user ? (
 						<div className="event-rsvp-user">
 							Registering as {user.fullName || user.preferredName} ({user.email})
@@ -112,10 +129,6 @@
 
 	return class EventRsvp extends React.Component {
 		state = {};
-		static getDerivedStateFromProps(props, state) {
-			const event = staticGetEvent(props);
-			if (event !== state.event) return { event };
-		}
 
 		getEvent = () => staticGetEvent(this.props);
 
@@ -134,6 +147,7 @@
 
 		renderNative = (event) => {
 			const props = { ...this.props, event };
+			console.log('render native', get(props, 'event.public.rsvpFields'));
 			return (
 				<NativeRsvp {...{ ...props }} />
 			);
