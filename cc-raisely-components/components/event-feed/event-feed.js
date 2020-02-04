@@ -1,6 +1,7 @@
 (RaiselyComponents, React) => {
 	const { api, Spinner } = RaiselyComponents;
 	const { getData } = api;
+	const { get } = RaiselyComponents.Common;
 
 	const EventCardRef = RaiselyComponents.import('event-card', { asRaw: true });
 	let EventCard;
@@ -32,9 +33,14 @@
 			try {
 				const searchKey = show === 'past' ? 'startAtLT' : 'startAtGTE';
 
-				const events = await getData(api.events.getAll({
+				let events = await getData(api.events.getAll({
 					query: { [searchKey]: now },
 				}));
+
+				if (!get(this.props, 'global.user.uuid')) {
+					const hiddenStatus = ['cancelled', 'hidden', 'draft'];
+					events = events.filter(e => !hiddenStatus.includes(get(e, 'public.status', 'ok')));
+				}
 
 				this.setState({ loading: false, events });
 				console.log(`Event feed loaded (${show})`, events);
