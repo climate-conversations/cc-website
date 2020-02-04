@@ -8,7 +8,7 @@ const MockResponse = require('../utils/mockResponse');
 const MockRequest = require('../utils/mockRequest');
 const { upsertUser } = require('../../src');
 
-const { statusOk, itReturnsMinimalUser } = require('./shared');
+const { statusOk } = require('./shared');
 
 const { expect } = chai;
 
@@ -28,6 +28,14 @@ const filteredCreateUser = {
 	...createUser,
 	private: { host: true },
 };
+
+function itReturnsMinimalUser(results) {
+	it('returns minimal user', () => {
+		expect(results.res.body).to.eql({
+			data: pick(results.user, ['preferredName', 'fullName', 'email', 'uuid']),
+		});
+	});
+}
 
 describe('upsertUser', () => {
 	const results = {

@@ -3,8 +3,6 @@ const { get, pick, set } = require('lodash');
 const shortUuid = require('short-uuid');
 const RestError = require('./restError');
 
-const { minimalUser } = require('./proxy/transforms');
-
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
 	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName',
 	'private.attendedConversation', 'private.nycConsent', 'user.postcode'];
@@ -12,6 +10,32 @@ const permittedCreateFields = ['fullName', 'firstName', 'preferredName', 'lastNa
 	'private.alternateEmail', 'private.alternatePhone', 'private.source', ...permittedUpdateFields];
 
 const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newsletter', 'mailingList', 'attendedConversation'];
+
+/**
+ * Return only uuid, fullName and preferredName from a request that returns a user
+ * @param {object} body Response body
+ * @return {object} Transformed body
+ */
+function redactUser(original) {
+	return function reductFn(body) {
+		const { data } = body;
+
+		const permitted = ['uuid', 'preferredName', 'fullName', 'email'];
+		const optional = ['phoneNumber'];
+
+		const user = pick(data, permitted)
+		optional.forEach(key => {
+			const value = get(data, key);
+			if ((typeof value !== 'undefined') && (get(original, key) === value)) {
+				set(user, key, value);
+			}
+		})
+
+		return {
+			data: user,
+		};
+	}
+}
 
 /**
  * This is a helper when working with new/updated records to generalise
@@ -32,7 +56,7 @@ async function save(record, bodyParams, req) {
 				...bodyParams,
 				data,
 			},
-			transform: minimalUser,
+			transform: redactUser(record),
 			transform2xxOnly: true,
 			escalate: true,
 		}, req);
@@ -46,7 +70,7 @@ async function save(record, bodyParams, req) {
 		body: {
 			data,
 		},
-		transform: minimalUser,
+		transform: redactUser(record),
 		transform2xxOnly: true,
 		escalate: true,
 	}, req);
