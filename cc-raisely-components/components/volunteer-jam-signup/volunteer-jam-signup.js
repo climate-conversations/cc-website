@@ -38,15 +38,14 @@
 
 		async load() {
 			const now = new Date().toISOString();
-			console.log('Loading upcoming event...`');
 			const values = this.props.getValues();
-			const category = values.category || 'Volunteer Jam';
+			const category = values.eventType || 'Volunteer Jam';
 
 			try {
 				let [event] = await getData(api.events.getAll({
 					query: {
 						startAtGTE: now,
-						eventType: category,
+						'public.eventType': category,
 						limit: 1,
 					},
 				}));
