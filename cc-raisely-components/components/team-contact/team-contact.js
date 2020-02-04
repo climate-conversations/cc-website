@@ -23,7 +23,7 @@
 				this.setState({ teamProfile, teamLeader: teamProfile.user });
 			} catch (e) {
 				console.error(e);
-				this.setState({ error: e.message, loading: false });
+				this.setState({ error: e.message || 'Could not load team', loading: false });
 			}
 		}
 
@@ -42,7 +42,7 @@
 			};
 		}
 
-		renderForTeam() {
+		renderTeam() {
 			const { teamProfile } = this.state;
 			return (
 				<div className="team-membership-details">
@@ -51,25 +51,18 @@
 							label="Open Group Chat"
 							link={get(teamProfile.private.teamChatUrl)}
 						/>
-						Note: This will add you to the group chat if you are not already a member
+						(Note: This will add you to the group chat if you are not already a member)
 					</div>
 				</div>
 			);
 		}
-		mode() {
-			const { show } = this.props.getValues();
-			return show;
-		}
-
-		render() {
-			const { teamProfile, facilitator, teamLeader, loading } = this.state;
-			if (loading) return <Spinner />
-			if (this.mode() === 'team') return this.renderForTeam();
-
+		renderFacil() {
+			const { teamProfile, facilitator, teamLeader } = this.state;
 			const { you, your } = this.nouns(facilitator);
 			const leaderName = get(teamLeader, 'preferredName') || get(teamLeader, 'fullName');
+
 			return (
-				<div className="team-membership-details">
+				<React.Fragment>
 					<div className="team-membership__team">
 						<span className="team-membership__team-name">{you} are part of</span>
 						<h4>{teamProfile.name}</h4>
@@ -86,6 +79,23 @@
 							phone={get(teamLeader, 'phoneNumber')}
 						/>
 					</div>
+				</React.Fragment>
+			);
+		}
+		mode() {
+			const { show } = this.props.getValues();
+			return show;
+		}
+
+		render() {
+			const { loading, error } = this.state;
+			if (loading) return <Spinner />
+
+			return (
+				<div className="team-membership-details">
+					{error ? (
+						<div className="error">{error}</div>
+					) : ((this.mode() === 'team') ? this.renderTeam() : this.renderFacil())}
 				</div>
 			);
 		}
