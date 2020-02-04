@@ -21,18 +21,31 @@
 		const multiDates = get(event, 'public.multiDates');
 
 		const photo = event.photoUrl || defaultPhoto;
-		const link = { href: get(event, 'public.signupUrl') };
+		const link = { href: get(event, 'public.signupMethod') === 'link' && get(event, 'public.signupUrl') };
 		if (link.href) {
 			link.target = '_blank';
 		} else {
-			link.href = `/events/${event.path || event.uuid}/view`;
+			// For facilitator training, link to the facilitate page
+			// so they can read the full commitment
+			if (get(event, 'public.eventType') === 'Facilitator Training') {
+				link.href = '/facilitate'
+			} else {
+				link.href = `/events/${event.uuid}/view`;
+			}
 		}
-		const edit = `/events/${event.path || event.uuid}/edit`;
+		const edit = `/events/${event.uuid}/edit`;
 		const clone = `/events/create?clone=${event.uuid}`;
-		const rsvps = `/events/${event.path || event.uuid}/rsvps`;
+		const rsvps = `/events/${event.uuid}/rsvps`;
+
+		const classes = {
+			hidden: 'secret',
+		};
+
+		const status = get(event, 'public.status', 'published');
+		const className = `postfeed__item ${classes[status] || status}`;
 
 		return (
-			<div className="postfeed__item">
+			<div className={className}>
 				<div className="post post--detail-event post--direction-horizontal">
 					<div className="post__image">
 						<img src={photo} alt="" />
@@ -61,11 +74,11 @@
 						{!short ? (
 							<div className="post__buttons--wrapper">
 								{hideEdit ? '' : (
-									<React.Fragment>
-										<Link className="button button--cta post__link show--logged-in" href={edit}>Edit</Link>
-										<Link className="button button--secondary post__link show--logged-in" href={rsvps}>RSVPs</Link>
-										<Link className="button button--cta post__link show--logged-in" href={clone}>Clone</Link>
-									</React.Fragment>
+									<div className="show--logged-in hide--logged-out">
+										<Link className="button button--cta post__link show--logged-in hide--logged-out" href={edit}>Edit</Link>
+										<Link className="button button--secondary post__link show--logged-in hide--logged-out" href={rsvps}>RSVPs</Link>
+										<Link className="button button--cta post__link show--logged-in hide--logged-out" href={clone}>Clone</Link>
+									</div>
 								)}
 								{disableLink ? '' : (
 									<Link className="button button--primary post__link" {...link}>Sign up</Link>
