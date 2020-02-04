@@ -62,6 +62,9 @@
 
 			event.startAt = dataAndTime(event.startAt, event.startTime);
 			event.endAt = dataAndTime(event.endAt, event.endTime);
+			if (event.publicConversationAt) {
+				event.publicConversationAt = dataAndTime(event.publicConversationAt, '12:00');
+			}
 		}
 		getTime(event) {
 			if (event.startAt) {
@@ -74,11 +77,31 @@
 				event.endAt = endDate.date;
 				event.endTime = endDate.time;
 			}
+			if (event.publicConversationAt) {
+				const conversationDate = timeFromDate(event.startAt);
+				event.publicConversationAt = conversationDate.date;
+			}
 		}
 
 		buildSteps() {
 			const { title } = this.state;
 			const fields = ['event.name', 'event.path', 'event.eventType',
+				{
+					id: 'status',
+					type: 'select',
+					label: 'Event status',
+					options: [
+						{ label: 'Draft', value: 'draft' },
+						{ label: 'Published', value: 'published' },
+						{ label: 'Hidden', value: 'hidden' },
+						{ label: 'Cancelled', value: 'cancelled' },
+					],
+					default: 'published',
+					core: false,
+					private: false,
+					recordType: 'event',
+				},
+
 				/* eslint-disable object-property-newline,object-curly-newline */
 				'event.photoUrl',
 				{
@@ -112,6 +135,7 @@
 				{ id: 'startTime', type: 'text', core: true, default: '19:00', recordType: 'event', label: 'Start Time' },
 				'event.endAt',
 				{ id: 'endTime', type: 'text', core: true, default: '21:00', recordType: 'event', label: 'End Time' },
+				'event.publicConversationAt',
 				'event.multiDates',
 				'event.venue', 'event.address1', 'event.address2', 'event.postcode', 'event.description',
 				'event.intro', 'event.isPrivate',
