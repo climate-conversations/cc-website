@@ -29,7 +29,8 @@
 					Conversation.loadConversation({ props }),
 					getData(api.interactions.getAll({
 						query: {
-							recordUuid: uuid,
+							reference: uuid,
+							recordType: 'event',
 							category: 'facilitator-reflection',
 							private: 1,
 						},
@@ -59,7 +60,7 @@
 				subject: conversation.name,
 				launchButtonLabel: `Send a message to ${preferredName}`,
 			};
-			const fields = ['interaction.facilitator-reflection.all'];
+			const fields = [{ interactionCategory: 'facilitator-reflection' }];
 			const models = ['interaction'];
 
 			return (
@@ -70,7 +71,10 @@
 						fields={fields}
 						values={{ interaction: reflection }}
 					/>
-					{ reflection.user ? <Messenger {...message} /> : '' }
+					<div className="reflection--review__message">
+						<p>If {"there's"} anything here that concerns you, you can send the facilitator a message.</p>
+						{ reflection.user ? <Messenger {...message} /> : '' }
+					</div>
 				</div>
 			);
 		}
@@ -110,11 +114,11 @@
 						</React.Fragment>
 					)}
 
-					<div className="reflection--review__buttons">
+					<div className="reflection--review__buttons buttons">
 						{index === 0 ? (
 							<ReturnButton {...props} backLabel="Go Back" />
 						) : (
-							<Button onCick={() => this.next(-1)}>Previous Reflection</Button>
+							<Button onClick={() => this.next(-1)}>Previous Reflection</Button>
 						)}
 						{index < reflections.length - 1 ? (
 							<Button onClick={() => this.next()}>Next Reflection</Button>
