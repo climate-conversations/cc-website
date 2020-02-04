@@ -44,12 +44,13 @@
 				const [reflections, surveys] = await Promise.all([
 					getData(api.interactions.getAll({
 						query: {
-							category: 'facilitator-reflection', recordUuid: eventUuid,
+							category: 'facilitator-reflection', reference: eventUuid,
 						},
 					})),
 					getData(api.interactions.getAll({
 						query: {
-							category: 'cc-post-survey-2019', recordUuid: eventUuid,
+							category: Conversation.surveyCategories().postSurvey,
+							reference: eventUuid,
 						},
 					})),
 				]);
@@ -87,6 +88,7 @@
 			const processLink = `/conversations/${uuid}/process`;
 			const reflectionLink = `/conversations/${uuid}/view-reflections`;
 			const reconcileLink = `/conversations/${uuid}/reconcile-donations`;
+			const reviewLink = `/conversations/${uuid}/review`;
 			const displayValues = { event: conversation };
 
 			return (
@@ -105,6 +107,7 @@
 					</div>
 					<div className="view-conversation__buttons">
 						<Button href={processLink}>Process Conversation</Button>
+						<Button href={reviewLink}>Review Conversation</Button>
 						<Button href={reflectionLink}>Facilitators Reflection</Button>
 						<Button href={reconcileLink}>Reconcile Donations</Button>
 					</div>
