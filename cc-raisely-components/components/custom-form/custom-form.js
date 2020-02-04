@@ -144,8 +144,37 @@
 			this.state = { values: [] };
 		}
 
+		static resolveFields(fields, campaignConfig) {
+			if (!campaignConfig) {
+				throw new Error('Please pass the campaign configuration');
+			}
+			// Expand an interaction category into its individual fields
+			const expandedFields = [];
+			fields.forEach((field) => {
+				if (field.interactionCategory) {
+					expandedFields.push(...this.resolveInteractionFields(field, campaignConfig));
+				} else {
+					expandedFields.push(field);
+				}
+			});
+
+			// Fully describe each field
+			return expandedFields.map((field, fieldIndex) => {
+				try {
+					return this.prepareField(field, campaignConfig);
+				} catch (e) {
+					console.error(e);
+					return {
+						id: `error-${fieldIndex}`,
+						type: 'rich-description',
+						default: `<p ${errorStyle}>Error: ${e.message}</p>`,
+					};
+				}
+			});
+		}
+
 		componentDidMount() {
-			this.resolvedSteps = this.resolveFields(this.props.steps);
+			this.resolvedSteps = this.resolveSteps(this.props.steps);
 			// eslint-disable-next-line react/no-did-mount-set-state
 			this.setState({ steps: this.buildSteps(this.resolvedSteps) });
 
@@ -162,7 +191,7 @@
 			const changed = {};
 
 			if (!isEqual(this.props.steps, this.lastSteps)) {
-				this.resolvedSteps = this.resolveFields(this.props.steps);
+				this.resolvedSteps = this.resolveSteps(this.props.steps);
 				changed.steps = this.buildSteps(this.resolvedSteps);
 			}
 
@@ -229,7 +258,7 @@
 				}
 			} catch (e) {
 				console.error(e);
-				this.setState({ error: e.message });
+				this.setState({ error: e.message || 'An unknown error occurred' });
 			} finally {
 				this.setState({ loaded: true });
 			}
@@ -241,9 +270,9 @@
 		 * @param {string} sourceId id of the field (recordType.fieldId)
 		 * @return {object} The field definition
 		 */
-		findField(sourceId) {
+		static findField(sourceId, campaignConfig) {
 			console.log('CustomForm.findField');
-			const customFields = get(this.props, 'global.campaign.config.customFields');
+			const customFields = get(campaignConfig, 'customFields');
 			const fieldSources = sourceId.split('.');
 			const valid = fieldSources.length === 2 || (fieldSources[0] === 'interaction' && fieldSources.length === 3);
 			if (!valid) throw new Error(`Badly specified field "${sourceId}". Should be in the form recordType.field or interaction.category.field`);
@@ -325,7 +354,7 @@
 		 * @param {object|string} field
 		 * @return {object}
 		 */
-		prepareField(field) {
+		static prepareField(field, campaignConfig) {
 			let definition;
 			console.log('CustomForm.prepareField');
 
@@ -333,7 +362,7 @@
 				let sourceId = field.sourceFieldId || field;
 				// Happens if sourceFieldId is '', which happens when user is building form
 				if (typeof sourceId !== 'string') sourceId = '';
-				definition = { ...this.findField(sourceId) };
+				definition = { ...this.findField(sourceId, campaignConfig) };
 
 				// If it's an object, copy over any properties specified
 				if (field.sourceFieldId) {
@@ -352,11 +381,12 @@
 			if (this.completeRedirect) history.push(this.completeRedirect);
 		}
 
-		resolveInteractionFields(description) {
+		static resolveInteractionFields(description, campaignConfig) {
 			const category = description.interactionCategory;
 
-			const allInteractionFields = get(this.props, 'global.campaign.config.interactionCategoryFields', {})[category];
+			const allInteractionFields = get(campaignConfig, 'interactionCategoryFields', {})[category];
 
+			if (!allInteractionFields) throw new Error(`Unknown interaction category ${category}`);
 			const fieldList = [];
 			allInteractionFields.forEach((field) => {
 				let include = description.include ? description.include.indexOf(field) > -1 : true;
@@ -373,40 +403,16 @@
 		 * @param {object[]} steps The steps
 		 * @return {object[]} The steps with resolved fields
 		 */
-		resolveFields(steps) {
+		resolveSteps(steps) {
 			// Cache steps so we don't rerun this too frequently
 			this.lastSteps = steps;
-			console.log('CustomForm.resolveFields');
+			console.log('CustomForm.resolveSteps');
 			if (!(steps && Array.isArray(steps))) return null;
 
 			const resolvedSteps = steps.map((step) => {
 				const result = Object.assign({}, step);
 				if (step.fields) {
-					result.fields = [];
-
-					// Expand an interaction category into its individual fields
-					const expandedFields = [];
-					step.fields.forEach((field) => {
-						if (field.interactionCategory) {
-							expandedFields.push(...this.resolveInteractionFields(field));
-						} else {
-							expandedFields.push(field);
-						}
-					});
-
-					// Fully describe each field
-					result.fields = expandedFields.map((field, fieldIndex) => {
-						try {
-							return this.prepareField(field);
-						} catch (e) {
-							console.error(e);
-							return {
-								id: `error-${fieldIndex}`,
-								type: 'rich-description',
-								default: `<p ${errorStyle}>Error: ${e.message}</p>`,
-							};
-						}
-					});
+					result.fields = this.constructor.resolveFields(step.fields, this.props.global.campaign.config);
 				}
 				return result;
 			});
@@ -457,7 +463,7 @@
 					await save(this.state.values, this.formToData);
 				} catch (e) {
 					console.error(e);
-					this.setState({ error: e.message });
+					this.setState({ error: e.message || 'An unknown error occurred' });
 					// Rethrow so that next step is aborted
 					throw e;
 				}
@@ -528,7 +534,7 @@
 				const ReturnButtonClass = ReturnButton();
 				if (ReturnButtonClass) {
 					const { getReturnUrl } = ReturnButtonClass.type;
-					finishedProps.completeRedirect = getReturnUrl(this.props, '/dashboards', true);
+					finishedProps.completeRedirect = getReturnUrl(this.props, '/dashboard', true);
 					console.log(`set redirect to ${finishedProps.completeRedirect}`);
 				}
 			}
@@ -633,7 +639,7 @@
 				});
 			}
 		});
-		console.log('CustomForm.mapFormToData (finished)');
+		console.log('CustomForm.mapFormToData (finished)', values);
 
 		return values;
 	}
