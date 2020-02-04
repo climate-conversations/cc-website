@@ -26,23 +26,26 @@
 		}
 
 		render() {
-			const { message, phone, label } = this.config();
+			const { message, phone, label, showIcon } = this.config();
 			let { url } = this.config();
 
 			if (phone && !url) {
 				url = this.constructor.generateUrl(phone, message);
 			}
 
-			const style = {};
-			const whatsAppLogo = 'https://raisely-images.imgix.net/switchon/uploads/580-b-57-fcd-9996-e-24-bc-43-c-543-png.png';
-			if (!label) style.background = `url(${whatsAppLogo})`;
+			let className;
+			if (label) {
+				className = 'button--primary';
+			} else {
+				className = 'button--whatsapp';
+			}
 
 			return (
 				<Button
 					disabled={!url}
 					href={url}
-					style={style}
-					className="button--whatsapp">
+					className={className}>
+					{showIcon ? <image className="button--whatsapp" /> : ''}
 					{label || ''}
 				</Button>
 			);
