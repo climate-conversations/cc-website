@@ -19,14 +19,22 @@
 		createdAt: 'expressing interest',
 	};
 
+	const descriptions = {
+		conversationGuestThankyou: 'Thank you message to guests of a conversation',
+		conversationHostThankyou: 'Thank you message to hosts of a conversation',
+		hostMessages: 'Messages sent to a prospective host to set a date for a conversation',
+		conversationMessages: 'Messages sent regarding a conversation, either before hand to the host, or after to new prospective hosts',
+	};
+
 	class ShowMessageTemplate extends React.Component {
-		state = { expanded: false }
-		toggleExpand = () => {
-			const expanded = !this.state.expanded;
+		state = { expanded: {} }
+		toggleExpand = (section) => {
+			const expanded = { ...this.state.expanded };
+			expanded[section] = !expanded[section];
 			this.setState({ expanded });
 		}
-		inner() {
-			const { expanded } = this.state;
+		inner(section) {
+			const expanded = this.state.expanded[section];
 			const { forceExpand } = this.props;
 			if (!(expanded || forceExpand)) return '';
 			const { template } = this.props;
@@ -34,7 +42,7 @@
 			const bodyHtml = { __html: body };
 			return (
 				<div className="message-template-list-item__inner">
-					<div className="message-template-list-item__subject">{subject}</div>
+					<div className="message-template-list-item__subject">Subject: <strong>{subject}</strong></div>
 					<div className="message-template-list-item__body">
 						<div dangerouslySetInnerHTML={bodyHtml} />
 					</div>
@@ -44,6 +52,7 @@
 		render() {
 			const { template, messageType } = this.props;
 			const { id } = template;
+			const sendBy = template.sendBy || 'email';
 			const { value, period, field } = get(template, 'sendAfter', {});
 			const relative = friendlyFields[field] || '';
 			const interval = Math.abs(value);
@@ -51,19 +60,22 @@
 			const timing = `${interval} ${period} ${direction} ${relative}`;
 
 			const isSingle = specialMessages.includes(messageType);
-			const title = template.id || template.subject || 'Click to expand';
+			let title = template.id || template.subject || 'Click to expand';
+			if (!isSingle) title = `[${sendBy}] ${title}`;
 
 			const editLink = isSingle ?
 				`/templates/special/${messageType}` :
 				`/templates/${messageType}/${id}`;
 			const cloneLink = `/templates/create?clone=${id}`;
 			return (
-				<li className="message-template-list-item" onClick={this.toggleExpand}>
-					<div className="message-template-list-item__title">
-						<div className="message-template-list-item__title_id">{title}</div>
-						{isSingle ? '' : (
-							<div className="message-template-list-item__title_timing">{timing}</div>
-						)}
+				<li className="message-template-list-item" onClick={() => this.toggleExpand(messageType)}>
+					<div className="message-template-list-item__summary">
+						<div className="message-template-list-item__title">
+							{title}
+							{isSingle ? '' : (
+								<div className="message-template-list-item__title_timing">{timing}</div>
+							)}
+						</div>
 						<div className="message-template-list-item__title_buttons">
 							<Button href={editLink} theme="secondary">
 								<Icon name="create" size="small" />
@@ -82,14 +94,14 @@
 							)}
 						</div>
 					</div>
-					{this.inner()}
+					{this.inner(messageType)}
 				</li>
 			);
 		}
 	}
 
 	return class MessageTemplateList extends React.Component {
-		state = { loading: true };
+		state = { loading: true, forceExpand: {} };
 		componentDidMount() {
 			this.load()
 				.catch((e) => {
@@ -107,7 +119,11 @@
 			}
 			return this.state[messageType];
 		}
-		toggleExpand = () => { this.setState({ forceExpand: !this.state.forceExpand }); }
+		toggleExpand = (section) => {
+			const forceExpand = { ...this.state.forceExpand };
+			forceExpand[section] = !forceExpand[section];
+			this.setState({ forceExpand });
+		}
 		async load() {
 			const { uuid } = this.props.global.campaign;
 			const campaign = await getData(api.campaigns.get({
@@ -163,13 +179,17 @@
 			const titleSuffix = (templates || [{}]).length === 1 ? 'Template' : 'Templates';
 			const title = `${startCase(messageType)} ${titleSuffix}`;
 			const isSingle = specialMessages.includes(messageType);
+			const description = descriptions[messageType];
 
 			return (
 				<section className="message-template-list__section">
 					<h3>{title}</h3>
+					<div className="message-template-list__section-description">
+						{description}
+					</div>
 					<div className="message-template-list__section-buttons">
-						<Button theme="secondary" onClick={this.toggleExpand}>
-							{forceExpand ? 'Collapse' : 'Expand'} All
+						<Button theme="secondary" onClick={() => this.toggleExpand(messageType)}>
+							{forceExpand[messageType] ? 'Collapse' : 'Expand'} All
 						</Button>
 						{isSingle ? '' : (
 							<Button theme="primary" href="/templates/create">
@@ -182,10 +202,11 @@
 						<ol className="message-template-list__list">
 							{templates.map(template => (
 								<ShowMessageTemplate
+									key={template.id}
 									deleteTemplate={this.deleteTemplate}
 									template={template}
 									messageType={messageType}
-									forceExpand={forceExpand} />
+									forceExpand={forceExpand[messageType]} />
 							))}
 						</ol>
 					)}
