@@ -21,7 +21,7 @@
  *
  * // or to go there manually from within a function:
  * const returnUrl = ReturnButton.getReturnUrl(this.props, '/defaultPage', true);
- * this.props.location.history.push(returnUrl);
+ * this.props.history.push(returnUrl);
  */
 (RaiselyComponents, React) => {
 	const { Button } = RaiselyComponents.Atoms;
@@ -123,7 +123,7 @@
 		render() {
 			const values = {...this.props, ...this.props.getValues() };
 			const { backLabel, saveLabel, saveTheme, backTheme } = values;
-			const defaultUrl = values.defaultUrl || '/dashboards';
+			const defaultUrl = values.defaultUrl || '/dashboard';
 			const query = getQuery(get(this.props, 'router.location.search'));
 
 			const backUrl = getReturnUrl(query, defaultUrl);

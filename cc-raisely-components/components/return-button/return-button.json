@@ -71,7 +71,7 @@
             "id": "defaultUrl",
             "type": "text",
             "label": "Default Path",
-            "value": "/dashboards",
+            "value": "/dashboard",
             "singular": null
         }
     },
