@@ -87,6 +87,10 @@
 		async load() {
 			try {
 				if (!Conversation) Conversation = ConversationRef().html;
+				const surveys = [
+					Conversation.surveyCategories().preSurvey,
+					Conversation.surveyCategories().postSurvey,
+				];
 
 				const eventUuid = this.props.conversation ||
 					get(this.props, 'match.params.event') ||
@@ -97,10 +101,10 @@
 				const rsvpPromise = Conversation.loadRsvps({ props: this.props, type: ['host', 'guest'] })
 					.then(r => this.setState(r));
 
-				const promises = ['cc-pre-survey-2019', 'cc-post-survey-2019'].map(category =>
+				const promises = surveys.map(category =>
 					getData(api.interactions.getAll({
 						query: { category, private: 1 },
-						recordUuid: eventUuid,
+						reference: eventUuid,
 					})));
 				promises.push(eventPromise, rsvpPromise);
 
