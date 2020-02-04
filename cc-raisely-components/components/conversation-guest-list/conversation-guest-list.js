@@ -1,7 +1,7 @@
 (RaiselyComponents, React) => {
 	const { get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
-	const { Button } = RaiselyComponents.Atoms;
+	const { Button, Icon } = RaiselyComponents.Atoms;
 	const { getData } = api;
 
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
@@ -20,7 +20,7 @@
 
 		legend = (s) => {
 			const { guest } = this.props;
-			if (get(guest, `postSurvey.private.${s.id}`)) {
+			if (get(guest, `postSurvey.detail.private.${s.id}`)) {
 				const className = `conversation-guest-legend-${s.id}`;
 				return <span className={className}>{s.icon}</span>;
 			}
@@ -29,22 +29,26 @@
 
 		render() {
 			const { guest } = this.props;
+			const { user } = guest;
 
 			const symbols = [
 				{ id: 'host', icon: 'H' },
 				{ id: 'facilitate', icon: 'F' },
-				{ id: 'donate', icon: '$' },
+				{ id: 'donate', icon: 'D' },
 				{ id: 'corporateHost', icon: 'C' },
 				{ id: 'volunteer', icon: 'V' },
 				{ id: 'research', icon: 'R' },
+				{ id: 'fundraise', icon: '$' },
 			];
+			const surveyLink = `/surveys/${guest.uuid}`;
 
 			return (
 				<li key={guest.uuid} className="list__item">
 					<div className="conversation-guest-list__name">{this.guestName()}</div>
-					<div className="conversation-guest-list__email">{guest.email}</div>
+					<div className="conversation-guest-list__email">{user.email}</div>
 					<div className="conversation-guest-list__legend">{symbols.map(this.legend)}</div>
 					<div className="conversation-guest-list__buttons">
+						<Icon name="list_alt" href={surveyLink} />
 						<WhatsappButton phone={guest.phoneNumber} />
 						<RaiselyButton recordType="user" uuid={guest.uuid} />
 					</div>
@@ -66,8 +70,7 @@
 		async loadGuests(eventUuid) {
 			const rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
 			return rsvps
-				.filter(({ type }) => type === 'guest')
-				.map(rsvp => rsvp.user);
+				.filter(({ type }) => type === 'guest');
 		}
 
 		async load() {
@@ -82,6 +85,12 @@
 			const guests = await this.loadGuests(eventUuid);
 
 			this.setState({ guests });
+
+			await guests.map(async (guest) => {
+				const { post } = await Conversation.loadSurveys(guest, ['post']);
+				guest.postSurvey = post;
+				this.setState({ guests });
+			});
 		}
 
 		render() {
