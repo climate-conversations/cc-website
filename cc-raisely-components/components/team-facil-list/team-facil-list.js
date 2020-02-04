@@ -1,4 +1,5 @@
 (RaiselyComponents, React) => {
+	const { Button } = RaiselyComponents.Atoms;
 	const { get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
 	const { getData } = api;
@@ -23,18 +24,25 @@
 
 	class Profile extends React.Component {
 		buttons() {
-			const { profile } = this.props;
-			if (!profile.parentUuid) return null;
+			const { profile, props } = this.props;
+			const profileLink = (profile.type === 'GROUP') ?
+				`/t/${profile.path}` :
+				`/${profile.path}`;
+
+			if (!profile.parentUuid) {
+				return <div className="team-facil-list__buttons" />;
+			}
 			return (
 				<div className="team-facil-list__buttons">
 					{ profile.type === 'GROUP' ? (
-						<WhatsappButton url={profile.teamChatUrl} />
+						<WhatsappButton url={profile.teamChatUrl} label="Group Chat" />
 					) : '' }
 					<WhatsappButton phone={profile.user.phoneNumber} />
+					<Button href={profileLink} label="View" />
 					<RaiselyButton
 						recordType="profile"
 						uuid={profile.uuid}
-						props={this.props} />
+						props={props} />
 				</div>
 			);
 		}
@@ -42,14 +50,24 @@
 		render() {
 			const { profile, selected, onClick } = this.props;
 			const className = `list__item ${selected ? 'select' : ''}`;
+			let teamName;
+			if (profile.type === 'GROUP') {
+				if (get(this.props, 'campaign.profile.uuid') === profile.parentUuid) {
+					teamName = '(unassigned)';
+				} else {
+					teamName = profile.parent.name;
+				}
+			}
 			// FIXME add status (overdue conversation, conversation coming up, host follow up due)
 			return (
-				<li key={profile.uuid} className={className} onClick={onClick}>
+				<li key={profile.uuid} className={className} onClick={onClick} >
 					<div className="team-facil-list__photo"><ProfileImage profile={profile} /></div>
-					<div className="team-facil-list__name">{profile.name}</div>
-					{profile.type === 'GROUP' ? (
-						<div className="team-facil-list__leader">{profile.user.preferredName}</div>
-					) : ''}
+					<div className="team-facil-list__name">
+						{profile.name}
+						<div className="team-facil-list__leader">
+							{profile.type === 'GROUP' ? profile.user.preferredName : teamName}
+						</div>
+					</div>
 					{this.buttons()}
 				</li>
 			);
@@ -74,7 +92,7 @@
 		}
 
 		render() {
-			const { title, profiles } = this.props;
+			const { title, profiles, props } = this.props;
 			const { selectedTeams } = this.state;
 			return (
 				<div className="team-facil-list__wrapper">
@@ -82,10 +100,12 @@
 					<ul className="team-facil-list__list">
 						{profiles.map(profile => (
 							<Profile
+								key={profile.uuid}
 								{...this.props}
 								onClick={() => this.toggleTeam(profile.uuid)}
 								profile={profile}
-								selected={selectedTeams.includes(profile.uuid)} />
+								selected={selectedTeams.includes(profile.uuid)}
+								props={props} />
 						))}
 					</ul>
 				</div>
@@ -143,7 +163,7 @@
 			let teamProfiles = profiles.filter(p => p.type === 'GROUP');
 			if (profiles.find(p => p.parentUuid === unassignedUuid)) {
 				teamProfiles = [
-					{ uuid: unassignedUuid, name: '(Unassigned)' },
+					{ uuid: unassignedUuid, name: '(Unassigned Facilitators)' },
 					...teamProfiles,
 				];
 			}
@@ -179,21 +199,23 @@
 			if (error) return <div className="error">{error}</div>;
 			if (!memberProfiles) return <Spinner />
 
-			const innerTitle = selectedTeams.length ? 'Team Members' : 'Facilitators';
+			const innerTitle = selectedTeams.length ? `Team Members` : 'Facilitators';
 
 			return (
 				<div className="team-list__wrapper">
 					{display === 'all' ? (
 						<List
+							props={this.props}
 							title="Teams"
 							profiles={teamProfiles}
 							setSelectedTeams={this.setSelectedTeams} />
 					) : '' }
-					<List title={innerTitle} profiles={memberProfiles} />
+					<List title={innerTitle} profiles={memberProfiles} props={this.props} />
 					<div className="team-list__help">
-						<p>Facilitators and teams are managed through profiles in Raisely.</p>
+						<p>Click on a team to show only the facilitators in that team</p>
+						<p>Facilitators and teams are managed as <strong>Profiles</strong> in Raisely.</p>
 						<p>
-							To add a facilitator to a team. Click the button below, find or create
+							To add a facilitator to a team: Click the button below, find or create
 							a profile for them
 							and add their profile to the team they should belong to.
 						</p>
