@@ -12,6 +12,7 @@
 		 * @returns {User[]} User records for facils in the team leaders team
 		 */
 		static async getFacilitatorsByTeam(teamUuid) {
+			if (!teamUuid) throw new Error('Must supply a team uuid');
 			const facilitatorProfiles = await getData(api.profiles.members.getAll({
 				id: teamUuid,
 				query: { private: 1 },
@@ -45,17 +46,43 @@
 		 * @return {User[]}
 		 */
 		static async getTeamOrFacilitators(props) {
-			let users = [get(props, 'global.user')];
-
+			let users;
 			if (this.isTeamMode(props)) {
-				let currentUserUuid = get(props, 'global.user.uuid');
-				users = this.getFacilitatorsByLeader(currentUserUuid);
+				console.log('Team');
+				let teamUuid = get(props, 'global.current.profile.uuid');
+				users = await this.getFacilitatorsByTeam(teamUuid);
 				if (!users.length) {
 					throw new Error('There are no active facilitators in your team')
 				}
+			} else {
+				console.log('Individual');
+				users = [get(props, 'global.current.profile.user')];
 			}
 
 			return users;
+		}
+
+		/**
+		 * Load the conversations for one or more facilitators
+		 * Returns conversation records, with a facilitator
+		 * @param {*} userUuid
+		 *
+		 */
+		static async loadConversations(campaignUuid, userUuid) {
+			const rsvps = await getData(api.eventRsvps.getAll({
+				query: {
+					user: userUuid,
+					type: 'facilitator,co-facilitator',
+					private: 1,
+					campaign: campaignUuid,
+				},
+			}));
+			const conversations = rsvps.map((rsvp) => {
+				// eslint-disable-next-line no-param-reassign
+				rsvp.event.facilitator = rsvp.user;
+				return rsvp.event;
+			});
+			return conversations;
 		}
 
 		/**
