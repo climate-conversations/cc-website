@@ -21,7 +21,7 @@
 		const facilitators = ['facilitator', 'co-facilitator'];
 		const reflections = await getData(api.interactions.getAll({
 			query: {
-				recordUuid: conversation.uuid,
+				reference: conversation.uuid,
 				category: 'facilitator-reflection',
 			},
 		}));
