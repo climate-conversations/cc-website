@@ -5,14 +5,17 @@
 	const { get, pick } = RaiselyComponents.Common;
 	const { getData, save } = api;
 
-	const interactionCategory = 'facilitator-reflection';
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
+	// const interactionCategory = 'facilitator-reflection';
 
 	return class FacilReflection extends React.Component {
 		generateForm() {
+			if (!Conversation) Conversation = ConversationRef().html;
 			const multiFormConfig = [
 				{
 					title: 'Facilitator Reflection',
-					fields: [{ interactionCategory, exclude: ['conversationUuid'] }],
+					fields: [{ interactionCategory: Conversation.getReflectionCategory(), exclude: ['conversationUuid'] }],
 				},
 			];
 
@@ -21,36 +24,28 @@
 
 		load = async ({ dataToForm }) => {
 			const eventUuid = this.props.eventUuid || get(this.props, 'match.params.event');
+			const userUuid = get(this.props, 'global.user.uuid');
 
-			const query = {
-				record: eventUuid,
-				recordType: 'event',
-				category: interactionCategory,
-				user: get(this.props, 'global.user.uuid'),
-				private: 1,
-			};
+			if (!Conversation) Conversation = ConversationRef().html;
+			const interactions = await Conversation.loadReflections({ eventUuid, userUuid });
 
-			const interactions = await getData(api.interactions.getAll({
-				query,
-			}));
 			let [interaction] = interactions;
 			if (!interaction) {
-				interaction = query;
-				interaction.categoryUuid = interaction.category;
-				interaction.userUuid = interaction.user;
-				interaction.recordUuid = interaction.record;
-				delete interaction.category;
-				delete interaction.user;
-				delete interaction.record;
-				delete interaction.private;
+				interaction = {
+					recordUuid: eventUuid,
+					recordType: 'event',
+					categoryUuid: Conversation.getReflectionCategory(),
+					userUuid: userUuid,
+				}
 			}
 
-			this.setState({ interaction });
+			this.setState({ interaction, interactionCategory: Conversation.getReflectionCategory() });
 
-			return dataToForm({ interaction: { [interactionCategory]: interaction } });
+			return dataToForm({ interaction: { [Conversation.getReflectionCategory()]: interaction } });
 		}
 
 		save = async (values, formToData) => {
+			const { interactionCategory } = this.state;
 			const data = formToData(values);
 			const interaction = data.interaction[interactionCategory];
 			console.log('Saving...' ,values, data);
