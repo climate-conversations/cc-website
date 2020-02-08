@@ -101,7 +101,7 @@
 		}
 
 		getValues() {
-			return;
+			return {};
 			if (this.values) return this.values;
 
 			const defaults = {
