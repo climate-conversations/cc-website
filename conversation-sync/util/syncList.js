@@ -8,12 +8,15 @@ async function syncRaiselyToMailchimp() {
 		log: console.log,
 	});
 
+	const limit = 100;
+	let offset = parseInt(process.env.OFFSET) || 0;
 	let next;
 
 	// Fetch raisely users
 	do {
+		console.log('Fetching records from raisely ...');
 		const body = await raiselyRequest({
-			path: next || '/users?private=1&limit=1000',
+			path: next || `/users?private=1&limit=${limit}&offset=${offset}`,
 			fullResult: true,
 		});
 
@@ -23,17 +26,16 @@ async function syncRaiselyToMailchimp() {
 
 		for (let i = 0; i < users.length; i++) {
 			const user = users[i];
-			// if (user.uuid === 'faa837cd-2daa-11ea-a257-37bf76a80e6a') {
-			// 	console.log(user.email)
-			// 	throw new Error('found')
+
 
 			const data = {
 				type: 'user.updated',
 				data: user,
 			}
-			console.log('Syncing person ', user.uuid);
+			console.log(`**** Syncing person ${i + offset} ${user.uuid} ${user.email} ****`);
 			await controller.process({ data });
 		}
+		offset += limit;
 
 	} while (next);
 }
