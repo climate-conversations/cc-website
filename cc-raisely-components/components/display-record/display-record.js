@@ -1,8 +1,11 @@
 (RaiselyComponents, React) => {
 	const { Spinner } = RaiselyComponents;
-	const { dayjs, get, startCase } = RaiselyComponents.Common;
+	const { dayjs, get, displayCurrency } = RaiselyComponents.Common;
 	const renderHtml = RaiselyComponents.Common.htmr;
 	const { api } = RaiselyComponents;
+
+	const CustomFormRef = RaiselyComponents.import('custom-form', { asRaw: true });
+	let CustomForm;
 
 	const errorStyle = 'style="border: 1px solid red;"';
 
@@ -14,18 +17,22 @@
 	}
 
 	function renderValue({ values, field }) {
-		const path = [];
+		let path = [];
 		if (field.recordType) path.push(field.recordType);
 		if (field.recordType === 'interaction') path.push('detail');
 		if (!field.core) path.push(field.private ? 'private' : 'public');
 		path.push(field.id);
 
-		const value = get(values, path);
+		let value = get(values, path);
+		if (!value) {
+			path = ['interaction', field.interactionCategory, 'detail', path[2], field.id];
+			value = get(values, path);
+		}
 		const content = field.default;
 
 		switch (field.type) {
 			case 'select':
-				return field.options[value] || value;
+				return field.options[value] || value || 'N/A';
 			case 'checkbox':
 				return value ? 'Yes' : 'No';
 			case 'rich-description':
@@ -33,6 +40,8 @@
 					renderHtml(content) : renderHtml(`<p>${content}</p>`);
 			case 'date':
 				return dayjs(value).format(field.format);
+			case 'currency':
+				return displayCurrency(value, 'SGD');
 			default:
 				if (value === null || (typeof value === 'undefined')) return 'N/A';
 				return value;
@@ -81,137 +90,9 @@
 
 		setFields = () => {
 			const { fields } = this.getConfig();
-			const resolvedFields = this.resolveFields(fields);
+			if (!CustomForm) CustomForm = CustomFormRef().html;
+			const resolvedFields = CustomForm.resolveFields(fields, this.props.global.campaign.config);
 			this.setState({ fields: resolvedFields });
-		}
-
-		// eslint-disable-next-line class-methods-use-this
-		generateField(recordType, id, isPrivate) {
-			return {
-				id,
-				recordType,
-				private: isPrivate,
-				label: startCase(`${recordType} ${id}`),
-			};
-		}
-
-		explodeModel(model, category) {
-			const { values } = this.state;
-			const record = values[model];
-			const recordType = singular(model);
-
-			const allInteractionFields = get(this.props, 'global.campaign.config.interactionCategoryFields', {})[category];
-
-			const customFields = get(this.props, `global.campaign.config.customFields.${recordType}`, [])
-				.map(field => ({ ...field, recordType }))
-				// If category is specified, filter by interaction category
-				.filter(f => !category || allInteractionFields.includes(f.id));
-
-			const fieldIds = customFields.map(field => `${field.recordType}.${field.id}`);
-
-			// Append any unknown public fields
-			Object.keys(record.public || {}).forEach((key) => {
-				if (!fieldIds.includes(`${recordType}.${key}`)) {
-					customFields.push(this.generateField(recordType, key, false));
-				}
-			});
-			Object.keys(record.private || {}).forEach((key) => {
-				if (!fieldIds.includes(`${recordType}.${key}`)) {
-					customFields.push(this.generateField(recordType, key, true));
-				}
-			});
-
-			return customFields;
-		}
-
-		/**
-		 * Find a field by a recordType.fieldId identifier
-		 * @param {string} sourceId id of the field (recordType.fieldId)
-		 * @return {object} The field definition
-		 */
-		findField(sourceId) {
-			console.log('CustomForm.findField');
-			if (!this.props.global) {
-				throw new Error('Developer, please pass {...this.props}');
-			}
-			const fieldSources = sourceId.split('.');
-			if (fieldSources[fieldSources.length - 1] === 'all') {
-				return this.explodeModel(fieldSources[0], (fieldSources.length > 2) && fieldSources[1]);
-			}
-
-			const customFields = get(this.props, 'global.campaign.config.customFields', {});
-			if (fieldSources.length !== 2) throw new Error(`Badly specified field "${sourceId}". Should be in the form recordType.field`);
-			const [record, fieldId] = fieldSources;
-			const recordType = singular(record);
-
-			if (!customFields[recordType]) throw new Error(`Unknown record type "${record}" for custom field "${sourceId}"`);
-			const field = customFields[recordType].find(f => f.id === fieldId);
-			if (!field) throw new Error(`Cannot find custom field "${fieldId}" for custom field "${sourceId}" (Hint: you need to reload the page after adding a custom field to the campaign)`);
-
-			// Save the record type for help in formatting the data
-			field.recordType = recordType;
-
-			return field;
-		}
-		/**
-		 * Prepare a field for use in the form
-		 * Accepts fields defined by object, or simply a string identifying recordType.fieldId
-		 * which will be resolved
-		 * @param {object|string} field
-		 * @return {object}
-		 */
-		prepareField(field) {
-			let definition;
-			console.log('CustomForm.prepareField');
-
-			if (typeof field === 'string' || Object.keys(field).includes('sourceFieldId')) {
-				let sourceId = field.sourceFieldId || field;
-				// Happens if sourceFieldId is '', which happens when user is building form
-				if (typeof sourceId !== 'string') sourceId = '';
-				definition = this.findField(sourceId);
-
-				// If it's an object, copy over any properties specified
-				if (field.sourceFieldId) {
-					definition = Object.assign({}, definition, field);
-				}
-			} else {
-				definition = Object.assign({}, field);
-			}
-
-			return definition;
-		}
-
-		/**
-		 * Resolve all the fields
-		 * @param {object[]} fields The fields
-		 * @return {object[]} The resolved fields
-		 */
-		resolveFields(fields) {
-			console.log('CustomForm.resolveFields');
-			if (!(fields && Array.isArray(fields))) return null;
-
-			const resolvedFields = [];
-
-			fields.forEach((field, fieldIndex) => {
-				try {
-					const foundField = this.prepareField(field);
-					// If the field was exploded to many fields
-					if (Array.isArray(foundField)) {
-						resolvedFields.push(...foundField.map(f => this.prepareField(f)));
-					} else {
-						resolvedFields.push(foundField);
-					}
-				} catch (e) {
-					console.error(e);
-					resolvedFields.push({
-						id: `error-${fieldIndex}`,
-						type: 'rich-description',
-						default: `<p ${errorStyle}>Error: ${e.message}</p>`,
-					});
-				}
-			});
-
-			return resolvedFields;
 		}
 
 		load = async () => {
@@ -299,6 +180,7 @@
 			return (
 				<div className={className}>
 					{fields.map(field => (<Field
+						key={field.id}
 						{...this.props}
 						field={field}
 						values={values}
