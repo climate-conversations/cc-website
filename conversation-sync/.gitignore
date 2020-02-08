@@ -5,3 +5,4 @@ appengine/lib
 dist/
 .env
 *-cred.json
+.DS_Store
