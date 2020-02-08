@@ -15,23 +15,76 @@
  */
 (RaiselyComponents, React) => {
 	const { api } = RaiselyComponents;
-	const { getData, getQuery, quickLoad } = api;
-	const { get } = RaiselyComponents.Common;
+	const { getData, getQuery, qs, quickLoad } = api;
+	const { get, set } = RaiselyComponents.Common;
+
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { raw: true });
+	let UserSaveHelper;
 
 	const plural = word => ((word.slice(word.length - 1) === 's') ? word : `${word}s`);
 
+	const reflectionCategory = 'facilitator-reflection';
+	const surveyCategories = {
+		preSurvey: 'cc-pre-survey-2020',
+		postSurvey: 'cc-post-survey-2020',
+	};
+
 	return class Conversation extends React.Component {
+		static getReflectionCategory() {
+			return reflectionCategory;
+		}
 		static getUuid(props) {
 			return props.conversation ||
 				get(props, 'match.params.event') ||
 				getQuery(get(props, 'router.location.search', {})).event;
 		}
 
+		static async loadReflections({ eventUuid, userUuid }) {
+			const query = {
+				record: eventUuid,
+				recordType: 'event',
+				category: reflectionCategory,
+				user: userUuid,
+				private: 1,
+			};
+
+			const interactions = await getData(api.interactions.getAll({
+				query,
+			}));
+			return interactions;
+		}
+
+		/**
+		 * Load the surveys for a particular guest of a conversation
+		 * @param {string} eventRsvp.eventUuid the conversation to load the surveys for
+		 * @param {string} eventRsvp.userUuid The user to load the survey for
+		 * @param {string[]} include Containig 'pre' or 'post' Default: both
+		 * @returns {object} { pre, post }
+		 */
+		static async loadSurveys(eventRsvp, include = ['pre', 'post']) {
+			const promises = ['pre', 'post'].map(key => {
+				if (!include || include.includes(key)) {
+					return getData(api.interactions.getAll({
+						query: {
+							private: 1,
+							category: surveyCategories[`${key}Survey`],
+							user: eventRsvp.userUuid,
+						},
+					}))
+					.then(results => results.find(r => (r.recordUuid === eventRsvp.eventUuid)));
+				}
+				return null;
+			});
+			const [pre, post] = await Promise.all(promises);
+
+			return { pre, post };
+		}
+
 		/**
 		 * Load a conversation
 		 * @param {object} opts.props Pass in this.props
 		 * @param {boolean} opts.private Is the private event required?
-		 * @return {object} Suitable for using with this.setState
+		 * @return {object} The conversation that's loaded
 		 */
 		static async loadConversation({ props, private: isPrivate }) {
 			try {
@@ -63,7 +116,8 @@
 			try {
 				const types = Array.isArray(type) ? type.map(t => plural(t)) : type;
 
-				const eventUuid = props.conversation ||
+				const eventUuid = props.eventUuid ||
+					props.conversation ||
 					get(props, 'match.params.event') ||
 					getQuery(get(props, 'router.location.search')).event;
 
@@ -83,7 +137,74 @@
 			return result;
 		}
 
+		/**
+		 * Sum guests, donations, host and facil interests for the conversation
+		 * and cache them on the event so they can be more easily retrieved
+		 * @param {string} eventUuid the id of the event to fetch and update cache if need be
+		 * @return {Event} with private.cache set
+		 */
+		static async updateStatCache(eventUuid) {
+			const query = {
+				category: surveyCategories.postSurvey,
+				reference: eventUuid,
+				recordType: 'event',
+			};
+			const queryStr = qs.stringify(query);
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const [event, results, donations, surveys] = await Promise.all([
+				UserSaveHelper.proxy(`/events/${eventUuid}?private=1`),
+				this.loadRsvps({ props: { eventUuid }, type: ['co-facilitator', 'facilitator', 'guest']}),
+				UserSaveHelper.proxy(`/donations?conversationUuid=${eventUuid}&private=1`),
+				UserSaveHelper.proxy(`/interactions?${queryStr}`, { method: 'GET' }),
+			]);
+			const { rsvps } = results;
+
+			const cache = {
+				guests: 0,
+				hosts: 0,
+				facilitators: 0,
+				donations: {
+					online: 0,
+					total: 0,
+					donorCount: 0,
+				},
+			};
+			rsvps.forEach(guest => {
+				if (guest.type === 'guest') cache.guests++;
+			});
+			surveys.forEach(survey => {
+				if (get(survey, 'detail.private.host')) cache.hosts += 1;
+				if (get(survey, 'detail.private.facilitate')) cache.faciltiators += 1;
+			});
+			donations.forEach(donation => {
+				cache.donations.total += donation.campaignAmount;
+				cache.donations.donorCount += 1;
+				if (donation.type === 'ONLINE') {
+					cache.donations.online += donation.campaignAmount;
+				} else {
+					const paymentType = get(donation, 'public.paymentType');
+					const init = get(cache.donations, paymentType, 0);
+					set(cache.donations, paymentType, init + donation.campaignAmount);
+				}
+			});
+
+			const oldCache = get(event, 'private.statCache', {});
+			if (Object.keys(cache).find(key => cache[key] !== oldCache[key]) ||
+				Object.keys(cache.donations).find(key => cache.donations[key] !== oldCache.donations[key])) {
+				await UserSaveHelper.proxy(`/events/${event.uuid}`, {
+					body: {
+						data: { private: { statCache: cache } },
+						partial: true,
+					}
+				});
+				set(event, 'private.statCache', cache);
+			}
+			return event;
+		}
+
+		static surveyCategories() { return surveyCategories; }
 		static isProcessed(conversation) { return get(conversation, 'private.isProcessed'); }
+		static isReconciled(conversation) { return get(conversation, 'private.reconciledAt'); }
 		static isReviewed(conversation) { return get(conversation, '!!private.reviewedAt'); }
 		static awaitingReview(conversation) {
 			return this.isProcessed(conversation) && !this.isReviewed(conversation);
