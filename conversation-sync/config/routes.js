@@ -5,8 +5,6 @@ const Controllers = require('../src/controllers');
 const config = {
 	datastore: {},
 	pubsub: {},
-	// Authenticate can also be a function
-	authenticate: process.env.AUTH_TOKEN,
 	// eslint-disable-next-line no-console
 	log: console.log,
 };
