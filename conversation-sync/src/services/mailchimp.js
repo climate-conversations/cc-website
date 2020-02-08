@@ -126,9 +126,13 @@ class MailchimpService {
 		const hash = personHash(person);
 		let listEntry;
 		let shouldUpdate = false;
+		let canTag = true;
 		try {
 			listEntry = await this.mailchimp.get(`/lists/${listId}/members/${hash}`);
-			shouldUpdate = true;
+			// If they are pending or unsubscribed we won't be able to re-add them
+			shouldUpdate = listEntry.status === 'subscribed';
+			canTag = shouldUpdate;
+			if (!canTag) console.log(`Mailchimp list ${listId}, Person ${person.uuid} person is unsubscribed`);
 		} catch (e) {
 			// Person is not in the list
 			if (e.status == 404) {
@@ -146,7 +150,7 @@ class MailchimpService {
 			await this.mailchimp.patch(`/lists/${listId}/members/${hash}`, payload);
 		}
 
-		await this.setTags(person, listEntry.tags, listId);
+		if (canTag) await this.setTags(person, listEntry.tags, listId);
 	}
 }
 
