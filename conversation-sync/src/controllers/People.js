@@ -27,7 +27,7 @@ async function authenticate(token) {
 	const { tags, roles } = await getTagsAndRoles(token);
 
 	if (roles.includes('ORG_ADMIN')) return true;
-	if (['facilitator', 'team-leader'].includes(tags)) return true;
+	if (_.intersection(['facilitator', 'team-leader'], tags).length) return true;
 
 	return false;
 }
@@ -37,17 +37,30 @@ async function authenticate(token) {
  * @param {} req
  */
 async function getTagsAndRoles(token) {
-	if (!token) return { tags: [], roles: [] };
+	const noMatch = { tags: [], roles: [] };
+	if (!token) return noMatch;
 
 	const opt = { cacheTTL: AUTHENTICATION_TTL };
-	const [authentication, user] = await Promise.all([
-		raiselyRequest({ ...opt, cacheKey: `/authenticate ${token}`, path: '/authenticate', token }),
-		raiselyRequest({ ...opt, cacheKey: `/users/me ${token}`, path: '/users/me?private=1', token }),
-	]);
+	let authentication;
+	let user;
+
+	try {
+		[authentication, user] = await Promise.all([
+			raiselyRequest({ ...opt, cacheKey: `/authenticate ${token}`, path: '/authenticate', token }),
+			raiselyRequest({ ...opt, cacheKey: `/users/me ${token}`, path: '/users/me?private=1', token }),
+		]);
+	} catch (error) {
+		if (error.statusCode && (error.statusCode >= 400) && (error.statusCode <= 499)) {
+			const path = _.get(error, 'request.uri.path', '');
+			console.log(`Authentication request (${path}) failed (status: ${error.statusCode})`);
+			return noMatch;
+		}
+		throw error;
+	}
 
 	return {
-		tags: _.get(user, 'data.tags', []).map(t => t.path),
-		roles: _.get(authentication, 'data.roles', []),
+		tags: _.get(user, 'tags', []).map(t => t.path),
+		roles: _.get(authentication, 'roles', []),
 	};
 }
 
