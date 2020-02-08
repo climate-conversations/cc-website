@@ -10,7 +10,8 @@ async function fetchTeam(conversationUuid) {
 		path: `/events/${conversationUuid}/rsvps`,
 		qs: {
 			// FIXME need to know how to specify facilitator, host
-		}
+		},
+		token: process.env.RAISELY_TOKEN,
 	});
 	let host = rsvps.find(r => r.type === 'host');
 	let facilitator = rsvps.find(r => r.type === 'facilitator');

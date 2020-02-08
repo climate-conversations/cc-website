@@ -125,6 +125,7 @@ class BackendReport extends AirblastController {
 	async getSurveyFields(surveyVersion) {
 		const config = await raiselyRequest({
 			path: '/campaigns/cc-volunteer-portal/config',
+			token: process.env.RAISELY_TOKEN,
 		});
 
 		let preSurveyFields = config.interactionCategoryFields[`cc-pre-survey-${surveyVersion}`];

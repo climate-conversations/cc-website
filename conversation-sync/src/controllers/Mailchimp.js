@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 const { AirblastController } = require('airblast');
 const _ = require('lodash');
+const { raiselyRequest } = require('../helpers/raiselyHelpers');
 
 const MailchimpService = require('../services/mailchimp');
 
@@ -39,7 +40,7 @@ class Mailchimp extends AirblastController {
 	async process({ data }) {
 		if (data.type === 'user.deleted') return this.deletePerson(data);
 		if (data.type === 'user.forgotten') return this.forgetPerson(data);
-		if (data.type === 'donation.created') return this.donorSync(data);
+		if (data.type.startsWith('donation.')) return this.donorSync(data);
 
 		const updateTypes = ['user.updated', 'user.created'];
 		if (updateTypes.includes(data.type)) return this.updatePerson(data);
@@ -53,10 +54,11 @@ class Mailchimp extends AirblastController {
 		const { user } = donation;
 		if (donation.campaignAmount < 10000) {
 			// Fetch other donations to see if it's in excess of 100
-			const donations = raiselyRequest({
+			const donations = await raiselyRequest({
 				path: `/user/${user.uuid}/donations?limit=100`,
+				token: process.env.RAISELY_TOKEN,
 			});
-			const sum = donations.reduce((total, donation) => donation.campaignAmount + total, 0);
+			const sum = donations.reduce((total, d) => d.campaignAmount + total, 0);
 			if (sum < 10000) return;
 		}
 

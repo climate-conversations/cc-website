@@ -19,7 +19,7 @@ class DonorFacilMatch extends AirblastController {
 	async process({ data }) {
 		const { WEBSITE_PATH, PORTAL_PATH } = process.env;
 
-		if (data.type !== 'donation.created') throw new Error(`Unrecognised event ${data.type}`);
+		if (!['donation.created', 'donation.succeeded'].includes(data.type)) throw new Error(`Unrecognised event ${data.type}`);
 
 		const donation = data.data;
 
@@ -41,6 +41,7 @@ class DonorFacilMatch extends AirblastController {
 				startAtGTE: eventWindow,
 				'user.email': donation.email,
 			},
+			token: process.env.RAISELY_TOKEN,
 		});
 		if (rsvps.length) {
 			// On the off chance they have multiple, try and find the first rsvp with an
@@ -69,6 +70,7 @@ class DonorFacilMatch extends AirblastController {
 					private: { donationUuid: donation.uuid },
 				},
 			},
+			token: process.env.RAISELY_TOKEN,
 		});
 	}
 
@@ -83,6 +85,7 @@ class DonorFacilMatch extends AirblastController {
 			path: `/donations/${donation.uuid}/move`,
 			method: 'PATCH',
 			data: { profileUuid: profile.uuid },
+			token: process.env.RAISELY_TOKEN,
 		})
 	}
 
@@ -94,6 +97,7 @@ class DonorFacilMatch extends AirblastController {
 			qs: {
 				type: 'INDIVIDUAL',
 			},
+			token: process.env.RAISELY_TOKEN,
 		});
 		if (!profile) {
 			this.log(`No user profile for ${user.uuid}, creating`)
@@ -106,6 +110,7 @@ class DonorFacilMatch extends AirblastController {
 					photoUrl: user.photoUrl,
 					goal: 20000,
 				},
+				token: process.env.RAISELY_TOKEN,
 			});
 		}
 		return profile;

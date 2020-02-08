@@ -63,7 +63,7 @@ function raiselyToRow(data, headerMap) {
  * @param {object} options.body
  */
 async function raiselyRequest(options) {
-	const token = options.token || process.env.RAISELY_TOKEN;
+	const token = options.token;
 
 	const uri = options.path.startsWith('http') ?
 		options.path :
