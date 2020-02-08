@@ -5,30 +5,10 @@
 	const { dayjs, get } = RaiselyComponents.Common;
 
 	const Messenger = RaiselyComponents.import('message-send-and-save');
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const Checkbox = RaiselyComponents.import('checkbox');
+	let UserSaveHelper;
 
-	function Checkbox({ label, onChange, value, disabled }) {
-		const labelClass = `form-field__label-text ${disabled ? 'disabled' : ''}`;
-		return (
-			<div className="field-wrapper">
-				<div className="form-field form-field--checkbox form-field--not-empty form-field--valid">
-					<label onClick={() => !disabled && onChange({ value: !value })}>
-						<input
-							type="checkbox"
-							onChange={(e) => {
-								e.stopPropagation();
-								if (!disabled) {
-									onChange(!value);
-								}
-							}}
-							disabled={disabled}
-							className="form-field--checkbox__inline"
-							checked={value} />
-						<span className={labelClass}>{label}</span>
-					</label>
-				</div>
-			</div>
-		);
-	}
 	return class EventViewRsvps extends React.Component {
 		state = { loading: true };
 		componentDidMount() {
@@ -93,19 +73,45 @@
 			}
 		}
 		markAttended = async (rsvp, val) => {
+			// Checkbox seems to send 2 events, one with val as a boolean, one with val as an object
+			// this drops one of them so we don't double our requests to the server
+			if (val.value || val.value === false) return null;
 			try {
+				const { event } = this.state;
 				rsvp.attended = val;
-				await getData(api.eventRsvps.update({
-					id: rsvp.id,
-					data: {
-						data: {
-							attended: rsvp.attended,
-						},
-					},
-				}));
+
+				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+				const promises = [
+					UserSaveHelper.proxy(`/event_rsvps/${rsvp.uuid}`, {
+						method: 'PATCH',
+						body: {
+							data: {
+								attended: rsvp.attended,
+							},
+							partial: true,
+						}
+					}),
+				];
+				// If it's a public conversation, note that the user has attended the conversation
+				if (val && (get(event, 'public.eventType') === 'Public Conversation')) {
+					promises.push(
+						UserSaveHelper.proxy(`/users/${rsvp.userUuid}`, {
+							method: 'PATCH',
+							body: {
+								data: {
+									private: {
+										attendedConversation: true,
+									},
+								},
+								partial: true,
+							},
+						}));
+				}
+				await Promise.all(promises);
+				this.setState({ error: null });
 			} catch (e) {
+				this.setState({ error: e.message || 'Unable to save attendance' });
 				console.error(e);
-				this.setState({ error: e.message });
 			}
 		}
 		getSubject() {
