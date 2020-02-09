@@ -42,10 +42,13 @@
 			];
 			const surveyLink = `/surveys/${guest.uuid}`;
 
+			const email = user.email.endsWith('.test') || user.email.endsWith('.invalid') ?
+				'(no email)' : user.email;
+
 			return (
 				<li key={guest.uuid} className="list__item">
 					<div className="conversation-guest-list__name">{this.guestName()}</div>
-					<div className="conversation-guest-list__email">{user.email}</div>
+					<div className="conversation-guest-list__email">{email}</div>
 					<div className="conversation-guest-list__legend">{symbols.map(this.legend)}</div>
 					<div className="conversation-guest-list__buttons">
 						<Icon name="list_alt" href={surveyLink} />
