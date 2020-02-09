@@ -19,7 +19,7 @@
   "dependencies": {
     "@google-cloud/datastore": "^1.4.0",
     "@google-cloud/pubsub": "^0.18.0",
-    "airblast": "^0.1.6",
+    "airblast": "^0.1.8",
     "datastore-env": "^1.2.5",
     "deasync": "^0.1.13",
     "dotenv": "^6.2.0",
@@ -33,6 +33,7 @@
     "uuid-validate": "0.0.3"
   },
   "devDependencies": {
+    "@google-cloud/functions-emulator": "^1.0.0-beta.6",
     "babel-eslint": "^10.0.1",
     "chai": "^4.1.2",
     "chai-subset": "^1.6.0",
