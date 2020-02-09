@@ -6,8 +6,11 @@
 
 	const { api } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
-	const { dayjs, get } = RaiselyComponents.Common;
-	const { getQuery, save } = api;
+	const { get } = RaiselyComponents.Common;
+	const { getData, getQuery, save } = api;
+
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 
 	// eslint-disable-next-line object-curly-newline
 	const rsvpToItem = (({ uuid, type, userUuid, user }) => ({
@@ -20,17 +23,6 @@
 		prefName: user.prefName,
 		email: user.email,
 	}));
-
-	async function doApi(promise) {
-		const response = await promise;
-		const status = response.statusCode();
-		if (status >= 400) {
-			const message = get(response.body(), 'errors[0].message', 'An unknown error has occurred');
-			console.error(response.body());
-			throw new Error(message);
-		}
-		return response.body().data().data;
-	}
 
 	class ConversationTeam extends React.Component {
 		state = { saving: false, rsvps: [] };
@@ -234,7 +226,7 @@
 		}
 
 		async loadRsvps(eventUuid) {
-			const rsvps = await doApi(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
+			const rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
 			return rsvps
 				.filter(({ type }) => type !== 'guest');
 			// eslint-disable-next-line object-curly-newline
@@ -256,14 +248,23 @@
 			if (!newEvent) {
 				data.event.uuid = this.state.event.uuid;
 			}
+
+			if (!data.event.name) {
+				const rsvps = Object.keys(values[1]).map(key => values[1][key]);
+				const hosts = rsvps.filter(rsvp => rsvp.email && rsvp.type === 'host')
+				if (!Conversation) Conversation = ConversationRef().html;
+				data.event.name = Conversation.defaultName(hosts);
+			}
+
+
 			// workaround broken save
 			let record;
 			if (!data.event.uuid) {
-				record = await doApi(save('events', data.event, { partial: true }));
+				record = await getData(save('events', data.event, { partial: true }));
 			} else {
 				const event = { ...data.event };
 				delete event.uuid;
-				record = await doApi(api.events.update({ id: data.event.uuid, data: { data: event, partial: true } }));
+				record = await getData(api.events.update({ id: data.event.uuid, data: { data: event, partial: true } }));
 			}
 
 			this.setState({ event: record });
@@ -302,10 +303,10 @@
 						toDelete.push(rsvp);
 					}
 				});
-				promises.push(...toDelete.map(rsvp => doApi(api.eventRsvps.delete({ id: rsvp.uuid }))));
+				promises.push(...toDelete.map(rsvp => getData(api.eventRsvps.delete({ id: rsvp.uuid }))));
 			}
 
-			promises.push(toInsert.map(rsvp => doApi(api.eventRsvps.create({ data: rsvp }))));
+			promises.push(toInsert.map(rsvp => getData(api.eventRsvps.create({ data: rsvp }))));
 
 			return Promise.all(promises);
 		}
@@ -316,19 +317,6 @@
 			if (step === 1) {
 				// Save the form as we go
 				this.save(values, formToData).catch(e => console.error(e));
-			}
-
-			if (!data.event.name) {
-				const host = get(values, '[1].rsvps', []).find(rsvp => rsvp.type === 'host');
-
-				if (host) {
-					const hostName = get(host, 'preferredName', '');
-					data.event.name = `${hostName}'s Conversation`;
-
-					const newValues = Object.assign({}, values, dataToForm(data));
-
-					return newValues;
-				}
 			}
 
 			return null;
