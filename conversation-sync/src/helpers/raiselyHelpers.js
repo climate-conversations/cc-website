@@ -71,7 +71,6 @@ async function raiselyRequest(options) {
 
 	const headers = Object.assign({
 		'User-Agent': 'Climate Conversations Message Pipe',
-		// Pass through original authorization if the user is not escalated
 		Authorization: `Bearer ${token}`,
 	}, options.headers);
 
