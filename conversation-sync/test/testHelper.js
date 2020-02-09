@@ -26,15 +26,27 @@ function nockRaisely() {
 		.log(console.log);
 }
 
-function nockCollection(n, path, result) {
-	return n.get(path).reply(200, { data: result })
+function nockCollection(n, path, result, token) {
+	return n
+		.get(path)
+		.reply(function () {
+			if (token) {
+				const auth = this.req.headers.authorization;
+				if (!auth) throw new Error('Expected authorization header')
+				const [b, t] = auth.split(' ');
+				if (t !== token) {
+					throw new Error(`Token missing or incorrect: ${t} (expected ${token})`);
+				}
+			}
+			return [200, { data: result }]
+		})
 }
 
 function nockEventTeam() {
 	nockCollection(nockRaisely(), /\/events\/.*\/rsvps/, [
 		{ type: 'facilitator', user: facilitator },
 		{ type: 'host', user: host },
-	]);
+	], process.env.RAISELY_TOKEN);
 	return { facilitator, host };
 }
 
