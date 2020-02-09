@@ -14,4 +14,10 @@
 .gitignore
 
 node_modules
-#!include:.gitignore
+node_modules/
+ngrok
+npm-debug.log
+appengine/lib
+dist/
+.env
+.DS_Store
