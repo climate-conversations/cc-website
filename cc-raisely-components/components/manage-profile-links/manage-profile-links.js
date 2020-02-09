@@ -1,8 +1,8 @@
 (RaiselyComponents, React) => {
-	const { get } = RaiselyComponents.Common;
-	const { api } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
-	const { getData } = api;
+	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
+	let Facilitator;
+
 	return class ManageProfileLinks extends React.Component {
 		state = {};
 		componentDidMount() {
@@ -11,10 +11,14 @@
 
 		async load() {
 			try {
-				const teams = await getData(api.users.meWithProfiles({ type: 'GROUP' }));
-				this.setState({ teams })
+				if (!Facilitator) Facilitator = FacilitatorRef().html;
+				const [teams, profile] = await Promise.all([
+					Facilitator.getTeams(),
+					Facilitator.getFacilitatorProfile(this.props),
+				]);
+				this.setState({ profile, teams });
 			} catch (e) {
-				this.setState()
+				this.setState({ error: e.message || 'Failed to load' });
 			}
 		}
 
@@ -42,15 +46,17 @@
 		}
 
 		render() {
-			let profile = get(this.props, 'global.user.profile');
-			// Raisely will assign the team profile if they don't have an individual one
-			// remove it
-			if (profile.type !== 'INDIVIDUAL') profile = null;
-			const { teams } = this.state;
+			const { error, profile, teams } = this.state;
 			return (
 				<div className="row__container manage-profile-wrapper">
 					{profile ? this.renderFacil(profile) : ''}
 					{teams && teams.length ? this.renderTeam(teams) : ''}
+					{error && (
+						<div className="error">
+							<p>There was an error loading your profiles:</p>
+							<p>{error}</p>
+						</div>
+					)}
 				</div>
 			)
 		}
