@@ -175,12 +175,16 @@
 					private: 1,
 				});
 
-				const [messages] = await Promise.all([
-					UserSaveHelper.proxy(`/interactions?${query}`, {
-						method: 'get',
-					}),
-					this.initSteps(),
-				]);
+				// Work around API throwing 500 when the results are empty
+				let messages = [];
+				try {
+					messages = await Promise.all([
+						UserSaveHelper.proxy(`/interactions?${query}`, {
+							method: 'get',
+						}),
+						this.initSteps(),
+					]);
+				} catch (error) {}
 				this.setState({ messages });
 				await this.checkCompleteSteps();
 			} catch (error) {
@@ -585,22 +589,25 @@
 					.catch(console.error);
 			}
 
-			return dataToForm({ interaction });
+			return dataToForm({ interaction: {
+				[interaction.category.path]: interaction,
+			} });
 		}
 
 		save = async (values, formToData) => {
 			const data = formToData(values);
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 
+			let { host } = this.state;
 			if (data.user) {
-				const host = await UserSaveHelper.upsertUser(data.user);
+				host = await UserSaveHelper.upsertUser(data.user);
 				this.setState({ host });
 			}
-			const { host } = this.state;
 
+			if (!host) host = values[0];
 			let { interaction: oldInteraction } = this.state;
 
-			const newInteraction = data.interaction;
+			let newInteraction = data.interaction['host-interest'];
 			if (!oldInteraction) {
 				const facilitatorUuid = get(this.props, 'global.user.uuid');
 				oldInteraction = {
@@ -608,20 +615,24 @@
 					categoryUuid: 'host-interest',
 					detail: {
 						private: {
-							assignedFacilitator: facilitatorUuid,
+							facilitatorUuid: facilitatorUuid,
 						},
 					},
 				};
 			}
+			newInteraction = {
+				...oldInteraction,
+				...newInteraction,
+			}
 			newInteraction.detail.private = {
 				...oldInteraction.detail.private,
-				...newInteraction.detail.private,
+				...get(newInteraction, 'detail.private', {}),
 			};
 
 			const interaction = await getData(save('interaction', newInteraction, { partial: true }));
 			if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
 			const nextUrl = ReturnButton.forwardReturnTo({ props: this.props, url: `/hosts/${get(interaction, 'uuid')}` });
-			this.props.location.history.push(nextUrl);
+			this.props.history.push(nextUrl);
 		}
 
 		reassign = async (newFacilitator) => {
