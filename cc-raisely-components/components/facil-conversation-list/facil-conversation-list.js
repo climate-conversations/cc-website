@@ -55,11 +55,13 @@
 
 			const baseUrl = `/conversations/${conversation.uuid}`;
 			let defaultUrl = `${baseUrl}/view`;
-			const processUrl = showFacil ? `${baseUrl}/review` : `${baseUrl}/process`;
+			const processUrl = `${baseUrl}/process`;
+			const reviewUrl = `${baseUrl}/review`;
+
+			const facilitator = get(conversation, 'facilitator');
+			const facilName = get(facilitator, 'fullName') || get(facilitator, 'preferredName') || get(facilitator, 'uuid') || 'unknown';
 
 			if (!hasPassed) defaultUrl = `${baseUrl}/edit`;
-
-			const processLabel = showFacil ? 'review' : 'process'
 
 			return (
 				<li className="conversation-list-item" key={conversation.uuid}>
@@ -68,10 +70,13 @@
 						<div className="conversation-name list__item--title">
 							{conversation.name}
 							<div className="conversation-start list__item--subtitle">{this.displayDate}</div>
-							{showFacil ? <div className="conversation-facil">Facil: Chris Jensen</div> : ''}
+							{showFacil ? <div className="conversation-facil">Facil: {facilName}</div> : ''}
 						</div>
-						{hasPassed && !isProcessed ? (
-							<Button className="button-small button-secondary" href={processUrl}>{processLabel}</Button>
+						{!showFacil && hasPassed && !isProcessed ? (
+							<Button className="button-small button-secondary" href={processUrl}>Process</Button>
+						) : ''}
+						{showFacil && hasPassed ? (
+							<Button className="button-small button-secondary" href={reviewUrl}>Review</Button>
 						) : ''}
 					</Link>
 				</li>
@@ -80,42 +85,37 @@
 	}
 
 	return class FacilConversationList extends React.Component {
-		state = { filter: true, loading: true };
+		state = { filter: true, loaded: false };
 
 		componentDidMount() {
 			this.load();
 		}
 
 		setConversations = () => {
-			let { conversations } = this;
+			const { allConversations } = this.state;
+			const isTeam = this.props.getValues().show === 'team';
+			let conversations;
 			if (this.state.filter) {
-				conversations = this.conversations
-					.filter(c => !get(c, 'private.isProcessed'));
+				conversations = allConversations
+					.filter(c =>
+						isTeam ?
+							!get(c, 'private.isReviewed'):
+							!get(c, 'private.reviewedAt'));
 			}
 
-			this.setState({ conversations, loading: false });
+			this.setState({ conversations, loaded: true });
 		}
 
 		async load() {
 			try {
 				const campaignUuid = this.props.global.uuid;
-				const userUuid = await this.getUserUuids();
-				const rsvps = await getData(api.eventRsvps.getAll({
-					query: {
-						user: userUuid,
-						type: 'facilitator,co-facilitator',
-						private: 1,
-						campaign: campaignUuid,
-					},
-				}));
-				this.conversations = rsvps.map((rsvp) => {
-					// eslint-disable-next-line no-param-reassign
-					rsvp.event.facilitator = rsvp.user;
-					return rsvp.event;
-				});
-				this.setConversations();
+				let userUuid = await this.getUserUuids();
+				// FIXME workaround api bug
+				if (userUuid.includes(',')) userUuid = null;
+				const conversations = await Facilitator.loadConversations(campaignUuid, userUuid);
+				this.setState({ allConversations: conversations }, this.setConversations)
 			} catch (error) {
-				this.setState({ loading: false, error })
+				this.setState({ loaded: true, error })
 			}
 		}
 
@@ -138,21 +138,21 @@
 
 		render() {
 			const now = dayjs();
-			const { conversations, filter, loading, error } = this.state;
+			const { conversations, filter, loaded, error } = this.state;
 			const isTeam = this.props.getValues().show === 'team';
 
-			if (loading) return <Spinner />;
+			if (!loaded) return <Spinner />;
 			if (error) {
 				return (
 					<div className="conversation-list__wrapper list__wrapper">
-						<div className="error">{error.message}</div>
+						<div className="error">{error.message || 'Error Loading Conversations'}</div>
 					</div>
 				);
 			}
 
 			return (
 				<div className="conversation-list__wrapper list__wrapper">
-					{this.conversations.length ? (
+					{conversations.length ? (
 						<Button className="list__toggle" onClick={this.toggleFilter}>
 							{filter ? 'Show All' : 'Hide Complete' }
 						</Button>
@@ -169,7 +169,7 @@
 							))}
 						</ul>
 					) : (
-						<p>You have no {this.conversations.length ? 'upcoming' : ''} conversations</p>
+						<p>There are no {conversations.length ? 'upcoming' : ''} conversations</p>
 					)}
 				</div>
 			);
