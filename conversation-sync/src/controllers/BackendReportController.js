@@ -1,4 +1,5 @@
 /* eslint-disable class-methods-use-this */
+require('../../config');
 const { AirblastController } = require('airblast');
 const _ = require('lodash');
 
@@ -86,7 +87,7 @@ class BackendReport extends AirblastController {
 
 		const guestData = data.data;
 		const { rsvp, conversation } = guestData;
-		if (!rsvp || !rsvp.uuid) throw new Error(`Cannot add to sheet as guest info has no ${rsvp.uuid}`);
+		if (!rsvp || !rsvp.uuid) throw new Error(`Cannot add to sheet as guest info has no rsvp.uuid`);
 
 		// Prepare spreadsheet headers
 		const [headerInfo, team] = await Promise.all([
