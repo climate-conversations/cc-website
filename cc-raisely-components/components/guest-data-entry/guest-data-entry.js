@@ -1,15 +1,18 @@
 /* eslint-disable class-methods-use-this */
 (RaiselyComponents, React) => {
-	const { Button } = RaiselyComponents.Atoms;
+	const { Button, Icon } = RaiselyComponents.Atoms;
 	const { get, set } = RaiselyComponents.Common;
-	const { api } = RaiselyComponents;
-	const { getData, quickLoad } = api;
+	const { api, Spinner } = RaiselyComponents;
+	const { getCurrentToken, getData, quickLoad } = api;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	let UserSaveHelper;
 	let Conversation;
+
+	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
+	// const WEBHOOK_URL = `http://localhost:8010/conversation-sync/us-central1/raiselyPeople`;
 
 	let actionFields;
 
@@ -24,6 +27,10 @@
 
 	return class GuestDataEntry extends React.Component {
 		state = { key: new Date().toISOString() };
+
+		componentDidMount() {
+			this.testCanSave();
+		}
 
 		prepareSteps() {
 			if (!Conversation) Conversation = ConversationRef().html;
@@ -235,22 +242,53 @@
 
 			await Promise.all(promises);
 
+			const rsvp = get(data, 'event_rsvp');
+			const { rsvpUuid } = this.state;
+			rsvp.uuid = rsvpUuid;
+
 			// Send the guest to be added to the backend spreadsheet
-			const webhookUrl = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
-			await UserSaveHelper.doFetch(webhookUrl, {
+			await UserSaveHelper.doFetch(WEBHOOK_URL, {
 				method: 'post',
 				body: {
 					data: {
-						user,
-						preSurvey: get(data, `interaction.${surveyCategories.preSurvey}.detail`),
-						postSurvey: get(data, `interaction.${surveyCategories.postSurvey}.detail`),
-						conversation: this.event,
-						rsvp: get(data, 'event_rsvp'),
+						type: 'guest.created',
+						data: {
+							user,
+							preSurvey: get(data, `interaction.${surveyCategories.preSurvey}.detail`),
+							postSurvey: get(data, `interaction.${surveyCategories.postSurvey}.detail`),
+							conversation: this.event,
+							rsvp,
+						}
 					}
 				}
 			});
+		}
 
-			throw new Error('Successful');
+		/**
+		 * Tests that the users token has permission to save to
+		 * the webhook url so we find out *before* they do the
+		 * data entry
+		 */
+		async testCanSave() {
+			try {
+				const token = getCurrentToken();
+				// ComponentDidMount gets called twice, once before
+				// props have finished loading
+				// don't send a request without a token
+				if (!token) return;
+
+				await UserSaveHelper.doFetch(WEBHOOK_URL, {
+					method: 'post',
+					body: {}
+				});
+			} catch (e) {
+				console.error(e);
+				this.setState({
+					webhookError: e,
+					message: e.message || '(Unknown Error)',
+				});
+			}
+			this.setState({ hookSuccessful: true });
 		}
 
 		saving() {
@@ -288,9 +326,9 @@
 					<p>Guest saved!</p>
 					<div>
 						<p>
-							As this is the first conversation you've processed in the new system,
-							could you do us a favour and review the saved details and check
-							that everything was saved correctly?
+							As this is the first conversation {"you've"} processed a conversation
+							in the new system, could you do us a favour and review the saved details
+							and check that everything was saved correctly?
 						</p>
 						<Button theme="cta" href={reviewLink}>Review Guest Details</Button>
 					</div>
@@ -302,13 +340,44 @@
 			);
 		}
 
+		renderCanSave() {
+			const { hookSuccessful } = this.state;
+			return (
+				<div className="save-validation">
+					{hookSuccessful ? (
+						<p>
+							<Icon name="done" size="small" />
+							Permissions to save guests verified
+						</p>
+					) : (
+						<p>
+							<Spinner className="spinner" sceneHeight="1rem" size="0.5" />
+							Verifying permission to save guests
+						</p>
+					)}
+				</div>
+			)
+		}
+
 		render() {
+			const { error, webhookError, key } = this.state;
+
+			if (webhookError) {
+				return (
+					<div className="guest-data-entry-wrapper" key={key}>
+						<h4>Error!</h4>
+						<p>Sorry, your account {"doesn't"} seem to have permission to save guest data.</p>
+						<p>(We thought we should stop you now before you do all that typing)</p>
+						<p>Please contact your team leader or program co-ordinator to resolve this</p>
+						<p>The error is: {error}</p>
+					</div>
+				)
+			}
+
 			if (!UserSaveHelper) {
 				UserSaveHelper = UserSaveHelperRef().html;
 				({ actionFields } = UserSaveHelper);
 			}
-
-			const { key } = this.state;
 
 			return (
 				<div className="guest-data-entry-wrapper" key={key}>
@@ -319,6 +388,7 @@
 						<p>For checkboxes press spacebar to check/uncheck the box</p>
 						<p>(You can do this on all forms in the volunteer portal, not just this one)</p>
 					</div>
+					{this.renderCanSave()}
 					<CustomForm
 						{...this.props}
 						steps={this.prepareSteps()}
