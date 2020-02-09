@@ -48,14 +48,12 @@
 		static async getTeamOrFacilitators(props) {
 			let users;
 			if (this.isTeamMode(props)) {
-				console.log('Team');
 				let teamUuid = get(props, 'global.current.profile.uuid');
 				users = await this.getFacilitatorsByTeam(teamUuid);
 				if (!users.length) {
 					throw new Error('There are no active facilitators in your team')
 				}
 			} else {
-				console.log('Individual');
 				users = [get(props, 'global.current.profile.user')];
 			}
 
@@ -93,6 +91,27 @@
 		 */
 		static isTeamMode(props) {
 			return props.getValues().show === 'team';
+		}
+
+		static async getTeams() {
+			const teams = await getData(api.users.meWithProfiles({ type: 'GROUP' }));
+			return teams;
+		}
+
+		static async getFacilitatorProfile(props) {
+			let profile = get(props, 'global.user.profile');
+
+			// Raisely will assign the team profile if they don't have an individual one
+			// remove it
+			if (profile && (profile.type !== 'INDIVIDUAL')) profile = null;
+
+			// Check if it can be loaded async
+			if (!profile) {
+				const profiles = await getData(api.users.meWithProfiles({ type: 'INDIVIDUAL' }));
+				if (profiles && profiles.length) [profile] = profiles;
+			}
+
+			return profile;
 		}
 
 		render() {
