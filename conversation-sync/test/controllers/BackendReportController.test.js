@@ -46,7 +46,7 @@ describe('Backend Report Controller', () => {
 	});
 	describe('WHEN sheet does not exist', () => {
 		before(() => {
-			mockSheet = setup([{ title: 'Surveys 2019' }]);
+			mockSheet = setup([{ title: 'Surveys 2019 TEST' }]);
 			return processController(guestData);
 		});
 		after(() => {
@@ -54,11 +54,10 @@ describe('Backend Report Controller', () => {
 		});
 		if (WITH_MOCK) {
 			it('creates sheet', () => {
-				mockSheet.assertCall('addWorksheet', [{ title: 'Surveys 2020' }]);
+				mockSheet.assertCall('addWorksheet', [{ title: 'Surveys 2020 TEST' }]);
 			});
 			it('sets header', () => {
-				expect(mockSheet.calls).to.haveOwnProperty('setHeaderRow');
-				expect(mockSheet.calls.setHeaderRow).to.deep.eq([headers]);
+				mockSheet.assertCall('addWorksheet', [{ headers }]);
 			});
 			itCreatesRow();
 		} else {
@@ -68,7 +67,7 @@ describe('Backend Report Controller', () => {
 	describe('WHEN row exists', () => {
 		before(() => {
 			mockSheet = setup([{
-				title: 'Surveys 2020',
+				title: 'Surveys 2020 TEST',
 				rows: [{
 					guestid: guestData.rsvp.uuid,
 				}],
