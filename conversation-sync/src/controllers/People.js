@@ -69,6 +69,26 @@ async function getTagsAndRoles(token) {
   * to update other services
   */
 class RaiselyPeople extends AirblastController {
+	validate({ data }) {
+		if (!data.type) {
+			throw new Error('Event contains no event type');
+		}
+		if (!data.data) {
+			throw new Error('Event contains no data');
+		}
+		if (data.type === 'guest.created') {
+			const keys = Object.keys (data.data);
+			const requiredKeys = ['user', 'preSurvey', 'postSurvey', 'conversation', 'rsvp'];
+			const missingKeys = _.difference(requiredKeys, keys);
+			if (missingKeys.length) {
+				throw new Error(`Guest event missing required data: ${missingKeys}`);
+			}
+		}
+		if (!data.data.rsvp.uuid) {
+			throw new Error('RSVP uuid is necessary to save data');
+		}
+	}
+
 	async process({ data }) {
 		const validEvents = Object.keys(raiselyEvents);
 		if (!validEvents.includes(data.type)) {
