@@ -202,6 +202,15 @@
 			return event;
 		}
 
+		/**
+		 * Give a conversation a name from the host
+		 */
+		static defaultName(rsvps) {
+			if (!(rsvps && rsvps.length)) return null;
+			const hostName = rsvps[0].fullName || rsvp[0].preferredName;
+			return `${hostName}'s conversation`;
+		}
+
 		static surveyCategories() { return surveyCategories; }
 		static isProcessed(conversation) { return get(conversation, 'private.isProcessed'); }
 		static isReconciled(conversation) { return get(conversation, 'private.reconciledAt'); }
