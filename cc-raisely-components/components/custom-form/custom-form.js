@@ -271,7 +271,6 @@
 		 * @return {object} The field definition
 		 */
 		static findField(sourceId, campaignConfig) {
-			console.log('CustomForm.findField');
 			const customFields = get(campaignConfig, 'customFields');
 			const fieldSources = sourceId.split('.');
 			const valid = fieldSources.length === 2 || (fieldSources[0] === 'interaction' && fieldSources.length === 3);
@@ -356,7 +355,6 @@
 		 */
 		static prepareField(field, campaignConfig) {
 			let definition;
-			console.log('CustomForm.prepareField');
 
 			if (typeof field === 'string' || Object.keys(field).includes('sourceFieldId')) {
 				let sourceId = field.sourceFieldId || field;
