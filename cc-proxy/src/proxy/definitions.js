@@ -14,7 +14,20 @@
 const { minimalUser } = require('./transforms');
 const { searchUsers, isUserAssignment, isAssignedUser } = require('./conditions');
 
-module.exports = [{
+module.exports = [
+{
+	// Let team leaders create facilitators
+	method: 'POST',
+	path: '/setupVolunteer/facilitator',
+	tags: ['team-leader'],
+},
+{
+	// Let ORG_ADMINs create team leaders
+	method: 'POST',
+	path: '/setupVolunteer/team-leader',
+	roles: ['ORG_ADMIN'],
+},
+{
 	// Let facilitators retrieve the message templates stored on
 	// campaign.private
 	method: 'GET',

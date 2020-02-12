@@ -1,6 +1,7 @@
 const { get } = require('lodash');
 
 const { upsertUser } = require('./upsert');
+const { setupVolunteer } = require('./setupVolunteer');
 const proxy = require('./proxy');
 
 const logger = require('./config/logging');
@@ -123,6 +124,7 @@ function wrap(fn, name) {
 const functions = {
 	proxy,
 	upsertUser,
+	setupVolunteer,
 };
 
 const proxiedFunctions = {};
