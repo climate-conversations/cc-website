@@ -103,6 +103,7 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
 					userUuid,
 					type,
 					goal: 25000,
+					currency: 'SGD',
 					name: profileName,
 				},
 			},
