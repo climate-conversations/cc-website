@@ -1,32 +1,68 @@
+## Jan 17 Run Issues
+- [X] Add authentication to cloud functions
+- [ ] Auto check donations were received
+- [ ] Flag if they enter data without choosing the type of donation
+- [ ] Host report seems to have all conversations
+- [X] add missing fields
+- [ ] Naming of conversation
+- [X] Facil reflection marked done when it's not
+- [X] Back button needed on book conversation page
+- [X] Hint use tab
+- [X] Return button on surveys doesn't work
+- [X] FTL conversation list empty when conversation is ready for review
+- [X] Conversation review says complete when only first 2 are done
+- [X] AssignedFacilitatator / FacilitatorUuid used inconsistently on host interest
+- [X] Individual dashboard links to team if they don't have a personal profile
+- [X] All conversations showing in facil conversation list
+- [X] Return link after adding conversation broken
+- [X] Reflection done is checked initially
+- [X] Drop what can we do to increase your score?
+- [ ] Template for messaging guests
+- [X] Delete duplicate Claudia
+- [X] Return after processing conversation broken
+- [X] Team leader conversation list, shows facil as Chris Jensen
+- [X] Couldn't load facil in team leader host list
+- [X] Guest list shows anon even for named guests
+- [X] Survey review: Handpone, postcode, email - FULLNAME, postcode were not saved!!! Country too?
+- [X] Review button in conversation view page
+- [X] Reflection review form broken
+- [ ] Send single message, give gmail option
+- [X] reflection review, next reflection button when there isn't a next
+- [ ] review conversation broken
+- [X] link to person profile
+- [ ] Facil profile should be profile.user.name not current.user.name
+
 
 ## Outstanding issues
 
-- [ ] Place instructions to assign team members
-- [ ] Ability for FTL/Coordinator to assign hosts
-- [ ] Team/Facil ids
+- [X] Place instructions to assign team members
+- [X] Ability for FTL/Coordinator to assign hosts
+- [X] Team/Facil ids
 - [X] Ability to assign team members
 - [X] Ability for coordinator to view teams
 - [X] check interactions are working
 - [X] Conversation page
 - [X] Host report is broken
 - [X] Write to guests
-- [ ] FTL processing check list
-- [ ] Conversation reconcile page needs to recognise an incomplete donation report
-- [ ] Add new hosts
-- [ ] Store message id on interactions
-- [ ] Change message templates from rich text to plaintext
+- [X] FTL processing check list
+- [X] Conversation reconcile page needs to recognise an incomplete donation report
+- [X] Add new hosts
+- [X] Store message id on interactions
+- [ ] Filter message templates from rich text to plaintext
+- [ ] Handlebars for templates
 - [X] FTL page
 - [X] Send host report
 - [X] Set up domain
 - [ ] Add note to facil reconcile form
 - [ ] Show messages already sent to host
 - [X] Interaction filtering by category doesn't seem to work properly
+- [ ] Include old hosts without host interactions in the list
 
 - [X] See more link below news
 - [X] Hide mail client select when whatsapp is selected
 - [X] Automatically save interaction in messaging
 - [ ] Check conversation details always shows hint
-- [ ] Upload photo doesn't result in processing form checkbox update
+- [X] Upload photo doesn't result in processing form checkbox update
 - [ ] Set name correctly when creating conversation from guest data entry
 - [X] Contact form doesn't filter users with invalid email
 - [X] Contact form click on person doesn't work
@@ -41,9 +77,8 @@
 - [ ] Return button needed from view conversation
 - [ ] Hide invalid email when listing conversation guests
 
-- [ ] Multiselect input
 - [ ] Proxy permissions
-- [ ] Sync reports
+- [X] Sync reports
 
 - [ ] Host report could do with styling
 - [ ] Host report accessible to logged out users
