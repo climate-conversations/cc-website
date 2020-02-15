@@ -8,6 +8,19 @@
 
 	return class Facilitator extends React.Component {
 		/**
+		 * Return the team profile to which a facilitator belongs
+		 */
+		static async getFacilitatorTeam(facilitatorUuid) {
+			const profiles = await getData(api.profiles.getAll({
+				user: facilitatorUuid,
+				type: 'INDIVIDUAL',
+			}));
+			if (!profiles) return null;
+
+			return profiles[0].parent;
+		}
+
+		/**
 		 * @param {string} teamUuid Uuid of a team profile record
 		 * @returns {User[]} User records for facils in the team leaders team
 		 */
@@ -93,6 +106,9 @@
 			return props.getValues().show === 'team';
 		}
 
+		/**
+		 * Returns the teams that a team leader is the leader of
+		 */
 		static async getTeams() {
 			const teams = await getData(api.users.meWithProfiles({ type: 'GROUP' }));
 			return teams;
