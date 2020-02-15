@@ -46,6 +46,10 @@ async function setupVolunteer(req) {
 	}
 
 	await Promise.all(promises);
+
+	return {
+		status: 'OK',
+	}
 }
 
 /**
