@@ -3,6 +3,7 @@
 
 	const proxyUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/proxy';
 	const upsertUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/upsertUser';
+	const setupFacilUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/setupFacilitator';
 
 	return class UserSaveHelper {
 		static actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'research', 'fundraise'];
@@ -64,6 +65,13 @@
 		static async proxy(path, options) {
 			const url = `${proxyUrl}${path}`;
 			return this.doFetch(url, options);
+		}
+
+		static async setupVolunteer(data) {
+			return this.doFetch(setupFacilUrl, {
+				method: 'post',
+				body: { data },
+			});
 		}
 
 		/**
