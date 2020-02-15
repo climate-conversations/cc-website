@@ -163,6 +163,13 @@ function nockSetRole(existingRoles, newRoles = []) {
 }
 
 function nockTagUser(existingTags, newTags = [], isAdmin = false) {
+	noteRequest('GET /tags', 'GET', `/tags?private=1`, 200, {
+		data: newTags.map(path => ({
+			uuid: `uuid-${path}`,
+			path
+		})),
+	});
+
 	noteRequest('GET /users', 'GET', `/users/${userUuid}?private=1`, 200, {
 		data: {
 			fullName: 'Mock user',
@@ -171,7 +178,7 @@ function nockTagUser(existingTags, newTags = [], isAdmin = false) {
 		}
 	});
 	newTags.forEach(tag => {
-		noteRequest(`POST /tags/${tag}/records`, 'POST', `/tags/${tag}/records`, 200, {});
+		noteRequest(`POST /tags/${tag}/records`, 'POST', `/tags/uuid-${tag}/records`, 200, {});
 	});
 }
 

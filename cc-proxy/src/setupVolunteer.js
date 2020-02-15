@@ -132,6 +132,13 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
  * @param {object} opts.req
  */
 async function setupTagsAndRoles({ tags, roles, userUuid, req }) {
+	const tagDetails = await raiselyRequest({
+		path: `/tags?private=1`,
+		escalate: false,
+		cacheKey: `/tags?private=1`,
+		cacheTTL: 10 * 60 * 1000,
+	}, req);
+
 	// Get existing tags and permissions
 	const [userData, rolesData] = await Promise.all([
 		raiselyRequest({
@@ -153,8 +160,9 @@ async function setupTagsAndRoles({ tags, roles, userUuid, req }) {
 
 	// Tag the person
 	missingTags.forEach((tag) => {
+		const tagUuid = tagDetails.data.find(t => t.path === tag).uuid;
 		promises.push(raiselyRequest({
-			path: `/tags/${tag}/records`,
+			path: `/tags/${tagUuid}/records`,
 			method: 'POST',
 			body: {
 				data: [{ uuid: userUuid }],
