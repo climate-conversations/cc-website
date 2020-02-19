@@ -31,7 +31,7 @@ describe('proxy', () => {
 	before(() => {
 		// Clear the cache on re-runs
 		request.cache.clear();
-	})
+	});
 
 	describe('POST /interactions', () => {
 		before(() => {
@@ -313,4 +313,23 @@ describe('proxy', () => {
 			expect(raiselyRequest.headers.authorization).to.eq(originalAuthKey);
 		});
 	});
+
+	describe('OPTIONS', () => {
+		before(() => {
+			results.res = new MockResponse();
+			results.req = new MockRequest({
+				method: 'OPTIONS',
+				url: '/interactions',
+				headers: {
+					Origin: 'https://climateconversations.raisely.com',
+				},
+			});
+
+			// Run the controller
+			return proxy(results.req, results.res);
+		});
+		it('status 204', () => {
+			expect(results.res.statusCode).to.eq(204);
+		})
+	})
 });
