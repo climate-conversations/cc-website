@@ -1,5 +1,5 @@
 const GoogleSpreadsheetLoader = require('../../src/services/sheetsProvider');
-const { expect } = require('chai');
+const MockClass = require('./mockClass');
 
 const example = [
 	{
@@ -9,17 +9,10 @@ const example = [
 	}
 ]
 
-function logCall(document, name, ...args) {
-	document.calls[name] = args;
-}
-
-class GoogleSpreadsheet {
+class GoogleSpreadsheet extends MockClass {
 	constructor(document)  {
+		super();
 		this.worksheets = (document || []).map(sheet => new Worksheet(this, sheet));
-		this.calls = {};
-	}
-	logCall(fn, ...args) {
-		logCall(this, fn, ...args);
 	}
 
 	useServiceAccountAuth(creds, cb) {
@@ -34,11 +27,6 @@ class GoogleSpreadsheet {
 		this.worksheets.push(worksheet);
 		this.logCall('addWorksheet', sheet);
 		cb(null, worksheet);
-	}
-
-	assertCall(fn, args) {
-		expect(this.calls).to.haveOwnProperty(fn);
-		expect(this.calls[fn]).to.containSubset(args);
 	}
 }
 
