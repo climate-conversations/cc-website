@@ -1,5 +1,5 @@
 {
-  "name": "Cron engine",
+  "name": "cron-engine",
   "version": "1.0.0",
   "main": "src/router.js",
   "engines": {
@@ -11,6 +11,7 @@
     "url": "https://github.com/raisely/airblast/issues"
   },
   "scripts": {
+    "deploy": "gcloud app deploy app.yaml --project climate-conversations-sync",
     "start": "node index.js"
   },
   "dependencies": {

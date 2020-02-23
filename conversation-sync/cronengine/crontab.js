@@ -8,6 +8,15 @@ const crons = [{
 	request: 'raiselyPeopleRetry',
 }, {
 	schedule,
+	request: 'backendReportRetry',
+}, {
+	schedule,
+	request: 'donationSpreadsheetRetry',
+}, {
+	schedule,
+	request: 'donorFacilMatchRetry',
+}, {
+	schedule,
 	request: 'mailchimpRetry',
 }];
 
