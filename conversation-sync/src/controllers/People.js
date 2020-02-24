@@ -83,9 +83,9 @@ class RaiselyPeople extends AirblastController {
 			if (missingKeys.length) {
 				throw new Error(`Guest event missing required data: ${missingKeys}`);
 			}
-		}
-		if (!data.data.rsvp.uuid) {
-			throw new Error('RSVP uuid is necessary to save data');
+			if (!data.data.rsvp.uuid) {
+				throw new Error('RSVP uuid is necessary to save data');
+			}
 		}
 	}
 
