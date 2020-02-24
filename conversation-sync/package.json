@@ -19,6 +19,7 @@
   "homepage": "https://github.com/chrisjensen/conversation-sync#readme",
   "dependencies": {
     "@google-cloud/datastore": "^1.4.0",
+    "@google-cloud/debug-agent": "^4.2.2",
     "@google-cloud/pubsub": "^0.18.0",
     "airblast": "^0.1.11",
     "datastore-env": "^1.2.5",

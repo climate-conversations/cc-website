@@ -1,3 +1,5 @@
+require('@google-cloud/debug-agent').start({ allowExpressions: true });
+
 require('./config');
 const routes = require('./config/routes');
 
