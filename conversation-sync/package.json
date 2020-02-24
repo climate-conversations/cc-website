@@ -20,7 +20,7 @@
   "dependencies": {
     "@google-cloud/datastore": "^1.4.0",
     "@google-cloud/pubsub": "^0.18.0",
-    "airblast": "^0.1.10",
+    "airblast": "^0.1.11",
     "datastore-env": "^1.2.5",
     "deasync": "^0.1.13",
     "dotenv": "^6.2.0",
