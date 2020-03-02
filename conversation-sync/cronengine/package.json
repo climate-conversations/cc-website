@@ -15,6 +15,6 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "airblast": "git+https://github.com/raisely/airblast.git"
+    "airblast": "^0.2.0"
   }
 }

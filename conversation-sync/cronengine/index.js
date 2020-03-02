@@ -4,6 +4,6 @@
   * controllers
   */
 const cronEngine = require('airblast/cronEngine');
-const crontab = require('./crontab');
+const retries = require('./retries');
 
-cronEngine.start(crontab);
+cronEngine.start(retries);
