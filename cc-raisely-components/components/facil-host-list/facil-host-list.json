@@ -4,7 +4,7 @@
             "id": "show",
             "type": "select",
             "label": "Show host for:",
-            "value": "green",
+            "value": "facilitator",
             "options": [
                 {
                     "label": "Facilitator",
@@ -13,6 +13,10 @@
                 {
                     "label": "Team",
                     "value": "team"
+                },
+                {
+                    "label": "All",
+                    "value": "full"
                 }
             ],
             "singular": "Field"
