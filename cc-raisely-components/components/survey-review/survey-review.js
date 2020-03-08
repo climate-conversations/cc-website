@@ -63,7 +63,7 @@
 					.quickLoad({ props: this.props, models: ['eventRsvp.private'], required: true });
 
 				const [user, { pre, post }] = await Promise.all([
-					getData(api.users.get({ id: eventRsvp.userUuid })),
+					getData(api.users.get({ id: eventRsvp.userUuid, query: { private: 1 } })),
 					Conversation.loadSurveys(eventRsvp),
 				]);
 				this.setState({
