@@ -16,15 +16,11 @@
 		const hasGuest = !!rsvps.find(r => r.type === 'guest');
 		return hasGuest;
 	}
-	const hasPhoto = conversation => !!get(conversation, 'private.photoUrl');
+	const hasPhoto = conversation => !!get(conversation, 'private.attendeePhotoUrl');
 	async function hasReflection(conversation, rsvps) {
 		const facilitators = ['facilitator', 'co-facilitator'];
-		const reflections = await getData(api.interactions.getAll({
-			query: {
-				reference: conversation.uuid,
-				category: 'facilitator-reflection',
-			},
-		}));
+		if (!Conversation) Conversation = ConversationRef().html;
+		const reflections = await Conversation.loadReflections({ eventUuid: conversation.uuid });
 
 		const facils = rsvps
 			// Find facilitators
@@ -32,7 +28,7 @@
 
 		const incomplete = facils
 			// Check if they've done a reflection
-			.filter(rsvp => reflections.find(r => r.userUuid === rsvp.userUuid));
+			.filter(rsvp => !reflections.find(r => r.userUuid === rsvp.userUuid));
 
 		// If at least 1 facil is assigned to the conversation
 		// and they've all submitted a reflection then we're good
