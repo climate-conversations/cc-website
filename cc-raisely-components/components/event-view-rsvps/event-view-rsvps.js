@@ -9,6 +9,11 @@
 	const Checkbox = RaiselyComponents.import('checkbox');
 	let UserSaveHelper;
 
+	const DEFAULT_MESSAGE = `Hi {{user.preferredName}},
+With gratitude,
+{{sender.preferredName}}`;
+
+
 	return class EventViewRsvps extends React.Component {
 		state = { loading: true };
 		componentDidMount() {
@@ -123,6 +128,9 @@
 			const { user } = rsvp;
 			const userName = get(user, 'fullName') || get(user, 'preferredName');
 			const subject = this.getSubject();
+			const messageData = {
+				sender: get(this.props, 'global.user'),
+			}
 			return (
 				<li className="flex-table-row">
 					<span className="row-field small-field">{index + 1}</span>
@@ -139,8 +147,9 @@
 							sendBy='whatsapp'
 							to={[user]}
 							subject={subject}
-							body=''
+							body={DEFAULT_MESSAGE}
 							launchButtonLabel="Message"
+							messageData={messageData}
 						/>
 						<Button onClick={() => this.cancel(rsvp, userName)}>Delete</Button>
 					</div>
@@ -155,6 +164,9 @@
 				to = rsvps.map(r => r.user);
 				subject = this.getSubject();
 			}
+			const messageData = {
+				sender: get(this.props, 'global.user'),
+			}
 			return (
 				<div className="event-view-rsvps__wrapper">
 					{error ? (
@@ -168,7 +180,8 @@
 								sendBy='email'
 								to={to}
 								subject={subject}
-								body=''
+								body={DEFAULT_MESSAGE}
+								messageData={messageData}
 								launchButtonLabel="Message all Guests"
 							/>
 							<div className="event-view-rsvps__stats">

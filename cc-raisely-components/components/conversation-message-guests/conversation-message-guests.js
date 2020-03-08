@@ -45,14 +45,17 @@
 			}
 
 			const defaultMessage = 'Thank you for attending the Climate Conversation!';
-			const body = get(privateCampaign, 'private.conversationGuestThankyou', defaultMessage);
+			const message = get(privateCampaign, 'private.conversationGuestThankyou', defaultMessage);
 
 			const params = {
 				...this.props,
 				sendBy: 'email',
-				body,
+				body: message.body,
 				to: guests,
-				subject: "Thank you & what's next?",
+				subject: message.subject,
+				messageData: {
+					sender: get(this.props, 'global.user'),
+				}
 			};
 
 			return <Messenger {...params} />;
