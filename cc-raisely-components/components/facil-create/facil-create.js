@@ -1,8 +1,11 @@
 (RaiselyComponents, React) => {
-	const { ProfileSearch } = RaiselyComponents.Molecules;
+	const { ProfilePreviewByUuid, ProfileSelect } = RaiselyComponents.Molecules;
 	const { Button } = RaiselyComponents.Atoms;
+	const { api, Spinner } = RaiselyComponents;
+	const { getData } = api;
 
 	const UserSelect = RaiselyComponents.import('user-select-wrapper');
+	const ReturnButton = RaiselyComponents.import('return-button');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
 	let Facilitator;
@@ -11,48 +14,75 @@
 	return class FacilCreate extends React.Component {
 		state = { step: 1 }
 		async save() {
-			const { team, user } = this.state;
+			try {
+				const { team, user } = this.state;
 
-			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-			await UserSaveHelper.setupVolunteer({
-					type: 'facilitator',
-					userUuid: user.uuid,
-					teamUuid: team.uuid,
+				this.setState({ saving: true });
+				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+				await UserSaveHelper.setupVolunteer({
+						type: 'facilitator',
+						userUuid: user.uuid,
+						teamUuid: team.uuid,
+				});
+				this.setState({ saving: false });
+			} catch (e) {
+				console.error(e);
+				this.setState({ error: e.message || 'An unknown error occurred', saving: false });
+			}
+		}
+
+		reset = () => {
+			this.setState({
+				step: 1,
+				user: null,
+				existingTeam: null,
 			});
 		}
 
 		async loadExistingTeam() {
 			try {
-				const { user } = this.state;
+				const { user, team } = this.state;
 				this.setState({ loadingExistingTeam: true })
 				if (!Facilitator) Facilitator = FacilitatorRef().html;
-				const team = await Facilitator.getFacilitatorTeam(user.uuid);
-				this.setState({ existingTeam: team, loadingExistingTeam: false })
+				const promises = [Facilitator.getFacilitatorTeam(user.uuid)];
+				if (team && !team.name) {
+					promises.push(getData(api.profiles.get({ id: team.uuid })));
+				}
+				const [existingTeam, selectedTeam] = await Promise.all(promises);
+				const newState = { existingTeam, loadingExistingTeam: false };
+				if (selectedTeam) newState.team = selectedTeam;
+				this.setState(newState);
 			} catch (e) {
 				console.log(e);
 				this.setState({
 					loadingExistingTeam: false,
-					error: e.message || 'An unknown error occurred'
+					error: e.message || 'An unknown error occurred',
 				});
 			}
 		}
 
 		nextStep = (direction = 1) => {
 			const { step } = this.state;
-			if ((direction === 1) && (step === 2)) {
+			if ((direction === 1) && (step === 1)) {
 				this.loadExistingTeam();
+			}
+			if ((direction === 1) && step === 2) {
+				this.save();
 			}
 			this.setState({ step: step + direction });
 		}
 
-		updateUser = (user) => {
+		updateUser = ({ user }) => {
 			this.setState({ user });
+		}
+		updateTeam = (value) => {
+			const team = value && value.team;
+			this.setState({ team });
 		}
 
 		selectPage() {
 			const { global } = this.props;
-			const { user } = this.state;
-			const { uuid: campaignUuid } = global.campaign;
+			const { user, team } = this.state;
 
 			return (
 				<div className="facil-create__select-user">
@@ -62,15 +92,27 @@
 						label="Facilitator"
 						updateUser={this.updateUser} />
 
-					<ProfileSearch
-						limit={10}
-						type="GROUP"
-						searchLabel="Team to add them to"
-						campaignUuid={campaignUuid}
-						hideInitialResults={false}
-						user={global.user}
-						mock={global.campaign && global.campaign.mock}
-					/>
+					<div className="facil-create__profile-wrapper">
+						{team && team.uuid ? (
+							<ProfilePreviewByUuid
+								api={api}
+								heading="Add to team..."
+								uuid={team.uuid}
+								cancel={() => this.updateTeam(null)}
+							/>
+						) : (
+							<ProfileSelect
+								api={api}
+								global={global}
+
+								update={value => {
+									this.setState({ team: { uuid: value } })
+								}}
+
+								type="GROUP"
+							/>
+						)}
+					</div>
 				</div>
 			);
 		}
@@ -114,26 +156,54 @@
 			);
 		}
 
+		savePage() {
+			const { saving } = this.state;
+			if (saving) {
+				return (
+					<div className="facil-create__saving">
+						<p>Setting up the facilitator</p>
+						<Spinner />
+					</div>
+				);
+			}
+			return (
+				<div className="facil-create__saving">
+					<Button onClick={this.reset}>Add/update another</Button>
+					<ReturnButton backLabel="Back to Dashboard" />
+				</div>
+			)
+		}
+
 		buttons() {
 			const { loadingExistingTeam } = this.state;
 
 			return (
 				<div className="buttons facil-create__buttons">
 					<Button onClick={() => this.nextStep(-1)} theme="secondary">Back</Button>
-					<Button disabled={loadingExistingTeam} onClick={this.nextStep} theme="primary">Next</Button>
+					<Button disabled={loadingExistingTeam} onClick={() => this.nextStep()} theme="primary">Next</Button>
 				</div>
 			);
 		}
 
 		render() {
-			const { step } = this.state;
-			const pages = ['selectPage', 'verifyTeamPage'];
+			const { step, error } = this.state;
+			const pages = ['selectPage', 'verifyTeamPage', 'savePage'];
 			const page = pages[step - 1];
+
+			console.log('next page', step, page, this[page])
+
+			if (error) {
+				return (
+					<div className="facil-create__wrapper">
+						<p className="error">{error}</p>
+					</div>
+				)
+			}
 
 			return (
 				<div className="facil-create__wrapper">
 					{this[page]()}
-					{this.buttons()}
+					{(page !== 'savePage') && this.buttons()}
 				</div>
 			);
 		}
