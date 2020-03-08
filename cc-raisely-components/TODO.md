@@ -1,10 +1,18 @@
 ## Jan 17 Run Issues
+- [ ] Switch everything to monitor prop changes
+- [X] Conversation details do not contain user?private=1
+- [ ] Photo sync does not work
+- [ ] Handlebars substitution
+- [ ] Return button from host creation page
+- [ ] Email guests selects wrong conversation
+- [ ] Conversation checklist has wrong links for all conversations
+
 - [X] Add authentication to cloud functions
 - [ ] Auto check donations were received
 - [ ] Flag if they enter data without choosing the type of donation
 - [ ] Host report seems to have all conversations
 - [X] add missing fields
-- [ ] Naming of conversation
+- [X] Naming of conversation
 - [X] Facil reflection marked done when it's not
 - [X] Back button needed on book conversation page
 - [X] Hint use tab
@@ -30,8 +38,9 @@
 - [X] reflection review, next reflection button when there isn't a next
 - [ ] review conversation broken
 - [X] link to person profile
-- [ ] Facil profile should be profile.user.name not current.user.name
-
+- [X] Facil profile should be profile.user.name not current.user.name
+- [ ] Forward back button doesn't really work
+- [ ] Photo needs to save to private and needs to be synced to a google folder
 
 ## Outstanding issues
 
