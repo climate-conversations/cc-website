@@ -3,6 +3,7 @@
 
 	const { debounce, Downshift } = RaiselyComponents.Common;
 	const { Spinner } = RaiselyComponents;
+	const { getData } = RaiselyComponents.api;
 
 	const queryHelper = data => ({
 		...data,
@@ -30,12 +31,15 @@
 		search = debounce(
 			(value) => {
 				this.setState({ loading: true });
-				this.props.request(value).then((res) => {
-					this.setState({
-						items: res.body().data().data.map(i => ({ value: i, label: i })),
+				getData(this.props.request(value))
+					.then(data => this.setState({
+						items: data.map(i => ({ value: i, label: i })),
 						loading: false,
+					}))
+					.catch(error => {
+						console.error(error);
+						this.setState({ error: error.message || 'Unknown error occurred', loading: false });
 					});
-				});
 			},
 			300
 		)
@@ -68,6 +72,12 @@
 
 		render() {
 			if (!this.state.loading && this.state.items.length === 0) return null;
+
+			const { error } = this.state;
+
+			if (error) {
+				return <p className="error">{error}</p>;
+			}
 
 			return (
 				<ul className="user-select__list list__wrapper" {...this.props.getMenuProps()}>
