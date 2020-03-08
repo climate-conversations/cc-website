@@ -178,13 +178,14 @@
 				// Work around API throwing 500 when the results are empty
 				let messages = [];
 				try {
-					messages = await Promise.all([
+					[messages] = await Promise.all([
 						UserSaveHelper.proxy(`/interactions?${query}`, {
 							method: 'get',
 						}),
 						this.initSteps(),
 					]);
 				} catch (error) {}
+				console.log("messages: ", messages)
 				this.setState({ messages });
 				await this.checkCompleteSteps();
 			} catch (error) {
@@ -346,6 +347,10 @@
 				);
 			}
 
+			const messageData = {
+				sender: get(this.props, 'global.user'),
+			};
+
 			return (
 				<div className="host--interactions__wrapper">
 					{nextStep ? (
@@ -361,6 +366,7 @@
 								launchButtonLabel="Send Now"
 								onClose={this.load}
 								messageMeta={nextStepMeta}
+								messageData={messageData}
 							/>
 							<Button>{"I've"} already done this</Button>
 						</div>
@@ -368,10 +374,11 @@
 						{...this.props}
 						to={[host]}
 						subject='Hosting'
-						body='Hi'
+						body={`Hi ${host.preferredName}`}
 						sendBy='whatsapp'
 						launchButtonLabel="Message Host"
 						onClose={this.load}
+						messageData={messageData}
 					/>}
 					<div className="host--interactions__list">
 						<h4>Recent Messages</h4>
@@ -382,7 +389,7 @@
 						) : (
 							<p>We {"haven't"} recorded any messages to this host yet</p>
 						)}
-						View all interactions with the host in Raisely <RaiselyButton recordType="user" uuid={host.uuid} />
+						View all interactions with the host in Raisely <RaiselyButton recordType="user" uuid={host.uuid} label="View Host" />
 					</div>
 				</div>
 			);
@@ -465,11 +472,11 @@
 
 		next = async () => {
 			console.log('FormStep.next');
-			const { save: saveFn, shouldSave } = this.props;
-			if (shouldSave()) {
+			const { save, shouldSave } = this.props;
+			if (shouldSave) {
 				this.setState({ saving: true });
 				try {
-					await saveFn();
+					await save();
 				} catch (e) {
 					// Save function handles the error, we just need
 					// to avoid advancing the form
@@ -484,7 +491,7 @@
 		book = () => {
 			const { host } = this.props;
 			if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
-			const bookingUrl = ReturnButton().forwardReturnTo({
+			const bookingUrl = ReturnButton.forwardReturnTo({
 				props: this.props,
 				url: `/conversations/create?host=${host.uuid}`,
 			});
@@ -536,7 +543,7 @@
 	}
 
 	return class FacilAddHost extends React.Component {
-		state = { mode: 'edit', form: editForm };
+		state = { mode: 'edit' };
 
 		componentDidMount() {
 			this.setForm();
@@ -564,6 +571,7 @@
 
 				this.setState({ form: newForm });
 			} else {
+				editForm[0].buttons = EditButtons;
 				this.setState({ form: editForm, showInteractions: true });
 			}
 		}
@@ -674,6 +682,8 @@
 		render() {
 			// eslint-disable-next-line object-curly-newline
 			const { form, host, interaction, facilitator, mode, showInteractions } = this.state;
+
+			if (!form) return <Spinner />
 
 			const formSettings = {
 				host,
