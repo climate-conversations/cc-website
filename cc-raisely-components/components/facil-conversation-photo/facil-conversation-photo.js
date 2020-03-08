@@ -6,10 +6,15 @@
 	const { getData, save } = api;
 	const { get } = RaiselyComponents.Common;
 
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let UserSaveHelper;
+
+	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
+
 	return class FacilDonationReport extends React.Component {
 		generateForm() {
 			const multiFormConfig = [
-				{ title: 'Upload Conversation Photo', fields: ['event.photoUrl', 'event.photoConsent'] },
+				{ title: 'Upload Conversation Photo', fields: ['event.attendeePhotoUrl', 'event.photoConsent'] },
 			];
 
 			return multiFormConfig;
@@ -23,7 +28,24 @@
 		async save(values, formToData) {
 			const data = formToData(values);
 			const { event } = data;
-			return getData(save('event', event, { partial: true }));
+			await getData(save('event', event, { partial: true }));
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const webhookData = {
+				type: 'conversation.photoUploaded',
+				data: {
+					conversation: event,
+					photoConsent: get(event, 'private.photoConsent'),
+					url: get(event, 'private.attendeePhotoUrl'),
+				}
+			};
+			console.log('Sending to conversation-sync webhook', webhookData);
+			// Send the guest to be added to the backend spreadsheet
+			await UserSaveHelper.doFetch(WEBHOOK_URL, {
+				method: 'post',
+				body: {
+					data: webhookData,
+				}
+			});
 		}
 
 		render() {
