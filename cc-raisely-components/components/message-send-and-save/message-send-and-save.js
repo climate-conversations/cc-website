@@ -2,13 +2,15 @@
 	const { api, Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
 	const { getData } = api;
-	const { set } = RaiselyComponents.Common;
+	const { get } = RaiselyComponents.Common;
 	const { Modal } = RaiselyComponents.Molecules;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const WhatsAppButtonRef = RaiselyComponents.import('whatsapp-button', { asRaw: true });
 	const ReturnButton = RaiselyComponents.import('return-button');
+	const MessageFormatRef = RaiselyComponents.import('message-format', { asRaw: true })
 	let WhatsAppButton;
+	let MessageFormat;
 
 	const contactDefaults = { sendBy: 'whatsapp', emailClient: 'gmail' };
 
@@ -127,9 +129,12 @@
 	}
 
 	class ContactForm extends React.Component {
+		state = { prepared: false };
 		componentDidMount() {
 			this.initRecipients();
 			this.initContactFields();
+			if (!MessageFormat) MessageFormat = MessageFormatRef().html;
+			this.setState({ prepared: true });
 		}
 
 		onContactChange = (values) => {
@@ -161,6 +166,9 @@
 
 			const { sendBy, body, subject, emailClient } = Object.assign(contactDefaults, this.props);
 
+			// this.setState({ body });
+			// contactFields.find(f => f.id === 'body').default = body;
+
 			const contactSettings = {
 				sendBy,
 				body,
@@ -174,6 +182,15 @@
 				contactSettings,
 				contactSettingsKey: new Date().toISOString(),
 			}, this.setActiveRecipients);
+
+
+			setTimeout(() => {
+				const toggle = sendBy === 'whatsapp' ? 'email' : 'whatsapp';
+				let newContactSettings = { ...contactSettings, body, sendBy: toggle };
+				this.onContactChange([newContactSettings]);
+				newContactSettings = { ...contactSettings, body, sendBy };
+				this.onContactChange([newContactSettings]);
+			} , 250)
 		}
 
 		initRecipients() {
@@ -250,9 +267,20 @@
 			)
 		}
 
-		sendAll = (closeModal) => {
+		sendAll = async (closeModal) => {
 			const { selectedRecipients, recipientFields, contactSettings } = this.state;
-			const { subject, body, emailClient } = contactSettings;
+			const { subject, body: htmlBody, emailClient } = contactSettings;
+
+			let body = await MessageFormat.format(htmlBody, 'email');
+			// Variable substitution, insert the selected user
+			// for the value of user
+			const data = {
+				...get(this.props, 'messageData', {}),
+				user: { preferredName: 'Everyone' },
+			};
+
+			body = MessageFormat.substitute(body, data);
+
 			const { to } = this.props;
 			// Create the bcc list of users
 			const recipients = to
@@ -283,22 +311,30 @@
 				// Open the message composer
 				window.open(url);
 				// Save the interaction immediately and close the modal if necessary
-				this.saveInteraction(recentlySent)
-					.then((canClose) => {
-						if (canClose && closeModal) closeModal();
-					});
+				const canClose = await this.saveInteraction(recentlySent)
+				if (canClose && closeModal) closeModal();
 			} else {
 				// eslint-disable-next-line object-curly-newline
 				this.setState({ state: 'email', recentlySent, emailContent: { bcc, subject, body } });
 			}
 		}
-		send = (user, closeModal) => {
+		send = async (user, closeModal) => {
 			if (!WhatsAppButton) WhatsAppButton = WhatsAppButtonRef().html;
 			if (!user) {
 				console.log('Send called with no user, ignoring');
 			}
 			const { contactSettings } = this.state;
-			const { subject, body } = contactSettings;
+			const { subject, body: htmlBody } = contactSettings;
+			let body = await MessageFormat.format(htmlBody, 'whatsapp');
+			// Variable substitution, insert the selected user
+			// for the value of user
+			const data = {
+				...get(this.props, 'messageData', {}),
+				user,
+			};
+
+			body = MessageFormat.substitute(body, data);
+
 			const url = WhatsAppButton.generateUrl(user.phoneNumber, body);
 			window.open(url);
 			const message = {
@@ -423,7 +459,10 @@
 			const { props } = this;
 			if (!this.state) return <Spinner />;
 			// eslint-disable-next-line object-curly-newline
-			const { state, selectedRecipients, contactSettings, error, recipientFieldsKey, contactSettingsKey, recipientFields } = this.state;
+			const { state, selectedRecipients, contactSettings, error, recipientFieldsKey, contactSettingsKey, recipientFields, prepared } = this.state;
+
+			if (!prepared) return <Spinner />;
+
 			const { sendBy } = contactSettings;
 			const { to } = props;
 
@@ -459,7 +498,7 @@
 									{recipientCount < 2 ? this.buttons(recipientCount) : ''}
 								</div>
 								{recipientCount > 1 ? (
-									<div className="contact--form__recipients">
+									<div className="contact--form__recipients split__screen">
 										<h4>Send To</h4>
 										{ error ? (
 											<div className="error">{ error }</div>
