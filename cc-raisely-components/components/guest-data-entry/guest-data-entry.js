@@ -7,9 +7,11 @@
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	let UserSaveHelper;
 	let Conversation;
+	let Facilitator;
 
 	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
 	// const WEBHOOK_URL = `http://localhost:8010/conversation-sync/us-central1/raiselyPeople`;
@@ -134,6 +136,7 @@
 				set(data, 'user.private.mailingList', true);
 			}
 
+			console.log('Upserting user', data.user);
 			const user = await UserSaveHelper.upsertUser(data.user);
 			// temporary fix for upsert not returning an email
 			if (!user.email) user.email = data.user.email;
@@ -155,23 +158,28 @@
 				});
 			})
 				.filter(s => s)
-				.map(record => api.interactions.create({ data: record }))
+				.map(record => {
+					console.log(`Saving survey ${record.categoryUuid}`, record);
+					return api.interactions.create({ data: record })
+				})
 				.map(getData);
 
 			if (get(data, `interaction.${surveyCategories.postSurvey}.detail.private.host`)) {
-				promises.push(getData(api.interactions.create({
-					data: {
-						...interactionBase,
-						categoryUuid: 'host-interest',
-						detail: {
-							private: {
-								facilitatorUuid,
-								status: 'lead',
-								source: 'conversation',
-								conversationUuid: this.event.uuid,
-							},
+				const hostData = {
+					...interactionBase,
+					categoryUuid: 'host-interest',
+					detail: {
+						private: {
+							facilitatorUuid,
+							status: 'lead',
+							source: 'conversation',
+							conversationUuid: this.event.uuid,
 						},
 					},
+				};
+				console.log('Saving host', hostData)
+				promises.push(getData(api.interactions.create({
+					data: hostData,
 				})));
 			}
 
@@ -183,6 +191,7 @@
 				eventUuid: this.event.uuid,
 			});
 
+			console.log('Saving guest rsvp', data.event_rsvp);
 			promises.push(
 				getData(api.eventRsvps.create({ data: data.event_rsvp }))
 					.then(rsvp => this.setState({ rsvpUuid: rsvp.uuid }))
@@ -191,10 +200,13 @@
 			// Save donation / donation intention
 			const cashPaymentType = get(data, 'event_rsvp.private.donationIntention');
 			if (['transfer', 'cash'].includes(cashPaymentType)) {
-				promises.push(getData(api.donations.create({
-					data: {
+				if (!Facilitator) Facilitator = FacilitatorRef().html;
+				promises.push(
+					Facilitator.getFacilitatorProfileByUser(this.props, facilitatorUuid)
+				.then(profile => {
+					const donation = {
 						campaignUuid,
-						profileUuid: this.props.global.campaign.profile.uuid,
+						profileUuid: profile.uuid,
 						userUuid: user.uuid,
 						anonymous: true,
 						mode: 'LIVE',
@@ -207,33 +219,45 @@
 							cashPaymentType,
 						},
 						currency: 'SGD',
-					},
-				})));
+					};
+					console.log('Saving donation', donation);
+					promises.push(getData(api.donations.create({
+						data: donation,
+					})));
+				}));
 			}
 
 			// Add the future conversation
 			if (get(data, 'event.startAt')) {
+				if (!Conversation) Conversation = ConversationRef().html;
 				Object.assign(data.event, {
-					name: `<conversation name here>`,
+					name: Conversation.defaultName([user]),
 					campaignUuid,
 				});
+
+				console.log('Creating tentative new conversation', data.event);
+
 				const promise = getData(api.events.create({ data: data.event }))
 					// Add the facil and host to the conversation
 					.then((event) => {
+						const hostRsvp = {
+							type: 'host',
+							userUuid: user.uuid,
+							eventUuid: event.uuid,
+						};
+						const facilitatorRsvp = {
+							type: 'facilitator',
+							userUuid: facilitatorUuid,
+							eventUuid: event.uuid,
+						};
+
+						console.log('Assigning host and facilitator to conversation', hostRsvp, facilitatorRsvp);
 						return Promise.all([
 							getData(api.eventRsvps.create({
-								data: {
-									type: 'host',
-									userUuid: user.uuid,
-									eventUuid: event.uuid,
-								},
+								data: hostRsvp,
 							})),
 							getData(api.eventRsvps.create({
-								data: {
-									type: 'facilitator',
-									userUuid: facilitatorUuid,
-									eventUuid: event.uuid,
-								},
+								data: facilitatorRsvp,
 							})),
 						]);
 					});
@@ -246,20 +270,22 @@
 			const { rsvpUuid } = this.state;
 			rsvp.uuid = rsvpUuid;
 
+			const webhookData = {
+				type: 'guest.created',
+				data: {
+					user,
+					preSurvey: get(data, `interaction.${surveyCategories.preSurvey}.detail`),
+					postSurvey: get(data, `interaction.${surveyCategories.postSurvey}.detail`),
+					conversation: this.event,
+					rsvp,
+				}
+			};
+			console.log('Sending to conversation-sync webhook', webhookData);
 			// Send the guest to be added to the backend spreadsheet
 			await UserSaveHelper.doFetch(WEBHOOK_URL, {
 				method: 'post',
 				body: {
-					data: {
-						type: 'guest.created',
-						data: {
-							user,
-							preSurvey: get(data, `interaction.${surveyCategories.preSurvey}.detail`),
-							postSurvey: get(data, `interaction.${surveyCategories.postSurvey}.detail`),
-							conversation: this.event,
-							rsvp,
-						}
-					}
+					data: webhookData,
 				}
 			});
 		}
