@@ -182,6 +182,10 @@
 			body = `${body}
 ${url}`;
 
+			const messageData = {
+				sender: get(this.props, 'global.user'),
+			}
+
 			return (
 				<Messenger
 					{...this.props}
@@ -190,6 +194,7 @@ ${url}`;
 					body={body}
 					launchButtonLabel="Send Report to Host"
 					onClose={this.onSendReport}
+					messageData={messageData}
 				/>
 			);
 		}
