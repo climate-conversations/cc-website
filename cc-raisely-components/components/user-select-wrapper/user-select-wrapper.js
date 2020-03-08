@@ -1,6 +1,8 @@
 (RaiselyComponents, React) => {
 	const { api } = RaiselyComponents;
+	const { Button } = RaiselyComponents.Atoms;
 	const UserSelect = RaiselyComponents.import('user-select');
+	const RaiselyButton = RaiselyComponents.import('raisely-button');
 
 	return function UserSelectWrapper({ global, label, updateUser, user }) {
 		if (user && user.uuid) {
@@ -14,7 +16,7 @@
 					<div className="user__card">
 						<div className="static-field__title">{name}</div>
 						<div className="static-field__subtitle">{user.email}</div>
-						<Button type="button" onClick={() => this.updateUser({})}>Change</Button>
+						<Button type="button" onClick={() => updateUser({})}>Change</Button>
 						<RaiselyButton uuid={user.uuid} recordType="people" />
 					</div>
 				</div>
