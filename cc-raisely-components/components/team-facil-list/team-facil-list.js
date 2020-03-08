@@ -212,19 +212,7 @@
 					) : '' }
 					<List title={innerTitle} profiles={memberProfiles} props={this.props} />
 					<div className="team-list__help">
-						<p>Click on a team to show only the facilitators in that team</p>
-						<p>Facilitators and teams are managed as <strong>Profiles</strong> in Raisely.</p>
-						<p>
-							To add a facilitator to a team: Click the button below, find or create
-							a profile for them
-							and add their profile to the team they should belong to.
-						</p>
-						<RaiselyButton
-							recordType="profiles"
-							label="Add or Move Facilitators"
-							theme="secondary"
-							props={this.props}
-						/>
+						{display === 'all' ? <p>Click on a team to show only the facilitators in that team</p> : ''}
 					</div>
 				</div>
 			);
