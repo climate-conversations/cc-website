@@ -41,7 +41,7 @@
 
 		static async loadReflections({ eventUuid, userUuid }) {
 			const query = {
-				record: eventUuid,
+				reference: eventUuid,
 				recordType: 'event',
 				category: reflectionCategory,
 				user: userUuid,
@@ -207,7 +207,7 @@
 		 */
 		static defaultName(rsvps) {
 			if (!(rsvps && rsvps.length)) return null;
-			const hostName = rsvps[0].fullName || rsvp[0].preferredName;
+			const hostName = rsvps[0].fullName || rsvps[0].preferredName;
 			return `${hostName}'s conversation`;
 		}
 
