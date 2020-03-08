@@ -26,15 +26,8 @@
 				const uuid = Conversation.getUuid(props);
 
 				const [conversation, reflections] = await Promise.all([
-					Conversation.loadConversation({ props }),
-					getData(api.interactions.getAll({
-						query: {
-							reference: uuid,
-							recordType: 'event',
-							category: 'facilitator-reflection',
-							private: 1,
-						},
-					})),
+					Conversation.loadConversation({ props, private: true }),
+					Conversation.loadReflections({ eventUuid: uuid }),
 				]);
 
 				this.setState({ reflections, conversation, loading: false });
@@ -55,7 +48,7 @@
 			const message = {
 				...this.props,
 				sendBy: 'whatsapp',
-				body: `Hi ${preferredName}, I saw your reflection ...`,
+				body: `Hi ${preferredName}, I saw your reflection `,
 				to: [reflection.user],
 				subject: conversation.name,
 				launchButtonLabel: `Send a message to ${preferredName}`,
