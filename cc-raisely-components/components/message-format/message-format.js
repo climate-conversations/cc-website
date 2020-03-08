@@ -9,6 +9,7 @@
 
 (RaiselyComponents, React) => {
 	let stripHtml;
+	const { get } = RaiselyComponents.Common;
 
 	function loadJS(url, implementationCode) {
 		//url is URL of external file, implementationCode is the code
@@ -153,6 +154,11 @@
 				trimOnlySpaces: true,
 				cb: processTag,
 			});
+		}
+
+		static substitute(template, data) {
+			const subPattern = /{{([A-Za-z._\s]*)}}/gm
+			return template.replace(subPattern, (sub, group1) => get(data, group1.trim(), ''));
 		}
 	}
 
