@@ -12,10 +12,12 @@
 		 */
 		static async getFacilitatorTeam(facilitatorUuid) {
 			const profiles = await getData(api.profiles.getAll({
-				user: facilitatorUuid,
-				type: 'INDIVIDUAL',
+				query: {
+					user: facilitatorUuid,
+					type: 'INDIVIDUAL',
+				}
 			}));
-			if (!profiles) return null;
+			if (!(profiles && profiles.length)) return null;
 
 			return profiles[0].parent;
 		}
@@ -112,6 +114,14 @@
 		static async getTeams() {
 			const teams = await getData(api.users.meWithProfiles({ type: 'GROUP' }));
 			return teams;
+		}
+
+		static async getFacilitatorProfileByUser(props, userUuid) {
+			if (userUuid === get(props, 'global.user.uuid')) return this.getFacilitatorProfile(props)
+			const profiles = await getData(api.users.profiles.getAll({ id: userUuid, query: { type: 'INDIVIDUAL' } }));
+			let profile;
+			if (profiles && profiles.length) profile = profiles[0];
+			return profile;
 		}
 
 		static async getFacilitatorProfile(props) {
