@@ -2,10 +2,12 @@
 - [ ] Switch everything to monitor prop changes
 - [X] Conversation details do not contain user?private=1
 - [ ] Photo sync does not work
-- [ ] Handlebars substitution
+- [X] Handlebars substitution
 - [ ] Return button from host creation page
 - [ ] Email guests selects wrong conversation
 - [ ] Conversation checklist has wrong links for all conversations
+- [ ] Fix retries on google cloud function
+- [ ] Add segment to list all hosts in host list (those that have checked yes, but dont have a host intention)
 
 - [X] Add authentication to cloud functions
 - [ ] Auto check donations were received
@@ -25,7 +27,7 @@
 - [X] Return link after adding conversation broken
 - [X] Reflection done is checked initially
 - [X] Drop what can we do to increase your score?
-- [ ] Template for messaging guests
+- [X] Template for messaging guests
 - [X] Delete duplicate Claudia
 - [X] Return after processing conversation broken
 - [X] Team leader conversation list, shows facil as Chris Jensen
@@ -57,13 +59,13 @@
 - [X] Conversation reconcile page needs to recognise an incomplete donation report
 - [X] Add new hosts
 - [X] Store message id on interactions
-- [ ] Filter message templates from rich text to plaintext
-- [ ] Handlebars for templates
+- [X] Filter message templates from rich text to plaintext
+- [X] Handlebars for templates
 - [X] FTL page
 - [X] Send host report
 - [X] Set up domain
-- [ ] Add note to facil reconcile form
-- [ ] Show messages already sent to host
+- [X] Add note to facil reconcile form
+- [X] Show messages already sent to host
 - [X] Interaction filtering by category doesn't seem to work properly
 - [ ] Include old hosts without host interactions in the list
 
