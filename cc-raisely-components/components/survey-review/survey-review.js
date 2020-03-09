@@ -13,6 +13,13 @@
 		componentDidMount() {
 			this.load();
 		}
+		componentDidUpdate() {
+			const eventRsvpUuid = get(this.props, 'match.params.eventRsvp');
+			if (eventRsvpUuid !== this.state.eventRsvpUuid) {
+				this.load();
+			}
+		}
+
 		getFields() {
 			if (!Conversation) Conversation = ConversationRef().html;
 			const preSurveyQuestions = [
@@ -59,6 +66,8 @@
 		async load() {
 			try {
 				if (!Conversation) Conversation =  ConversationRef().html;
+				const eventRsvpUuid = get(this.props, 'match.params.eventRsvp');
+				this.setState({ eventRsvpUuid });
 				const { eventRsvp } = await api
 					.quickLoad({ props: this.props, models: ['eventRsvp.private'], required: true });
 

@@ -17,11 +17,15 @@
 		state = { loading: true };
 
 		componentDidMount() {
-			this.load()
-				.catch((e) => {
-					console.error(e);
-					this.setState({ loading: false, error: e.message });
-				});
+			this.load();
+		}
+		componentDidUpdate() {
+			const values = this.props.getValues();
+			const category = values.eventType || 'Volunteer Jam';
+			if (category !== this.state.category) {
+				this.setState({ loading: false });
+				this.load();
+			}
 		}
 
 		mockEvent = (category) => {

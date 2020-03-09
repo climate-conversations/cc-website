@@ -86,14 +86,16 @@
 	return class FacilProcessingChecklist extends React.Component {
 		state = { loading: true, checklist };
 
-		// eslint-disable-next-line consistent-return
 		componentDidMount() {
-			const isMock = get(this.props, 'global.campaign.mock');
-
-			if (isMock) return this.mockChecklist();
-
-			this.load()
-				.catch(console.error);
+			this.load();
+		}
+		componentDidUpdate() {
+			const eventUuid = get(this.props, 'match.params.event');
+			// Reload the conversation and guests if the id has changed
+			if (this.state.eventUuid !== eventUuid) {
+				this.setState({ loading: true });
+				this.load();
+			}
 		}
 
 		getCompletedSteps = conversation =>
@@ -209,6 +211,10 @@
 		async load() {
 			try {
 				const uuid = get(this.props, 'match.params.event');
+				this.setState({ eventUuid: uuid });
+
+				const isMock = get(this.props, 'global.campaign.mock');
+				if (isMock) return this.mockChecklist();
 
 				// Complete the url asap so users can just click through
 				// without waiting for async requests to return

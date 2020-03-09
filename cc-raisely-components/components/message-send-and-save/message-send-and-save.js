@@ -131,9 +131,21 @@
 	class ContactForm extends React.Component {
 		state = { prepared: false };
 		componentDidMount() {
+			if (!MessageFormat) MessageFormat = MessageFormatRef().html;
+			this.load();
+		}
+		componentDidUpdate(prevProps) {
+			// Check if any relevant properties have changed
+			let hasChanged = ['to', 'sendBy', 'body', 'subject', 'emailClient', 'messageMeta', 'messageData']
+				.find(key => this.props[key] !== prevProps[key]);
+
+			if (hasChanged) {
+				this.load();
+			}
+		}
+		load() {
 			this.initRecipients();
 			this.initContactFields();
-			if (!MessageFormat) MessageFormat = MessageFormatRef().html;
 			this.setState({ prepared: true });
 		}
 

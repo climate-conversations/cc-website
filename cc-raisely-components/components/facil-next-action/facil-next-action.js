@@ -36,6 +36,8 @@
 						type: 'facilitator',
 						private: 1,
 						userUuid: get(this, 'props.global.user.uuid'),
+						// Show oldest first
+						order: 'ASC',
 					},
 				}));
 

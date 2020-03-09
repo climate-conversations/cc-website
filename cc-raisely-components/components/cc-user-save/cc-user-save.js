@@ -1,3 +1,20 @@
+/**
+ * This is a utility component to help with
+ * * Upserting people records
+ * * Making requests through the permissions proxy
+ * * Requests to the facil setup cloud function
+ *
+ * Import this at the top of other components
+ * @example
+ * const UserSaveRef = RaiselyComponets.import('cc-user-save');
+ * let UserSave;
+ *
+ * // Within code that calls it
+ * if (!UserSave) UserSave = UserSaveRef().html;
+ * UserSave.upsertUser({
+ * 	email, preferredName
+ * });
+ */
 (RaiselyComponents) => {
 	const { getCurrentToken } = RaiselyComponents.api;
 
@@ -62,11 +79,24 @@
 			return json.data;
 		}
 
+		/**
+		 * Proxies a request through the permission escalation cloud function
+		 * This passes on the users login token, which the proxy will use to check
+		 * if the user is permitted to escalate their permissions
+		 *
+		 * @param {string} path Raisely api path
+		 * @param {object} options To pass to fetch
+		 * @return {object} the contents of the resulting JSON response
+		 */
 		static async proxy(path, options) {
 			const url = `${proxyUrl}${path}`;
 			return this.doFetch(url, options);
 		}
 
+		/**
+		 * Make a call to the volunteer setup function
+		 * @param {object} data Options to pass to the volunteer setup cloud function
+		 */
 		static async setupVolunteer(data) {
 			return this.doFetch(setupFacilUrl, {
 				method: 'post',
@@ -77,6 +107,7 @@
 		/**
 		 * Helper to perform an upsert of a user
 		 * @param {object} record
+		 * @returns {object} A limited version of the user record
 		 */
 		static async upsertUser(record) {
 			return this.doFetch(upsertUrl, {

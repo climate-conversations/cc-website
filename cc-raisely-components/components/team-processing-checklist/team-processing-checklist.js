@@ -92,8 +92,15 @@
 
 			if (isMock) return this.mockChecklist();
 
-			this.load()
-				.catch(console.error);
+			this.load();
+		}
+		componentDidUpdate() {
+			const eventUuid = get(this.props, 'match.params.event');
+
+			if (eventUuid !== this.state.eventUuid) {
+				this.setState({ loading: true });
+				this.load();
+			}
 		}
 
 		getCompletedSteps = conversation =>
@@ -213,6 +220,7 @@
 		async load() {
 			try {
 				const uuid = get(this.props, 'match.params.event');
+				this.setState({ eventUuid: uuid });
 
 				// Complete the url asap so users can just click through
 				// without waiting for async requests to return

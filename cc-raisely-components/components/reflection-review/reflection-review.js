@@ -17,6 +17,13 @@
 		componentDidMount() {
 			this.load();
 		}
+		componentDidUpdate() {
+			if (!Conversation) Conversation = ConversationRef().html;
+			const uuid = Conversation.getUuid(props);
+			if (uuid !== this.state.conversationUuid) {
+				this.load();
+			}
+		}
 
 		load = async () => {
 			const { props } = this;
@@ -24,6 +31,7 @@
 
 			try {
 				const uuid = Conversation.getUuid(props);
+				this.setState({ conversationUuid: uuid });
 
 				const [conversation, reflections] = await Promise.all([
 					Conversation.loadConversation({ props, private: true }),

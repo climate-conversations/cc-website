@@ -12,11 +12,20 @@
 		componentDidMount() {
 			this.load();
 		}
-
+		componentDidUpdate() {
+			if (!Conversation) Conversation = ConversationRef().html;
+			const eventUuid = Conversation.getUuid(this.props);
+			// Reload the conversation and guests if the id has changed
+			if (eventUuid !== this.state.eventUuid) {
+				this.setState({ loading: true });
+				this.load();
+			}
+		}
 		async load() {
 			try {
 				if (!Conversation) Conversation = ConversationRef().html;
-				const eventUuid = Conversation.getUuid();
+				const eventUuid = Conversation.getUuid(this.props);
+				this.setState({ eventUuid });
 				const conversationPromise = Conversation.loadConversation({ props: this.props, private: true })
 					.then(conversation => this.setState({ conversation }));
 

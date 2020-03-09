@@ -117,11 +117,16 @@
 		state = { selectedTeams: [] };
 
 		componentDidMount() {
-			this.load()
-				.catch((error) => {
-					console.error(error);
-					this.setState({ error });
-				});
+			this.load();
+		}
+		componentDidUpdate() {
+			const profileUuid = get(this.props, 'global.current.profile.uuid');
+			const { display } = this.props.getValues();
+			const hasChanged = (profileUuid !== this.state.profileUuid) ||
+				(this.state.display !== display);
+			if (hasChanged) {
+				this.load();
+			}
 		}
 
 		setSelectedTeams = (selectedTeams) => {
@@ -129,34 +134,43 @@
 		}
 
 		async load() {
-			const { campaign } = this.props.global;
-			const values = this.props.getValues();
+			try {
+				const { campaign } = this.props.global;
+				const values = this.props.getValues();
+				this.setState({ display: values.display });
 
-			const query = {
-				private: 1,
-				sort: 'name',
-				order: 'ASC',
-				limit: 1000,
-				campaign: campaign.uuid,
+				const query = {
+					private: 1,
+					sort: 'name',
+					order: 'ASC',
+					limit: 1000,
+					campaign: campaign.uuid,
+				};
+
+				if (values.display !== 'all') {
+					const profileUuid = get(this.props, 'global.current.profile.uuid');
+					this.setState({ profileUuid });
+					let profile = get(this.props, 'global.current.profile');
+					if (profile) {
+						profile = profile.uuid;
+					} else {
+						profile = this.props.profileUuid;
+					}
+					if (!profile) {
+						const error = 'Unknown current profile, this component should be used on a page with a url that contains :profile, or set display to all';
+						console.log(error);
+						this.setState({ error });
+					}
+
+					query.parent = profile;
+				}
+				const profiles = await getData(api.profiles.getAll({ query }));
+				this.setState({ profiles }, this.filterTeams);
+			} catch(error) {
+				console.error(error);
+				this.setState({ error });
 			};
 
-			if (values.display !== 'all') {
-				let profile = get(this.props, 'global.current.profile');
-				if (profile) {
-					profile = profile.uuid;
-				} else {
-					profile = this.props.profileUuid;
-				}
-				if (!profile) {
-					const error = 'Unknown current profile, this component should be used on a page with a url that contains :profile, or set display to all';
-					console.log(error);
-					this.setState({ error });
-				}
-
-				query.parent = profile;
-			}
-			const profiles = await getData(api.profiles.getAll({ query }));
-			this.setState({ profiles }, this.filterTeams);
 		}
 
 		initTeams(profiles, unassignedUuid) {

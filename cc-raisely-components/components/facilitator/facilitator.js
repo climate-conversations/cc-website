@@ -54,6 +54,24 @@
 		}
 
 		/**
+		 * Helper for components that work with getTeamOrFacilitators
+		 * to check if the relevant properties have changed and the
+		 * component requires a reload
+		 * @param {object} props
+		 * @return {string} That can be used like so
+		 * @example
+		 * componentDidUpdate(prevProps) {
+		 * 	const newKey = Facilitator.getTeamOrFacilUniqueKey(this.props);
+		 * 	const oldKey = Facilitator.getTeamOrFacilUniqueKey(prevProps);
+		 * 	if (newKey !== oldKey)
+		 * 		this.reload();
+		 *  }
+		 */
+		static getTeamOrFacilUniqueKey(props) {
+			return `${this.isTeamMode(props) ? 'team' : 'facilitator'} ${get(props, 'global.current.profile.uuid')}`;
+		}
+
+		/**
 		 * Calls isTeamMode to determine if the component should render for team
 		 * members or the current user, and returns the appropriate uuids for
 		 * either the user or team members

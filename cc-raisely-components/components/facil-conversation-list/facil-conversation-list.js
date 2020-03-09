@@ -12,7 +12,9 @@
 		private: 'home',
 		corporate: 'work',
 		overdue: 'warning',
-		inReview: 'check_circle_outline',
+		reconcileIssue: 'money_off',
+		awaitingReview: 'access_time',
+		readyForReview: 'assignment',
 	};
 
 	class Conversation extends React.Component {
@@ -36,19 +38,22 @@
 			const { now, conversation, showFacil } = this.props;
 
 			const { conversationType, isProcessed, reviewedAt } = get(conversation, 'private', {}) || {};
+			const isTeam = this.props.getValues().show === 'team';
 
 			const overdue = this.processOverdue.isBefore(now) && !isProcessed;
 			const hasPassed = this.startAt.isBefore(now);
 
 			let iconType = conversationType;
 			let tooltip = `${conversationType} conversation`;
-			if (hasPassed && !reviewedAt) {
-				iconType = 'inReview';
-				tooltip = 'To be reviewed by your team leader';
-			}
-			if (overdue || !this.reconciled) {
+			if (overdue) {
 				iconType = 'overdue';
 				tooltip = overdue ? 'Processing is overdue' : 'Donation amounts do not reconcile';
+			} else if (isProcessed && !this.reconciled) {
+				iconType = 'reconcileIssue';
+				tooltip = 'Donation amounts do not reconcile';
+			} else if (isProcessed && !reviewedAt) {
+				iconType = isTeam ? 'readyForReview' : 'awaitingReview';
+				tooltip = isTeam ? 'Ready for review' : 'To be reviewed by your team leader';
 			}
 
 			const icon = icons[iconType] || icons.private;
@@ -65,7 +70,7 @@
 
 			return (
 				<li className="conversation-list-item" key={conversation.uuid}>
-					<Link className="list__item" href={defaultUrl}>
+					<Link className="list__item" href={defaultUrl} title={tooltip}>
 						<Icon name={icon} title={tooltip} />
 						<div className="conversation-name list__item--title">
 							{conversation.name}
@@ -90,6 +95,16 @@
 		componentDidMount() {
 			this.load();
 		}
+		componentDidUpdate() {
+			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const reloadKey = Facilitator.getTeamOrFacilUniqueKey(this.props);
+
+			// Reload the conversation and guests if the id has changed
+			if (reloadKey !== this.state.reloadKey) {
+				this.setState({ loading: true });
+				this.load();
+			}
+		}
 
 		setConversations = () => {
 			const { allConversations } = this.state;
@@ -98,9 +113,8 @@
 			if (this.state.filter) {
 				conversations = allConversations
 					.filter(c =>
-						isTeam ?
-							!get(c, 'private.isReviewed'):
-							!get(c, 'private.reviewedAt'));
+						!get(c, 'private.isReviewed'));
+
 			}
 
 			this.setState({ conversations, loaded: true });
@@ -110,17 +124,20 @@
 			try {
 				const campaignUuid = this.props.global.uuid;
 				let userUuid = await this.getUserUuids();
-				// FIXME workaround api bug
 				if (userUuid.includes(',')) userUuid = null;
 				const conversations = await Facilitator.loadConversations(campaignUuid, userUuid);
 				this.setState({ allConversations: conversations }, this.setConversations)
 			} catch (error) {
+				console.error(error);
 				this.setState({ loaded: true, error })
 			}
 		}
 
 		async getUserUuids() {
 			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const reloadKey = Facilitator.getTeamOrFacilUniqueKey(this.props);
+			this.setState({ reloadKey });
+
 			const facilitators = await Facilitator.getTeamOrFacilitators(this.props);
 			const uuids = facilitators
 				.map((f) => {

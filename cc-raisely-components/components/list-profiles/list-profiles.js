@@ -65,11 +65,19 @@
 		componentDidMount() {
 			this.load();
 		}
+		componentDidUpdate() {
+			const conditions = get(this.props.getValues(), 'conditions', []);
+			this.setState({ conditions: JSON.stringify(conditions) });
+			if (this.state.conditions !== conditions) {
+				this.load();
+			}
+		}
 
 		async load() {
 			this.setState({ loading: true });
 			try {
 				const conditions = get(this.props.getValues(), 'conditions', []);
+				this.setState({ conditions: JSON.stringify(conditions) });
 				const query = {
 					order: 'ASC',
 				};

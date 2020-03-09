@@ -74,13 +74,23 @@
 		}
 
 		buttons = () => {
-			console.log('FormStep.buttons');
 			const nextText = this.props.shouldSave() ?
 				'Save' : this.props.actionText || 'Next';
 
-			const { back, hideButtons } = this.props;
+			const { back, hideButtons, save } = this.props;
 
 			if (hideButtons) { return ''; }
+
+			if (this.props.buttons) {
+				const ButtonsComponent = this.props.buttons;
+				return <ButtonsComponent
+					{...this.props}
+					save={save}
+					back={back}
+					shouldSave={this.props.shouldSave()}
+					next={this.next}
+				/>
+			}
 
 			return (
 				<div className="custom-form__navigation">
@@ -105,7 +115,6 @@
 		}
 
 		render() {
-			console.log('FormStep.render');
 			const { props } = this.props;
 			const { pageIndex, title, description } = this.props;
 			const values = get(this, `props.values.${pageIndex}`, {});
@@ -552,8 +561,6 @@
 		}
 
 		render() {
-			console.log('CustomForm.render');
-
 			if (!this.state.loaded) {
 				const { loadingText } = this.props;
 

@@ -63,8 +63,7 @@
 		state = { loading: true };
 
 		componentDidMount() {
-			this.load()
-				.catch(e => console.error(e));
+			this.load();
 		}
 		componentDidUpdate() {
 			const newValues = get(this, 'props.values', {});
@@ -72,8 +71,8 @@
 			const hasChanged = Object.keys(newValues)
 				.find(key => newValues[key] !== oldValues[key]);
 			if (hasChanged) {
-				this.load()
-					.catch(e => console.error(e));
+				this.setState({ loading: true });
+				this.load();
 			}
 		}
 
@@ -81,7 +80,7 @@
 			console.log('Configuring display record');
 			const config = Object.assign({
 				models: [],
-				associatins: [],
+				associations: [],
 			}, this.props);
 			if (this.props.getValues) Object.assign(config, this.props.getValues());
 
@@ -97,16 +96,16 @@
 
 		load = async () => {
 			console.log('DisplayFields.load');
-			const { associations, models } = this.getConfig();
-
-			const values = Object.assign(
-				{},
-				get(this.state, 'values', {}),
-				get(this.props, 'values', {})
-			);
-
-			const valueKeys = Object.keys(values);
 			try {
+				const { associations, models } = this.getConfig();
+
+				const values = Object.assign(
+					{},
+					get(this.state, 'values', {}),
+					get(this.props, 'values', {})
+				);
+
+				const valueKeys = Object.keys(values);
 				const modelsToFetch = models
 					.filter(model => !valueKeys.includes(model));
 
@@ -119,29 +118,29 @@
 						required: true,
 					}));
 				}
+
+				if (Array.isArray(associations)) {
+					const associationsToLoad = associations
+						.filter(assoc => !valueKeys.includes(assoc));
+
+					const loaded = associationsToLoad.map(async ({ uuidFrom, recordType }) => {
+						const uuid = get(values, uuidFrom);
+						if (uuid) {
+							const model = plural(recordType);
+							const key = singular(recordType);
+							values[key] = await api[model].get(uuid);
+						}
+					});
+
+					await Promise.all(loaded);
+				}
+
+				this.setState({ values, loading: false }, this.setFields);
 			} catch (e) {
 				console.error(e);
 				this.setState({ error: e.message });
 				throw e;
 			}
-
-			if (Array.isArray(associations)) {
-				const associationsToLoad = associations
-					.filter(assoc => !valueKeys.includes(assoc));
-
-				const loaded = associationsToLoad.map(async ({ uuidFrom, recordType }) => {
-					const uuid = get(values, uuidFrom);
-					if (uuid) {
-						const model = plural(recordType);
-						const key = singular(recordType);
-						values[key] = await api[model].get(uuid);
-					}
-				});
-
-				await Promise.all(loaded);
-			}
-
-			this.setState({ values, loading: false }, this.setFields);
 		}
 
 		render() {

@@ -13,16 +13,20 @@
 	let Conversation;
 
 	// eslint-disable-next-line object-curly-newline
-	const rsvpToItem = (({ uuid, type, userUuid, user }) => ({
-		uuid,
-		userUuid,
-		type,
-		firstName: user.firstName,
-		lastName: user.lastName,
-		fullName: user.fullName,
-		prefName: user.prefName,
-		email: user.email,
-	}));
+	const rsvpToItem = (rsvp => {
+		const { uuid, type, userUuid, user } = rsvp;
+
+		return {
+			uuid,
+			userUuid,
+			type,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			fullName: user.fullName,
+			prefName: user.prefName,
+			email: user.email,
+		};
+	});
 
 	class ConversationTeam extends React.Component {
 		state = { saving: false, rsvps: [] };
@@ -40,15 +44,14 @@
 
 			const rsvps = defaultRsvps.map((rsvpType) => {
 				const rsvp = { type: rsvpType };
-				const person = initialRsvps.find(r => r.type === rsvp);
+				const person = initialRsvps.find(r => r.type === rsvpType);
 				if (person) {
 					Object.assign(rsvp, rsvpToItem(person));
 				}
 				return rsvp;
 			});
-
 			initialRsvps.forEach((rsvp) => {
-				if (!rsvps.find(r => r.uuid === rsvp.uuid)) {
+				if (rsvp.uuid && !rsvps.find(r => r.uuid === rsvp.uuid)) {
 					rsvps.push(rsvpToItem(rsvp));
 				}
 			});
@@ -203,9 +206,20 @@
 		 *
 		 */
 		load = async ({ dataToForm }) => {
+			const query = getQuery(get(this.props, 'router.location.search'));
 			const eventUuid = this.props.eventUuid ||
 				get(this.props, 'match.params.event') ||
-				getQuery(get(this.props, 'router.location.search')).event;
+				query.event;
+
+			let addHost;
+			if (query.host) {
+				addHost = query.host && await this.loadHost(query.host);
+				if (!addHost) {
+					console.error('Host could not be found: ', query.host);
+				} else {
+					this.setState({ rsvps: [addHost] });
+				}
+			}
 
 			// We must be creating a new conversation
 			if (!eventUuid) {
@@ -220,9 +234,16 @@
 
 			const { event } = quickLoads;
 			this.oldName = event.name;
+			if (addHost) rsvps.push(addHost);
 			this.setState({ rsvps, event });
 
 			return dataToForm({ event });
+		}
+
+		async loadHost(userUuid) {
+			const user = await getData(api.users.get({ id: userUuid }));
+			const newHostRsvp = { type: 'host', userUuid, user };
+			return newHostRsvp;
 		}
 
 		async loadRsvps(eventUuid) {

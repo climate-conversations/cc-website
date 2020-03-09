@@ -16,20 +16,36 @@
 		componentDidMount() {
 			this.load();
 		}
-		load = async () => {
+		componentDidUpdate() {
 			if (!Conversation) Conversation = ConversationRef().html;
-			const { props } = this;
-			const campaignUuid = get(this.props, 'global.campaign.uuid');
-			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const eventUuid = Conversation.getUuid(this.props);
+			// Reload the conversation and guests if the id has changed
+			if (eventUuid !== this.state.eventUuid) {
+				this.setState({ loading: true });
+				this.load();
+			}
+		}
+		load = async () => {
+			try {
+				if (!Conversation) Conversation = ConversationRef().html;
+				const eventUuid = Conversation.getUuid(this.props);
+				this.setState({ eventUuid });
+				const { props } = this;
+				const campaignUuid = get(this.props, 'global.campaign.uuid');
+				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 
-			const [results, privateCampaign] = await Promise.all([
-				Conversation.loadRsvps({ props, type: ['guest'] }),
-				UserSaveHelper.proxy(`/campaigns/${campaignUuid}?private=1`, {
-					method: 'get',
-				})
-			]);
+				const [results, privateCampaign] = await Promise.all([
+					Conversation.loadRsvps({ props, type: ['guest'] }),
+					UserSaveHelper.proxy(`/campaigns/${campaignUuid}?private=1`, {
+						method: 'get',
+					})
+				]);
 
-			this.setState({ ...results, privateCampaign, loading: false });
+				this.setState({ ...results, privateCampaign, loading: false });
+			} catch(error) {
+				console.error(error);
+				this.setState({ error: error.message || 'An unknown error occurred' });
+			}
 		}
 
 		renderInner() {

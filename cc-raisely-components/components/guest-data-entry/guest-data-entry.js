@@ -33,6 +33,13 @@
 		componentDidMount() {
 			this.testCanSave();
 		}
+		componentDidUpdate() {
+			const eventUuid = get(this.props, 'match.params.event');
+			// Reload the conversation and guests if the id has changed
+			if (this.state.eventUuid !== eventUuid) {
+				this.load();
+			}
+		}
 
 		prepareSteps() {
 			if (!Conversation) Conversation = ConversationRef().html;
@@ -107,7 +114,8 @@
 				required: true,
 			});
 
-			this.event = data.event;
+			const eventUuid = get(this.props, 'match.params.event');
+			this.setState({ event: data.event, eventUuid });
 		}
 
 		save = async (values, formToData) => {
@@ -142,7 +150,7 @@
 			if (!user.email) user.email = data.user.email;
 
 			const interactionBase = {
-				recordUuid: this.event.uuid,
+				recordUuid: this.state.event.uuid,
 				recordType: 'event',
 				userUuid: user.uuid,
 			};
@@ -173,7 +181,7 @@
 							facilitatorUuid,
 							status: 'lead',
 							source: 'conversation',
-							conversationUuid: this.event.uuid,
+							conversationUuid: this.state.event.uuid,
 						},
 					},
 				};
@@ -188,7 +196,7 @@
 			Object.assign(data.event_rsvp, {
 				userUuid: user.uuid,
 				type: 'guest',
-				eventUuid: this.event.uuid,
+				eventUuid: this.state.event.uuid,
 			});
 
 			console.log('Saving guest rsvp', data.event_rsvp);
@@ -215,7 +223,7 @@
 						amount: get(data, 'event_rsvp.private.donationAmount'),
 						email: user.email,
 						private: {
-							conversationUuid: this.event.uuid,
+							conversationUuid: this.state.event.uuid,
 							cashPaymentType,
 						},
 						currency: 'SGD',
@@ -276,7 +284,7 @@
 					user,
 					preSurvey: get(data, `interaction.${surveyCategories.preSurvey}.detail`),
 					postSurvey: get(data, `interaction.${surveyCategories.postSurvey}.detail`),
-					conversation: this.event,
+					conversation: this.state.event,
 					rsvp,
 				}
 			};

@@ -17,7 +17,14 @@
 		componentDidMount() {
 			this.load();
 		}
+		componentDidUpdate() {
+			const eventUuid = get(this.props, 'match.params.event');
 
+			if (eventUuid !== this.state.eventUuid) {
+				this.setState({ loading: true });
+				this.load();
+			}
+		}
 
 		// eslint-disable-next-line class-methods-use-this
 		getCounters() {
@@ -34,6 +41,7 @@
 				if (!Conversation) Conversation = ConversationRef().html;
 
 				const eventUuid = Conversation.getUuid(this.props);
+				this.setState({ eventUuid });
 				const promises = [
 					Conversation.loadConversation({ props: this.props, private: 1 })
 						.then(res => this.setState(res)),

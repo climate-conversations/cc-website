@@ -104,12 +104,26 @@
 			this.facilitators = {};
 			this.load();
 		}
+		componentDidUpdate() {
+			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const reloadKey = Facilitator.getTeamOrFacilUniqueKey(this.props);
+
+			// Reload the conversation and guests if the id has changed
+			if (reloadKey !== this.state.reloadKey) {
+				console.log('Reloading', reloadKey, '!=', this.state.reloadKey)
+				this.setState({ loading: true });
+				this.load();
+			}
+		}
 
 		setHosts = () => {
+			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const reloadKey = Facilitator.getTeamOrFacilUniqueKey(this.props);
+			this.setState({ reloadKey });
+
 			const hostStatus = ['lead', 'interested', 'booked', 'hosted', 'not interested'];
 			const { mode } = this.props.getValues;
 			const filterStatus = ['lead', 'interested', 'booked'];
-			Facilitator = FacilitatorRef().html;
 			const isTeam = Facilitator.isTeamMode(this.props) || (mode === 'full');
 
 			let { hosts } = this;

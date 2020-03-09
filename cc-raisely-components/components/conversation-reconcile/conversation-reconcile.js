@@ -33,11 +33,22 @@
 		componentDidMount() {
 			this.initState();
 		}
+		componentDidUpdate() {
+			if (!Conversation) Conversation = ConversationRef().html;
+			const eventUuid = Conversation.getUuid(this.props);
+			// Reload the conversation and guests if the id has changed
+			if (eventUuid !== this.state.eventUuid) {
+				this.setState({ loading: true });
+				this.initState();
+			}
+		}
 
 		async initState() {
-			if (!Conversation) Conversation = ConversationRef().html;
-			const { props } = this;
 			try {
+				if (!Conversation) Conversation = ConversationRef().html;
+				const eventUuid = Conversation.getUuid(this.props);
+				this.setState({ eventUuid });
+				const { props } = this;
 				await Promise.all([
 					Conversation.loadConversation({ props, private: 1 })
 						.then(conversation => this.setState({ conversation, loading: false })),

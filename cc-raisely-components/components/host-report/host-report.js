@@ -83,6 +83,14 @@
 		componentDidMount() {
 			this.load();
 		}
+		componentDidUpdate() {
+			const eventUuid = get(this.props, 'match.params.event');
+			// Reload the conversation and guests if the id has changed
+			if (this.state.eventUuid !== eventUuid) {
+				this.setState({ loading: true });
+				this.load();
+			}
+		}
 
 		async load() {
 			try {
@@ -95,6 +103,7 @@
 				const eventUuid = this.props.conversation ||
 					get(this.props, 'match.params.event') ||
 					getQuery(get(this.props, 'router.location.search')).event;
+				this.setState({ eventUuid });
 
 				const eventPromise = Conversation.loadConversation({ props: this.props })
 					.then(r => this.setState(r));

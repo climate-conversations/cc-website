@@ -62,11 +62,16 @@
 
 	return class ConversationGuestList extends React.Component {
 		componentDidMount() {
-			this.load()
-				.catch((error) => {
-					console.error(error);
-					this.setState({ error: error.message });
-				});
+			this.load();
+		}
+
+		componentDidUpdate() {
+			if (!Conversation) Conversation = ConversationRef().html;
+			const eventUuid = Conversation.getUuid(this.props);
+			// Reload the conversation and guests if the id has changed
+			if (eventUuid !== this.state.eventUuid) {
+				this.load();
+			}
 		}
 
 		// eslint-disable-next-line class-methods-use-this
@@ -77,23 +82,29 @@
 		}
 
 		async load() {
-			if (!Conversation) Conversation = ConversationRef().html;
-			const eventUuid = Conversation.getUuid(this.props);
+			try {
+				if (!Conversation) Conversation = ConversationRef().html;
+				const eventUuid = Conversation.getUuid(this.props);
+				this.setState({ eventUuid });
 
-			// We must be creating a new conversation
-			if (!eventUuid) {
-				throw new Error('No conversation uuid specified');
-			}
+				// We must be creating a new conversation
+				if (!eventUuid) {
+					throw new Error('No conversation uuid specified');
+				}
 
-			const guests = await this.loadGuests(eventUuid);
+				const guests = await this.loadGuests(eventUuid);
 
-			this.setState({ guests });
-
-			await guests.map(async (guest) => {
-				const { post } = await Conversation.loadSurveys(guest, ['post']);
-				guest.postSurvey = post;
 				this.setState({ guests });
-			});
+
+				await guests.map(async (guest) => {
+					const { post } = await Conversation.loadSurveys(guest, ['post']);
+					guest.postSurvey = post;
+					this.setState({ guests });
+				});
+			} catch (error) {
+				console.error(error);
+				this.setState({ error: error.message || 'An unknown error occurred' });
+			}
 		}
 
 		render() {

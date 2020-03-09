@@ -1,14 +1,28 @@
 (RaiselyComponents, React) => {
 	const { api, Common, Spinner } = RaiselyComponents;
 	const { get } = Common;
-	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save');
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const WhatsAppButton = RaiselyComponents.import('whatsapp-button');
 	let UserSaveHelper;
 
 	return class TeamContact extends React.Component {
 		state = { loading: true };
+		componentDidMount() {
+			console.log('loading')
+			this.load();
+		}
+		componentDidUpdate() {
+			const profileUuid = get(this.props, 'global.current.profile.uuid') || get(this.props, 'match.params.profile');
+			const hasChanged = (profileUuid !== this.state.profileUuid) ||
+				(this.state.mode !== this.mode());
+			if (hasChanged) {
+				this.load();
+			}
+		}
 		async load() {
 			try {
+				const profileUuid = get(this.props, 'global.current.profile.uuid') || get(this.props, 'match.params.profile');
+				this.setState({ profileUuid, mode: this.mode() });
 				const { profile } = await api.quickLoad({ props: this.props, models: ['profile.private'], required: true });
 
 				if (profile.type === 'GROUP') {

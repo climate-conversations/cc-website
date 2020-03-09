@@ -42,6 +42,15 @@
 					this.setState({ loading: false, error: e.message });
 				});
 		}
+		componentDidUpdate() {
+			const categories = this.getCategories();
+
+			// Reload the conversation and guests if the id has changed
+			if (categories !== this.state.categories) {
+				this.setState({ loading: true });
+				this.load();
+			}
+		}
 
 		getCategories() {
 			let { categories } = this.props.getValues();
@@ -61,13 +70,13 @@
 		}
 
 		async load() {
-			const now = new Date().toISOString();
-			const categories = this.getCategories();
-			console.log('Loading upcoming events...`', categories);
-			const { global } = this.props;
-
-
 			try {
+				const now = new Date().toISOString();
+				const categories = this.getCategories();
+				this.setState({ categories });
+				console.log('Loading upcoming events...`', categories);
+				const { global } = this.props;
+
 				let events = await Promise.all(categories.map(async (category) => {
 					let { type } = category;
 					const typeKey = Array.isArray(type) ?
