@@ -17,8 +17,10 @@ function loadClass(filename) {
 	return mod(DummyRaiselyComponents, DummyReact);
 }
 
-const testText = "<h2>Welcome</h2><p>This is <b>bold </b>and&nbsp;<i>italic</i>&nbsp;and <strike>strike</strike></p><ul><li>bullet 1</li><li>bullet 2</li></ul><p><br></p><hr><p><br></p><ol><li>list 1</li><li>list 2</li></ol><p><br></p><p><a href=\"https://climate.sg\" target=\"_blank\">Link with text</a></p><p><br></p><p>This link: <a href=\"http://climate.sg\" target=\"_blank\">climate.sg</a></p>"
+const testText = "<h2>Welcome</h2><div><br></div>First para<div><br></div>Second para<p>This is <b>bold </b>and&nbsp;<i>italic</i>&nbsp;and <strike>strike</strike></p><ul><li>bullet 1</li><li>bullet 2</li></ul><div><br></div><hr><p><br></p><ol><li>list 1</li><li>list 2</li></ol><p><br></p><p><a href=\"https://climate.sg\" target=\"_blank\">Link with text</a></p><p><br></p><p>This link: <a href=\"http://climate.sg\" target=\"_blank\">climate.sg</a></p>"
 const whatsAppText = `Welcome
+First para
+Second para
 This is *bold* and _italic_ and ~strike~
 
 • bullet 1
@@ -35,6 +37,8 @@ This link: climate.sg
 `;
 
 const emailText = `Welcome
+First para
+Second para
 This is bold and italic and strike
 
 • bullet 1

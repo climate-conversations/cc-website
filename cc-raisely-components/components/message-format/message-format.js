@@ -170,7 +170,9 @@
 			{ tag: 'em', start: ' _', end: '_ ' },
 			{ tag: 'strike', start: ' ~', end: '~ ' },
 			{ tag: 'p', start: '\n', end: '\n' },
-			{ tag: 'br', end: '\n' },
+			// BR tag stands alone, should always be \n to account for
+			// malformed html that uses <br> instead of <br/>
+			{ tag: 'br', start: '\n', end: '\n' },
 			{ tag: 'hr', start: '---' },
 			{ tag: 'ul', fn: MessageFormat.listWrapper },
 			{ tag: 'ol', fn: MessageFormat.listWrapper },
@@ -179,7 +181,9 @@
 		],
 		email: [
 			{ tag: 'p', start: '\n', end: '\n' },
-			{ tag: 'br', end: '\n' },
+			// BR tag stands alone, should always be \n to account for
+			// malformed html that uses <br> instead of <br/>
+			{ tag: 'br', start: '\n', end: '\n' },
 			{ tag: 'hr', start: '===' },
 			{ tag: 'ul', fn: MessageFormat.listWrapper },
 			{ tag: 'ol', fn: MessageFormat.listWrapper },
