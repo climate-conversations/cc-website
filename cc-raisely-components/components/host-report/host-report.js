@@ -12,24 +12,33 @@
 	const HIGH_LEVEL = 8;
 
 	const attitudeConditions = [{
-		label: 'now are more likely to talk about climate breakdown',
+		label: 'now is more likely to talk about climate breakdown',
+		plural: 'now are more likely to talk about climate breakdown',
 		fn: ({ pre, post }) => increased(pre, post, 'talkativeness'),
 	}, {
-		label: 'view climate breakdown as a higher priority',
+		label: 'views climate breakdown as a higher priority',
+		plural: 'view climate breakdown as a higher priority',
 		sublabel: '(than they did before the conversation)',
 		fn: ({ pre, post }) => increased(pre, post, 'priority'),
 	}, {
-		label: 'now view climate breakdown as the highest priority',
+		label: 'now views climate breakdown as the highest priority',
+		plural: 'now view climate breakdown as the highest priority',
 		sublabel: "(and they didn't before)",
 		fn: ({ pre, post }) => crossed(pre, post, 'priority', HIGH_LEVEL),
 	}, {
-		label: 'feel a greater sense of agency to act on climate breakdown',
+		label: 'feels more hopeful about our ability to act on climate breakdown',
+		plural: 'feel more hopeful about our ability to act on climate breakdown',
+		fn: ({ pre, post }) => increased(pre, post, 'hope'),
+	}, {
+		label: 'feels a greater sense of agency to act on climate breakdown',
+		plural: 'feel a greater sense of agency to act on climate breakdown',
 		fn: ({ pre, post }) => increased(pre, post, 'agency'),
 	}, {
 		label: 'feels highly empowered',
+		plural: 'feel highly empowered',
 		fn: ({ pre, post }) => crossed(pre, post, 'agency', HIGH_LEVEL),
 	}, {
-		label: 'people would highly recommend Climate Conversations',
+		label: 'would highly recommend Climate Conversations',
 		fn: ({ post }) => get(post, 'detail.private.recommend') >= HIGH_LEVEL,
 	}];
 
@@ -52,11 +61,11 @@
 	 * Returns true if a field has increased between pre and post survey
 	 */
 	function increased(pre, post, field) {
-		// Don't false positive if field is missing
-		if (get(pre, ['detail', 'private', field], 'MISSING') === 'MISSING') return false;
-
 		const before = get(pre, ['detail', 'private', field], 'MISSING');
 		const after = get(post, ['detail', 'private', field], 0);
+
+		// Don't false positive if field is missing
+		if (before === 'MISSING') return false;
 
 		return before < after;
 	}
@@ -69,11 +78,12 @@
 	 * @param {*} threshold value that needs to be crossed
 	 */
 	function crossed(pre, post, field, threshold) {
-		// Don't false positive if field is missing
-		if (get(pre, ['private', field], 'MISSING') === 'MISSING') return false;
 
 		const before = get(pre, ['detail', 'private', field], 'MISSING');
 		const after = get(post, ['detail', 'private', field], 0);
+
+		// Don't false positive if field is missing
+		if (before === 'MISSING') return false;
 
 		return (before < threshold) && (after >= threshold);
 	}
@@ -112,8 +122,7 @@
 
 				const promises = surveys.map(category =>
 					getData(api.interactions.getAll({
-						query: { category, private: 1 },
-						reference: eventUuid,
+						query: { category, private: 1, reference: eventUuid },
 					})));
 				promises.push(eventPromise, rsvpPromise);
 
@@ -164,16 +173,21 @@
 
 			// Match pre with post
 			const matchedSurveys = postSurveys.map(survey => ({
-				pre: preSurveys.find(s => s.userUuid === survey.uuid),
+				pre: preSurveys.find(s => s.userUuid === survey.userUuid),
 				post: survey,
 			}));
 
-			const attitudes = attitudeConditions.map(attitude => (
-				{
+			const attitudes = attitudeConditions.map(attitude => {
+				const calculatedAttribute = {
 					label: attitude.label,
 					sublabel: attitude.sublabel,
 					value: countIf(matchedSurveys, null, attitude.fn),
-				}));
+				};
+				if (attitude.plural && calculatedAttribute.value !== 1) {
+					calculatedAttribute.label = attitude.plural;
+				}
+				return calculatedAttribute;
+			});
 
 			this.setState({ attitudes });
 		}
