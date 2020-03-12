@@ -313,9 +313,9 @@
 			}));
 
 			const urlMap = {
-				gmail: `https://mail.google.com/mail/?view=cm&fs=1&tf=1&bcc=${bcc}&su=${subject}&body=${body}`,
-				yahoo: `http://compose.mail.yahoo.com/?bcc=${bcc}&subject=${subject}&body=${body}`,
-				hotmail: `https://dub130.mail.live.com/default.aspx?rru=compose&subject=${subject}&body=${body}&bcc=${bcc}#page=Compose`,
+				gmail: `https://mail.google.com/mail/?view=cm&fs=1&tf=1&bcc=${bcc}&su=${subject}&body=${encodeURI(body)}`,
+				yahoo: `http://compose.mail.yahoo.com/?bcc=${bcc}&subject=${subject}&body=${encodeURI(body)}`,
+				hotmail: `https://dub130.mail.live.com/default.aspx?rru=compose&subject=${subject}&body=${encodeURI(body)}&bcc=${bcc}#page=Compose`,
 			};
 			const url = urlMap[emailClient];
 			if (url) {
