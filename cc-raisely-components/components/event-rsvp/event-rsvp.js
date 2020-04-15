@@ -153,8 +153,22 @@
 			);
 		}
 
+		renderClosed = (event) => {
+			return (
+				<div className="custom-form--event-rsvp event-rsvp__wrapper">
+					<h3>
+						{`Registration for ${event.name} has closed`}
+					</h3>
+				</div>
+			)
+		}
+
 		render() {
 			const event = this.getEvent();
+
+			if (!get(event, 'public.canRsvp')) {
+				return this.renderClosed(event);
+			}
 
 			if (!CCEvent) CCEvent = CCEventRef().html;
 			const method = CCEvent.getRsvpMethod(event);

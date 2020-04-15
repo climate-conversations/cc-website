@@ -45,8 +45,10 @@
 		componentDidUpdate() {
 			const categories = this.getCategories();
 
+			const hasChanged = (!Array.isArray(this.state.categories)) || categories.find(c => !this.state.categories.includes(c));
+
 			// Reload the conversation and guests if the id has changed
-			if (categories !== this.state.categories) {
+			if (hasChanged) {
 				this.setState({ loading: true });
 				this.load();
 			}
@@ -87,6 +89,7 @@
 						query: {
 							startAtGTE: now,
 							[typeKey]: type,
+							'public.canRsvp': true,
 							limit: 1,
 							campaign: get(global, 'campaign.uuid'),
 						},

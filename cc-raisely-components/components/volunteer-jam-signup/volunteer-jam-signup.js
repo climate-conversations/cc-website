@@ -23,7 +23,7 @@
 			const values = this.props.getValues();
 			const category = values.eventType || 'Volunteer Jam';
 			if (category !== this.state.category) {
-				this.setState({ loading: false });
+				this.setState({ loading: false, category });
 				this.load();
 			}
 		}
@@ -50,6 +50,7 @@
 					query: {
 						startAtGTE: now,
 						'public.eventType': category,
+						'public.canRsvp': true,
 						limit: 1,
 					},
 				}));

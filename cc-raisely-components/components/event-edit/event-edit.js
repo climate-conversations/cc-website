@@ -109,6 +109,7 @@
 					type: 'rich-description',
 					default: '<h5>How should people RSVP</h5>',
 				},
+				'event.canRsvp',
 				'event.signupMethod',
 				'event.rsvpFields',
 				{
