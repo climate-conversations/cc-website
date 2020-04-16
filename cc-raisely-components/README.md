@@ -27,9 +27,9 @@ npx raisely start
 ```
 
 ### Debugging
-To identify the component you need to debug, there are two ways you can identify it: from the admin or from the live site
+To identify the component you need to debug, there are two ways you can identify it: from the admin or from the client (live site)
 
-In the admin
+##### In the admin
 1. Open the page list for the campaign (eg https://admin.raisely.com/campaigns/cc-volunteer-portal/pages)
 2. Open the relevant page in the editor
 3. Hover over the component you want to debug, and click the cog
@@ -37,6 +37,17 @@ In the admin
 5. The corresponding source code should be in ./components/{name}/{name}.js
 
 {name} should be the running the title from step 4 through `_.kebabCase()`
+
+##### In the client
+1. Install the React extension for your browser
+2. Open the page
+3. Open the React Inspector, use the selection pointer to click on the component in the page
+
+The name of the selected component will be the name as used in the source code, so you can find it with
+
+```sh
+grep -i NAME components/*/*.js
+```
 
 
 ### Tests
