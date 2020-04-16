@@ -1237,6 +1237,7 @@ p {
         color: accessibleColor($secondaryColor);
     }
 
+
     &__navigation {
 
         .button {
@@ -1518,16 +1519,23 @@ ul.list__wrapper, .list__wrapper ul {
 		font-size: 2rem;
     margin: 0 0.6rem;
   }
+  &.select {
+    background: $primaryLighter;
+  }
   
   .list__item--title {
     display: flex;
-    flex: 1 1;
+    flex: 2 2;
     flex-direction: column;
     color: black;    
     font-size: 1.4rem;
     font-weight: bold;
     margin-left: 0.5rem;
     margin-right: 0.5rem;
+  }
+  
+  .list__item--small {
+    flex: 1 1;
   }
 
   .list__item--subtitle {
@@ -1543,6 +1551,15 @@ ul.list__wrapper, .list__wrapper ul {
   }
 }
 
+.host-list-header {
+  display: flex !important;
+  border-bottom: 2px solid gray;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  .list__item--small {
+    font-weight: bold;
+  }
+}
 .host-list-item {
   .list__item--title {
     font-size: 1.1rem;
@@ -1558,6 +1575,14 @@ ul.list__wrapper, .list__wrapper ul {
   .host-status {
     margin-right: 0.3rem;
   }
+  .host-list-item__buttons {
+    flex: 1 1;
+  }
+}
+
+ul.host-list {
+  max-height: 60vh;
+  overflow-y: scroll;
 }
 
 .field-help {
@@ -1739,6 +1764,8 @@ ul.list__wrapper, .list__wrapper ul {
     width: 50%;
     display: inline-block;
     vertical-align: top;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   .custom-form-wrapper {
     @include respond-to('min-tablet') {
@@ -1933,4 +1960,173 @@ ul.list__wrapper, .list__wrapper ul {
 ul.contact--form__recipients--whatsapp-list {
     list-style: none;
     padding-left: 0;
+}
+
+.raisely--button {
+  &__logo {
+    vertical-align: middle;
+  }
+}
+
+.team-facil-list__wrapper {
+    display: inline-block;
+    width: 50%;
+    vertical-align: top;
+  	padding-right: 2rem;
+
+  .team-facil-list__list {
+    padding-left: 0;
+    border: 2px solid black;
+    border-radius: $borderRadius;
+    height: 50vh;
+    overflow-y: scroll;
+  }
+  
+    .team-facil-list__photo {
+      max-width: 50%;
+      max-height: 50%;
+      flex: 1 1;
+      margin-right: 0.5rem;
+    }
+    .team-facil-list__name {
+      display: flex;
+      flex: 4 4;
+      flex-flow: column;
+      font-weight: bold;
+    }
+    .team-facil-list__buttons {
+      flex: 2 2;
+    }
+    .team-facil-list__leader {
+      font-weight: normal;
+    }
+}
+
+.no-bullet {
+  list-style: none;
+}
+
+.facil-donations-report--leader-notes--wrapper,
+.conversation--reconcile__wrapper { 
+  .team-leader-notes,
+  .reconcile--facil-notes {
+    border: 1px solid gray;
+    border-radius: $borderRadius;
+    padding: 0.5em;
+    margin: 1em;
+  }
+
+  .reconcile--notes,
+  .reconcile--notes_facil-notes {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .custom-form-wrapper {
+    margin-top: 1rem;
+  }
+  
+  .button.button--primary {
+    box-shadow: none;
+  }
+}
+
+section.message-template-list__section {
+    width: 50%;
+    display: inline-block;
+  	vertical-align: top;
+  
+  .message-template-list__section-description {
+    min-height: 3rem;
+  }
+  
+  ol.message-template-list__list {
+    border: 2px solid black;
+    border-radius: $borderRadius;
+    margin-right: 1.5rem;
+    padding-left: 0;
+    li.message-template-list-item {
+      list-style: none;
+      border-radius: $borderRadius;
+      
+      .message-template-list-item__inner {
+          padding: 1rem;
+          border-bottom: 2px solid black;
+          border-top: 1px solid gray;
+      }
+      .message-template-list-item__subject {
+          border-bottom: 1px solid gray;
+      }
+
+      .message-template-list-item__summary {
+        margin: 0;
+        padding: 0.5rem 1rem;
+        display: flex;
+        flex-flow: row;
+        border-radius: $borderRadius;
+        &:hover {
+          text-decoration: none;
+          background-color: $secondaryLighter;
+        }
+
+        .message-template-list-item__title_buttons {
+            flex: 2 2;
+          	text-align: right;
+        }
+        .message-template-list-item__title {
+          	font-weight: bold;
+            flex: 3 3;
+          .message-template-list-item__title_timing {
+            font-weight: normal;
+          }
+        }
+      }
+    }
+  }
+}
+
+.manage-profile-wrapper {
+  h3 {
+    color: $secondaryDarkest;
+  }
+  .button {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.hint {
+  padding: 1rem;
+  background: $secondaryLightest;
+  margin: 1rem;
+  border-radius: $borderRadius;
+  strong {
+    color: black;
+  }
+}
+
+.reflection--review__message {
+  margin-top: 1rem;
+}
+
+.buttons {
+  text-align: center;
+  .button {
+    display: inline-block;
+    margin-top: 1rem;
+  }
+}
+
+.save-validation {
+  font-size: 0.8rem;
+  margin-left: 1rem;
+  color: gray;
+  .spinner {
+    float: left;
+  }
+}
+
+.host--form__buttons button, .host--form__buttons .modal__button {
+    display: inline-block;
+  margin-bottom: 0.5rem;
 }

@@ -666,6 +666,33 @@ min-height: 5em;
 .postfeed {
   margin-bottom: -1.5rem;
   padding-left: 0;
+  &__item.cancelled,
+  &__item.secret,
+  &__item.draft {
+    .post__meta,
+    .post__image {
+      opacity: 0.5;
+    }
+    &:before {
+			text-transform: capitalize;
+      position: relative;
+      z-index: 1;
+      font-weight: bold; 
+    }
+    .button,
+    .post__title {
+      opacity: 1;
+    }
+  }
+  &__item.cancelled:before {
+      content: 'cancelled';
+  }
+  &__item.secret:before {
+      content: 'hidden';
+  }
+  &__item.draft:before {
+      content: 'draft';
+  }
 
   @for $i from 1 through length($accents) {
     &__item:nth-of-type(#{$i}) {
@@ -1717,5 +1744,25 @@ ul.list__wrapper, .list__wrapper ul {
 #editor-root[data-theme-id="peerToPeer-basic"] {
   .form-field--checkbox {
     border: none,
+  }
+}
+
+.error {
+  background: #ff5a5a;
+  font-weight: bold;
+  padding: 0.5rem;
+  border-radius: $borderRadius;
+  p {
+    font-weight: bold;
+  }
+}
+
+.col--8 .profile-grid--limit-5 .profile-grid__item {
+  width: 100%;
+}
+
+.raisely-logo {
+  img {
+    max-width: 100%;
   }
 }
