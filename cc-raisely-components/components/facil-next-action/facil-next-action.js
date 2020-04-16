@@ -72,7 +72,15 @@
 
 		render() {
 			const { action, loading, error } = this.state;
+			const isAdmin = get(this.props, 'global.user.isAdmin');
 			if (loading) return <div className="next--action__wrapper"><Spinner /></div>;
+			if (!isAdmin) {
+				return (
+					<div className="next--action__wrapper">
+						<p className="error">{`There's`} a problem with your user account. Parts of your dashboard will not work. Please contact an administrator (Error: user is not an admin)</p>
+					</div>
+				)
+			}
 			if (error) {
 				return (
 					<div className="next--action__wrapper">
