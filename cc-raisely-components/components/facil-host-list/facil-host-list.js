@@ -239,6 +239,10 @@
 			const mode = this.getMode();
 			const { mock } = this.props.global.campaign;
 			try {
+				if (!Facilitator) Facilitator = FacilitatorRef().html;
+				const reloadKey = Facilitator.getTeamOrFacilUniqueKey(this.props);
+				this.setState({ reloadKey });
+
 				if (mock) {
 					this.hosts = this.mock();
 				} else if (mode === 'full') {
