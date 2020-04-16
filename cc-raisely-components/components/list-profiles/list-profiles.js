@@ -67,8 +67,9 @@
 		}
 		componentDidUpdate() {
 			const conditions = get(this.props.getValues(), 'conditions', []);
-			this.setState({ conditions: JSON.stringify(conditions) });
-			if (this.state.conditions !== conditions) {
+			const conditionsJSON = JSON.stringify(conditions);
+			if (this.state.conditionsJSON !== conditionsJSON) {
+				this.setState({ conditionsJSON });
 				this.load();
 			}
 		}
