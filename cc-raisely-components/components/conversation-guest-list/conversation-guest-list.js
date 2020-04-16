@@ -61,6 +61,7 @@
 	}
 
 	return class ConversationGuestList extends React.Component {
+		state = { guests: [] }
 		componentDidMount() {
 			this.load();
 		}
@@ -69,6 +70,7 @@
 			if (!Conversation) Conversation = ConversationRef().html;
 			const eventUuid = Conversation.getUuid(this.props);
 			// Reload the conversation and guests if the id has changed
+			console.log('Update', eventUuid, this.state.eventUuid)
 			if (eventUuid !== this.state.eventUuid) {
 				this.load();
 			}
@@ -85,6 +87,8 @@
 			try {
 				if (!Conversation) Conversation = ConversationRef().html;
 				const eventUuid = Conversation.getUuid(this.props);
+				console.log('setState', eventUuid)
+
 				this.setState({ eventUuid });
 
 				// We must be creating a new conversation
@@ -111,6 +115,7 @@
 			if (!this.state) {
 				return <Spinner />;
 			}
+			if (!Conversation) Conversation = ConversationRef().html;
 			const eventUuid = Conversation.getUuid(this.props);
 
 			const { guests, error } = this.state;
