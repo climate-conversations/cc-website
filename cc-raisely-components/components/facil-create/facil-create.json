@@ -3,7 +3,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 1
+            "value": 41
         }
     },
     "uuid": "a1a46fe0-4af6-11ea-b489-6fbd816d9c54"

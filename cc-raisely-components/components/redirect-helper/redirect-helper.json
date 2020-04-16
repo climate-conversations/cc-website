@@ -3,14 +3,14 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 1
-		},
-		"redirectTo": {
+            "value": 14
+        },
+        "redirectTo": {
             "id": "redirectTo",
             "type": "select",
-			"label": "Redirect to ...",
-			"value": "facilitator",
-			"options": [
+            "label": "Redirect to ...",
+            "value": "facilitator",
+            "options": [
                 {
                     "label": "Facilitator Dashboard",
                     "value": "facilitator"

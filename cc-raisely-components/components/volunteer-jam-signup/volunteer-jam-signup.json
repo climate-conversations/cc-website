@@ -7,19 +7,6 @@
             "value": "",
             "singular": null
         },
-        "eventType": {
-            "id": "eventType",
-            "type": "select",
-            "label": "What type of event should be shown?",
-			"value": "Volunteer Jam",
-			"options": [
-				{"label": "Volunteer Jam", "value": "Volunteer Jam"},
-				{"label": "Public Conversation", "value": "Public Conversation"},
-				{"label": "Facilitator Training", "value": "Facilitator Training"},
-				{"label": "Other", "value": "Other"}
-			],
-            "singular": null
-        },
         "colour": {
             "id": "backgroundColour",
             "type": "select",
@@ -91,13 +78,38 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 31
+            "value": 40
         },
         "formName": {
             "id": "formName",
             "type": "text",
             "label": "Fallbck Form Name",
             "value": "",
+            "singular": null
+        },
+        "eventType": {
+            "id": "eventType",
+            "type": "select",
+            "label": "What type of event should be shown?",
+            "value": "Volunteer Jam",
+            "options": [
+                {
+                    "label": "Volunteer Jam",
+                    "value": "Volunteer Jam"
+                },
+                {
+                    "label": "Public Conversation",
+                    "value": "Public Conversation"
+                },
+                {
+                    "label": "Facilitator Training",
+                    "value": "Facilitator Training"
+                },
+                {
+                    "label": "Other",
+                    "value": "Other"
+                }
+            ],
             "singular": null
         },
         "description": {
