@@ -24,7 +24,11 @@
 				if (teams && teams.length) path = teams[0].path;
 			}
 
-			if (!path) path = '/dashboard';
+			if (!path) {
+				path = '/dashboard';
+			} else {
+				path = `/${path}`;
+			}
 
 			this.props.history.push(path);
 		}
