@@ -42,17 +42,7 @@
 					this.setState({ loading: false, error: e.message });
 				});
 		}
-		componentDidUpdate() {
-			const categories = this.getCategories();
 
-			const hasChanged = (!Array.isArray(this.state.categories)) || categories.find(c => !this.state.categories.includes(c));
-
-			// Reload the conversation and guests if the id has changed
-			if (hasChanged) {
-				this.setState({ loading: true });
-				this.load();
-			}
-		}
 
 		getCategories() {
 			let { categories } = this.props.getValues();
