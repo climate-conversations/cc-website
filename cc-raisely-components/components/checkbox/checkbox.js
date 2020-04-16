@@ -1,3 +1,12 @@
+/**
+ * Basic checkbox component for use outside of forms
+ *
+ * Props
+ * - onChange - Function to call on change
+ * - disabled - Disable checkbox
+ * - value - Value of the component, checked if truthy
+ * - label - Label for the checkbox
+ */
 (RaiselyComponents, React) => {
 	return function Checkbox({ label, onChange, value, disabled }) {
 		const labelClass = `form-field__label-text ${disabled ? 'disabled' : ''}`;
