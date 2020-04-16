@@ -1,11 +1,11 @@
-(RaiselyComponents, React) => {
+(RaiselyComponents) => {
 	const { api, Common, Spinner } = RaiselyComponents;
 	const { get } = Common;
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const WhatsAppButton = RaiselyComponents.import('whatsapp-button');
 	let UserSaveHelper;
 
-	return class TeamContact extends React.Component {
+	class TeamContact extends React.Component {
 		state = { loading: true };
 		componentDidMount() {
 			console.log('loading')
@@ -19,7 +19,7 @@
 				this.load();
 			}
 		}
-		async load() {
+		load = async () => {
 			try {
 				const profileUuid = get(this.props, 'global.current.profile.uuid') || get(this.props, 'match.params.profile');
 				this.setState({ profileUuid, mode: this.mode() });
@@ -41,7 +41,7 @@
 			}
 		}
 
-		nouns(facilitator) {
+		nouns = (facilitator) => {
 			const currentUuid = get(this.props, 'current.user.uuid', 'logged-out');
 			if (currentUuid === get(facilitator, 'uuid', 'n/a')) {
 				return {
@@ -56,7 +56,7 @@
 			};
 		}
 
-		renderTeam() {
+		renderTeam = () => {
 			const { teamProfile } = this.state;
 			return (
 				<div className="team-membership-details">
@@ -70,7 +70,7 @@
 				</div>
 			);
 		}
-		renderFacil() {
+		renderFacil = () => {
 			const { teamProfile, facilitator, teamLeader } = this.state;
 			const { you, your } = this.nouns(facilitator);
 			const leaderName = get(teamLeader, 'preferredName') || get(teamLeader, 'fullName');
@@ -96,7 +96,7 @@
 				</React.Fragment>
 			);
 		}
-		mode() {
+		mode = () => {
 			const { show } = this.props.getValues();
 			return show;
 		}
@@ -114,4 +114,6 @@
 			);
 		}
 	};
+
+	return TeamContact;
 };
