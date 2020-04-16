@@ -271,10 +271,12 @@
 			}
 
 			if (!data.event.name) {
-				const rsvps = Object.keys(values[1]).map(key => values[1][key]);
+				const rsvps = Object.keys(values[1] || {}).map(key => values[1][key]);
 				const hosts = rsvps.filter(rsvp => rsvp.email && rsvp.type === 'host')
-				if (!Conversation) Conversation = ConversationRef().html;
-				data.event.name = Conversation.defaultName(hosts);
+				if (hosts.length) {
+					if (!Conversation) Conversation = ConversationRef().html;
+					data.event.name = Conversation.defaultName(hosts);
+				}
 			}
 
 
@@ -303,6 +305,7 @@
 				Object.keys(newRsvps).forEach((key) => {
 					const rsvp = newRsvps[key];
 					if (rsvp.userUuid) {
+						rsvp.eventUuid = record.uuid;
 						toInsert.push(rsvp);
 					}
 				});
@@ -345,6 +348,7 @@
 
 		render() {
 			const steps = this.generateForm();
+
 			return (<CustomForm
 				{...this.props}
 				steps={steps}
