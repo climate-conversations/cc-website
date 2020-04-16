@@ -10,6 +10,7 @@
 	const UserSelect = RaiselyComponents.import('user-select');
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const Messenger = RaiselyComponents.import('message-send-and-save');
+	const ReturnButtonComponent = RaiselyComponents.import('return-button');
 	const ReturnButtonRef = RaiselyComponents.import('return-button', { asRaw: true });
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	let ReturnButton;
@@ -177,14 +178,17 @@
 
 				// Work around API throwing 500 when the results are empty
 				let messages = [];
+				const initStepsPromise = this.initSteps();
 				try {
+
 					[messages] = await Promise.all([
 						UserSaveHelper.proxy(`/interactions?${query}`, {
 							method: 'get',
 						}),
-						this.initSteps(),
 					]);
 				} catch (error) {}
+				// In case the other failed
+				await initStepsPromise;
 				console.log("messages: ", messages)
 				this.setState({ messages });
 				await this.checkCompleteSteps();
@@ -293,11 +297,10 @@
 						this.setState({ saving: true });
 						await updateInteraction(interaction);
 					}
+					this.setState({ saving: false }, this.nextStep);
 				} catch (error) {
 					console.error(error);
-					this.setState({ error: `Could not update: ${error.message}` });
-				} finally {
-					this.setState({ saving: false }, this.nextStep);
+					this.setState({ error: `Could not update: ${error.message}`, saving: false });
 				}
 			}
 		}
@@ -390,6 +393,11 @@
 							<p>We {"haven't"} recorded any messages to this host yet</p>
 						)}
 						View all interactions with the host in Raisely <RaiselyButton recordType="user" uuid={host.uuid} label="View Host" />
+					</div>
+					<div>
+						<ReturnButtonComponent
+							{...this.props} saveTheme="secondary" saveLabel="Return to Dashboard"
+						/>
 					</div>
 				</div>
 			);
