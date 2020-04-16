@@ -1,5 +1,8 @@
 ## Jan 17 Run Issues
-- [ ] Switch everything to monitor prop changes
+- [X] Switch everything to monitor prop changes
+- [ ] Host report look nicer
+- [ ] Last step for team leaders
+- [ ] Populate host report message
 - [X] Conversation details do not contain user?private=1
 - [ ] Photo sync does not work
 - [X] Handlebars substitution
