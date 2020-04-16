@@ -65,12 +65,10 @@
 		componentDidMount() {
 			this.load();
 		}
-		componentDidUpdate() {
-			const newValues = get(this, 'props.values', {});
-			const oldValues = get(this, 'state.values', {});
-			const hasChanged = Object.keys(newValues)
-				.find(key => newValues[key] !== oldValues[key]);
-			if (hasChanged) {
+		componentDidUpdate(prevProps) {
+			const { fields } = this.getConfig();
+
+			if (fields !== this.state.prevFields) {
 				this.setState({ loading: true });
 				this.load();
 			}
@@ -94,35 +92,40 @@
 			this.setState({ fields: resolvedFields });
 		}
 
+		getModelsToLoad() {
+			const values = Object.assign(
+				{},
+				get(this.state, 'values', {}),
+				get(this.props, 'values', {})
+			);
+
+			const { associations, models } = this.getConfig();
+			const valueKeys = Object.keys(values);
+			let associationsToLoad = Array.isArray(associations) ? associations
+				.filter(assoc => !valueKeys.includes(assoc)) : [];
+
+			const modelsToLoad = models
+				.filter(model => !valueKeys.includes(model));
+			return { associationsToLoad, modelsToLoad, values };
+		}
+
 		load = async () => {
 			console.log('DisplayFields.load');
 			try {
-				const { associations, models } = this.getConfig();
+				const { associations, fields } = this.getConfig();
+				this.setState({ prevFields: fields });
 
-				const values = Object.assign(
-					{},
-					get(this.state, 'values', {}),
-					get(this.props, 'values', {})
-				);
+				const { modelsToLoad, associationsToLoad, values } = this.getModelsToLoad(values);
 
-				const valueKeys = Object.keys(values);
-				const modelsToFetch = models
-					.filter(model => !valueKeys.includes(model));
-
-				console.log('Loading: ', models, 'received: ', valueKeys);
-
-				if (modelsToFetch.length) {
+				if (modelsToLoad.length) {
 					Object.assign(values, await api.quickLoad({
-						models: modelsToFetch,
+						models: modelsToLoad,
 						props: this.props,
 						required: true,
 					}));
 				}
 
 				if (Array.isArray(associations)) {
-					const associationsToLoad = associations
-						.filter(assoc => !valueKeys.includes(assoc));
-
 					const loaded = associationsToLoad.map(async ({ uuidFrom, recordType }) => {
 						const uuid = get(values, uuidFrom);
 						if (uuid) {
