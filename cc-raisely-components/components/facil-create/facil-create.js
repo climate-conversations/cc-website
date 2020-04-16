@@ -5,6 +5,7 @@
 	const { getData } = api;
 
 	const UserSelect = RaiselyComponents.import('user-select-wrapper');
+	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
@@ -33,7 +34,7 @@
 
 		reset = () => {
 			this.setState({
-				step: 1,
+				step: 0,
 				user: null,
 				existingTeam: null,
 			});
@@ -112,6 +113,14 @@
 								type="GROUP"
 							/>
 						)}
+					</div>
+
+					<div className="facil-create__profile-wrapper">
+						<p>
+							If you {"can't"} find the facilitator, you may need to add them.
+							Click this button and then click on the New button at the top.
+						</p>
+						<RaiselyButton href="/people" label="Add Person" />
 					</div>
 				</div>
 			);
