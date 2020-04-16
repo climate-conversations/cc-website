@@ -9,6 +9,7 @@
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const ReturnButton = RaiselyComponents.import('return-button');
 	let UserSaveHelper;
 	let Conversation;
 	let Facilitator;
@@ -368,7 +369,8 @@
 					</div>
 					<div>
 						<Button theme="primary" onClick={reset}>Add another Guest</Button>
-						<Button theme="secondary" href={completeHref}>Go back to dashboard</Button>
+						<ReturnButton {...this.props} backTheme="secondary" backLabel="Go back"
+							theme="secondary" href={completeHref}>Go back to dashboard</ReturnButton>
 					</div>
 				</div>
 			);
