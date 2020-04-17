@@ -32,6 +32,7 @@ async function getTagsAndRoles(req) {
 	return {
 		tags: _.get(user, 'data.tags', []).map(t => t.path),
 		roles: _.get(authentication, 'data.roles', []),
+		user: _.get(user, 'data'),
 	};
 }
 
@@ -45,7 +46,7 @@ function matchPath(e, path) {
 }
 
 async function authorize(req, path) {
-	const { tags, roles } = await getTagsAndRoles(req);
+	const { user, tags, roles } = await getTagsAndRoles(req);
 
 	const escalation = escalations.find((e) => {
 		let isMatch = e.method.toLowerCase() === req.method.toLowerCase() && matchPath(e, path);
@@ -64,7 +65,14 @@ async function authorize(req, path) {
 		return false;
 	}
 
-	return escalation;
+	return {
+		...escalation,
+		originalUser: user && {
+			uuid: user.uuid,
+			tags,
+			roles,
+		}
+	};
 }
 
 module.exports = {
