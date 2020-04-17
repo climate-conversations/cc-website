@@ -31,6 +31,7 @@ describe('proxy', () => {
 	before(() => {
 		// Clear the cache on re-runs
 		request.cache.clear();
+		nock.cleanAll();
 	});
 
 	describe('POST /interactions', () => {
