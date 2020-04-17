@@ -29,6 +29,7 @@ function createOriginalHeaders(options, req) {
  * @param {string|object} options.query
  * @param {object} options.body
  * @param {object} options.originalUser uuid of the original user that made the request
+ * @param {string} options.cacheKey If present, the result will be cached using this key (or return the previously cached value)
  * @param {Request} req The original express request
  */
 async function raisely(options, req) {
