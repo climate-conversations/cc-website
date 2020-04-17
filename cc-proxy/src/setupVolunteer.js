@@ -36,13 +36,14 @@ async function setupVolunteer(req) {
 			req,
 		}));
 	} else if (type === 'team-leader') {
-		promises.push(setupTagsAndRoles({ tags: ['team-leader'], roles: ['DATA_ADMIN', 'PROFILE_EDITOR'], req }));
+		promises.push(setupTagsAndRoles({ tags: ['team-leader'], roles: ['DATA_ADMIN', 'PROFILE_EDITOR', 'CAMPAIGN_ADMIN'], req }));
 		promises.push(setupProfile({
 			type: 'GROUP',
 			userUuid,
 			name: teamName,
 			req,
 		}));
+		promises.push(assignPortalCampaign(userUuid, req));
 	}
 
 	await Promise.all(promises);
@@ -50,6 +51,27 @@ async function setupVolunteer(req) {
 	return {
 		status: 'OK',
 	}
+}
+
+/**
+ * Assign the team leader to the portal campaign
+ *
+ * @param {string} userUuid
+ * @param {object} req
+ */
+async function assignPortalCampaign(userUuid, req) {
+	return raiselyRequest({
+		method: 'POST',
+		path: `/users/${userUuid}/assignments`,
+		body: {
+			data: [{
+				recordUuid: process.env.PORTAL_CAMPAIGN_UUID,
+				recordType: 'campaign',
+			}],
+		},
+		escalate: true,
+	}, req);
+
 }
 
 /**

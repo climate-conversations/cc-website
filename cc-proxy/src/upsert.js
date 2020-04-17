@@ -186,7 +186,7 @@ async function upsertUser(req) {
 		});
 	}
 	const { assignSelf } = req.body;
-console.log('RECORD', record)
+
 	let existing;
 	if (!record.uuid) {
 		const promises = [];
