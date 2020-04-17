@@ -34,6 +34,12 @@ module.exports = [
 	path: /\/campaigns\/[a-zA-Z0-9_-]*/,
 	tags: ['team-leader', 'facilitator'],
 },
+{
+	// Let facils and leaders assign records
+	method: 'POST',
+	path: '/assignments',
+	tags: ['team-leader', 'facilitator'],
+},
 /***** Let the public sign up for things ****** */
 {
 	// Let the public signup
