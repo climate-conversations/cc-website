@@ -31,8 +31,8 @@
 	}
 
 	function ProfileItem({ profile, fields, defaultImage }) {
-		const quote = get(profile, 'user.public.quote');
-		const showQuote = fields.includes('user.public.quote') && quote;
+		const quote = get(profile, 'public.quote');
+		const showQuote = fields.includes('public.quote') && quote;
 
 		return (
 			<div className="profile-grid__item">
