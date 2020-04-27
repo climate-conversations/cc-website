@@ -8,9 +8,11 @@
 
 	return class EventBackground extends React.Component {
 		componentDidMount() {
-			return;
-			this.getEvents()
-				.catch(console.error);
+			// Prevent duplicate timers being created
+			if (!(this.interval || this.timeout)) {
+				this.getEvents()
+					.catch(console.error);
+			}
 		}
 		componentWillUnmount() {
 			if (this.interval) {
