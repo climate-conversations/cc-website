@@ -1,15 +1,17 @@
 /* eslint-disable class-methods-use-this */
 (RaiselyComponents, React) => {
-	const CustomForm = RaiselyComponents.import('custom-form');
-	const UserSelect = RaiselyComponents.import('user-select');
-	const RaiselyButton = RaiselyComponents.import('raiely-button');
 
 	const { api } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
 	const { get } = RaiselyComponents.Common;
-	const { getData, getQuery, save } = api;
+	const { getData, getQuery } = api;
 
+	const CustomForm = RaiselyComponents.import('custom-form');
+	const UserSelect = RaiselyComponents.import('user-select');
+	const RaiselyButton = RaiselyComponents.import('raiely-button');
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let UserSaveHelper;
 	let Conversation;
 
 	// eslint-disable-next-line object-curly-newline
@@ -206,6 +208,7 @@
 		 *
 		 */
 		load = async ({ dataToForm }) => {
+			if (!Conversation) Conversation = ConversationRef().html;
 			const query = getQuery(get(this.props, 'router.location.search'));
 			const eventUuid = this.props.eventUuid ||
 				get(this.props, 'match.params.event') ||
@@ -227,12 +230,11 @@
 			}
 
 			// Load event and rsvps
-			const [quickLoads, rsvps] = await Promise.all([
-				api.quickLoad({ props: this.props, models: ['event.private'], required: true }),
+			const [event, rsvps] = await Promise.all([
+				Conversation.loadConversation({ props: this.props, required: true }),
 				this.loadRsvps(eventUuid),
 			]);
 
-			const { event } = quickLoads;
 			this.oldName = event.name;
 			if (addHost) rsvps.push(addHost);
 			this.setState({ rsvps, event });
@@ -247,7 +249,8 @@
 		}
 
 		async loadRsvps(eventUuid) {
-			const rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const rsvps = await UserSaveHelper.proxy(`/events/${eventUuid}?private=1`);
 			return rsvps
 				.filter(({ type }) => type !== 'guest');
 			// eslint-disable-next-line object-curly-newline
@@ -282,12 +285,24 @@
 
 			// workaround broken save
 			let record;
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			if (!data.event.uuid) {
-				record = await getData(save('events', data.event, { partial: true }));
+				record = await UserSaveHelper.proxy(`/events`, {
+					method: 'POST',
+					body: {
+						data: event,
+					},
+				});
 			} else {
 				const event = { ...data.event };
 				delete event.uuid;
-				record = await getData(api.events.update({ id: data.event.uuid, data: { data: event, partial: true } }));
+				record = await UserSaveHelper.proxy(`/events/${data.event.uuid}`, {
+					method: 'PATCH',
+					body: {
+						partial: true,
+						data: event,
+					},
+				});
 			}
 
 			this.setState({ event: record });
@@ -327,10 +342,10 @@
 						toDelete.push(rsvp);
 					}
 				});
-				promises.push(...toDelete.map(rsvp => getData(api.eventRsvps.delete({ id: rsvp.uuid }))));
+				promises.push(...toDelete.map(rsvp => UserSaveHelper.proxy(`/event_rsvps/${rsvp.uuid}`, { method: 'DELETE' })));
 			}
 
-			promises.push(toInsert.map(rsvp => getData(api.eventRsvps.create({ data: rsvp }))));
+			promises.push(toInsert.map(rsvp => UserSaveHelper.proxy(`/event_rsvps`, { method: 'DELETE', body: { data: rsvp } })));
 
 			return Promise.all(promises);
 		}

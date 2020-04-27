@@ -29,6 +29,22 @@
 		postSurvey: 'cc-post-survey-2020',
 	};
 
+	async function loadModel({ props, required, private: isPrivate, model }) {
+		try {
+			const uuid = get(props, `match.params.${model}`);
+			let url = `/${plural(model)}/${uuid}`;
+			if (isPrivate) url += '?private=1';
+
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const conversation = await UserSaveHelper.proxy(url, {});
+			return conversation;
+		} catch (e) {
+			if (required) throw e;
+			console.error(e);
+			return { error: e.message, errorObject: e };
+		}
+	}
+
 	return class Conversation extends React.Component {
 		static getReflectionCategory() {
 			return reflectionCategory;
@@ -86,15 +102,12 @@
 		 * @param {boolean} opts.private Is the private event required?
 		 * @return {object} The conversation that's loaded
 		 */
-		static async loadConversation({ props, private: isPrivate }) {
-			try {
-				const models = [`event${isPrivate ? '.private' : ''}`];
-				const { event: conversation } = await quickLoad({ models, required: true, props });
-				return conversation;
-			} catch (e) {
-				console.error(e);
-				return { error: e.message, errorObject: e };
-			}
+		static async loadConversation(options) {
+			return loadModel({ ...options, model: 'event' })
+		}
+
+		static async loadRsvp(options) {
+			return loadModel({ ...options, model: 'eventRsvp' })
 		}
 
 		/**
@@ -121,7 +134,8 @@
 					get(props, 'match.params.event') ||
 					getQuery(get(props, 'router.location.search')).event;
 
-				result.rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
+				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+				result.rsvps = await UserSaveHelper.proxy('/event_rsvps', { query: { event: eventUuid, private: 1 } });
 				if (types) types.forEach((key) => { result[key] = []; });
 				result.rsvps.forEach((rsvp) => {
 					// Work around an api bug

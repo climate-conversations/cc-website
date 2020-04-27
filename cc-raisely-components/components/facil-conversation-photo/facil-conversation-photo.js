@@ -7,6 +7,8 @@
 	const { get } = RaiselyComponents.Common;
 
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
 	let UserSaveHelper;
 
 	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
@@ -21,8 +23,9 @@
 		}
 
 		load = async ({ dataToForm }) => {
-			const records = await api.quickLoad({ props: this.props, required: true, models: ['event.private'] });
-			return dataToForm(records);
+			if (!Conversation) Conversation = ConversationRef().html;
+			const event = await Conversation.loadConversation({ props: this.props, required: true, private: true });
+			return dataToForm({ event });
 		}
 
 		async save(values, formToData) {

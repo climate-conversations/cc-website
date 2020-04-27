@@ -1,8 +1,7 @@
 (RaiselyComponents, React) => {
 	const { Icon, Button } = RaiselyComponents.Atoms;
 	const { get, dayjs } = RaiselyComponents.Common;
-	const { api, Spinner, Link } = RaiselyComponents;
-	const { getData } = api;
+	const { Spinner, Link } = RaiselyComponents;
 
 	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
 	let Facilitator;

@@ -76,13 +76,6 @@
 			}
 		}
 
-		// eslint-disable-next-line class-methods-use-this
-		async loadGuests(eventUuid) {
-			const rsvps = await getData(api.eventRsvps.getAll({ query: { event: eventUuid, private: 1 } }));
-			return rsvps
-				.filter(({ type }) => type === 'guest');
-		}
-
 		async load() {
 			try {
 				if (!Conversation) Conversation = ConversationRef().html;
@@ -96,7 +89,7 @@
 					throw new Error('No conversation uuid specified');
 				}
 
-				const guests = await this.loadGuests(eventUuid);
+				const { guests } = await Conversation.loadRsvps({ props: this.props });
 
 				this.setState({ guests });
 

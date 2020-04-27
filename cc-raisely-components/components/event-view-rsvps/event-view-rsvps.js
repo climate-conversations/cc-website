@@ -51,7 +51,7 @@ With gratitude,
 					({ event, rsvps } = this.mock());
 				} else {
 					({ event } = await api
-						.quickLoad({ props: this.props, models: ['event'], required: true }));
+						.quickLoad({ props: this.props, models: ['event.private'], required: true }));
 
 					rsvps = await getData(api.eventRsvps.getAll({ query: { event: event.uuid, private: 1 } }));
 				}

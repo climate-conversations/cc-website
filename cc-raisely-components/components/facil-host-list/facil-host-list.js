@@ -17,6 +17,8 @@
 
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
+	const UserHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let UserHelper;
 	let Facilitator;
 
 	const icons = {
@@ -134,6 +136,7 @@
 				hosts = hosts
 					.filter(filter)
 			}
+			if (!UserHelper) UserHelper = UserHelperRef().html;
 			hosts.forEach((host) => {
 				// Ensure visible hosts have conversation
 				if (!host.conversation) {
@@ -143,7 +146,7 @@
 						// Multiple hosts may come from the same conversation
 						// so cache the promise to retrieve so we only fetch it
 						// once, and add a then callback to the promise for each host
-						const makePromise = () => getData(api.events.get({ id: uuid }))
+						const makePromise = () => UserHelper.proxy(`/evets/${uuid}`)
 								.catch(e => this.setState({ error: e }));
 						cachedPromise('conversation', uuid, makePromise)
 							.then((c) => {
@@ -157,7 +160,7 @@
 					host.facilitator = this.facilitators[facilUuid];
 					if (!host.facilitator && facilUuid) {
 						host.facilitator = true;
-						const makePromise = () => getData(api.users.get({ id: facilUuid /*, query: { private: true } */}))
+						const makePromise = () => UserHelper.proxy(`/evets/${facilUuid}`)
 							.then(facilitator => this.facilitators[facilUuid] = facilitator);
 						cachedPromise('faciltiator', facilUuid, makePromise)
 							.then(host.facilitator = this.facilitators[facilUuid]);
@@ -216,7 +219,7 @@
 
 		async loadAll() {
 			const [intention] = await Promise.all([
-				this.hosts = getData(api.interactions.getAll({
+				getData(api.interactions.getAll({
 					query: {
 						private: 1,
 						category: 'host-interest',

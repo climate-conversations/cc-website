@@ -20,9 +20,8 @@
 					Facilitator.getFacilitatorProfile(this.props),
 					getData(api.users.authenticate())
 				]);
-				console.log('Authenticate', authenticate);
 				const isAdmin = get(authenticate, 'roles', []).includes('ORG_ADMIN');
-				this.setState({ profile, teams });
+				this.setState({ profile, teams, isAdmin });
 			} catch (e) {
 				this.setState({ error: e.message || 'Failed to load' });
 			}
@@ -62,9 +61,7 @@
 		}
 
 		render() {
-			const { error, profile, teams } = this.state;
-			// FIXME set this once we've resolved facil and team leader permissions
-			const isAdmin = false;
+			const { error, profile, teams, isAdmin } = this.state;
 			return (
 				<div className="row__container manage-profile-wrapper">
 					{profile ? this.renderFacil(profile) : ''}

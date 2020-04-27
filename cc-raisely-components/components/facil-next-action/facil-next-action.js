@@ -2,7 +2,9 @@
 	const { dayjs, get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
-	const { getData } = api;
+
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let UserSaveHelper;
 
 	const processConversation = conversation => ({
 		description: `Let's process ${conversation.name}`,
@@ -31,7 +33,8 @@
 			try {
 				const now = dayjs();
 
-				const rsvps = await getData(api.eventRsvps.getAll({
+				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+				const rsvps = await UserSaveHelper.proxy('/event_rsvps', {
 					query: {
 						type: 'facilitator',
 						private: 1,
@@ -39,7 +42,7 @@
 						// Show oldest first
 						order: 'ASC',
 					},
-				}));
+				});
 
 				const conversations = rsvps.map(rsvp => rsvp.event);
 				const upcomingConversations = conversations

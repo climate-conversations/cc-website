@@ -6,6 +6,11 @@
 	const { getData, save } = api;
 	const { get } = RaiselyComponents.Common;
 
+	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const UserSaveHelperRef = RaiselyComponents.import('conversation', { asRaw: true });
+	let Conversation;
+	let UserSaveHelper;
+
 	const showTransferPage = values =>
 		get(values, '0.private.cashReceived') ||
 		get(values, '0.private.cashReceivedAmount');
@@ -41,15 +46,24 @@
 		}
 
 		load = async ({ dataToForm }) => {
-			const records = await api.quickLoad({ props: this.props, required: true, models: ['event.private'] });
-			this.setState(records);
-			return dataToForm(records);
+			if (!Conversation) Conversation = ConversationRef().html;
+			const event = await Conversation.loadConversation({ props: this.props, required: true, private: 1 });
+			this.setState({ event });
+			return dataToForm({ event });
 		}
 
 		async save(values, formToData) {
 			console.log('Saving');
 			const data = formToData(values);
 			const { event } = data;
+			if (!UserSaveHelper) UserSaveHelperRef().html;
+			UserSaveHelper.proxy(`/events/${event.uuid}`, {
+				method: 'PATCH',
+				body: {
+					partial: true,
+					data: event,
+				}
+			})
 			return getData(save('event', event, { partial: true }));
 		}
 

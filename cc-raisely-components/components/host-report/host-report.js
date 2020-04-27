@@ -2,7 +2,7 @@
 (RaiselyComponents, React) => {
 	const { get } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
-	const { getQuery, getData, quickLoad } = api;
+	const { getQuery, getData } = api;
 
 	const Messenger = RaiselyComponents.import('message-send-and-save');
 	const ReturnButton = RaiselyComponents.import('return-button');

@@ -1,13 +1,15 @@
 (RaiselyComponents, React) => {
 	const { Link, Spinner, api } = RaiselyComponents;
-	const { getData, getQuery } = RaiselyComponents.api;
+	const { getQuery } = RaiselyComponents.api;
 	const { Icon } = RaiselyComponents.Atoms;
 	// eslint-disable-next-line object-curly-newline
 	const { dayjs, get, pick, set } = RaiselyComponents.Common;
 
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	let Conversation;
+	let UserSaveHelper;
 
 	/** NOTE: See the checklist definition below which defines items on the checklist */
 
@@ -199,10 +201,14 @@
 					set(conversation, 'private.isProcessed', true);
 					set(conversation, 'private.processedAt', new Date().toISOString());
 				}
-				await getData(api.events.update({
-					id: conversation.uuid,
-					data: { data: pick(conversation, ['private']), partial: true },
-				}));
+				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+				await UserSaveHelper.proxy(`/events/${conversation.uuid}`, {
+					method: 'PATCH',
+					body: {
+						data: pick(conversation, ['private']),
+						partial: true
+					}
+				});
 			}
 			this.setDoNext();
 			this.setState({ loading: false });
@@ -222,7 +228,8 @@
 				// frequently when processing a conversation)
 				this.setHrefs(uuid);
 
-				const eventPromise = api.quickLoad({ props: this.props, models: ['event.private'], required: true });
+				if (!Conversation) ConversationRef().html;
+				const eventPromise = Conversation.loadConversation({ props: this.props, private: 1, required: true });
 
 				this.setKnownCompletedSteps(eventPromise);
 

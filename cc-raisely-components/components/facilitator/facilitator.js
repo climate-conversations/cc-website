@@ -6,6 +6,9 @@
 	const { get } = Common;
 	const { getData } = api;
 
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let UserSaveHelper;
+
 	return class Facilitator extends React.Component {
 		/**
 		 * Return the team profile to which a facilitator belongs
@@ -23,6 +26,8 @@
 		}
 
 		/**
+		 * Return the user records for all the facilitators in a team
+		 *
 		 * @param {string} teamUuid Uuid of a team profile record
 		 * @returns {User[]} User records for facils in the team leaders team
 		 */
@@ -40,6 +45,7 @@
 		/**
 		 * Selects facils in the leaders teams. Note, if the leader has more than one team
 		 * chooses the first team returned by /profiles?user=:leaderUuid
+		 *
 		 * @param {string} leaderUuid Uuid of the team leader's user record
 		 * @returns {User[]} User records for facils in the team leaders team
 		 */
@@ -74,7 +80,7 @@
 		/**
 		 * Calls isTeamMode to determine if the component should render for team
 		 * members or the current user, and returns the appropriate uuids for
-		 * either the user or team members
+		 * either the user record or that of the team members
 		 * @param {object} props The component props
 		 * @return {User[]}
 		 */
@@ -100,14 +106,15 @@
 		 *
 		 */
 		static async loadConversations(campaignUuid, userUuid) {
-			const rsvps = await getData(api.eventRsvps.getAll({
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const rsvps = await UserSaveHelper.proxy('/event_rsvps', {
 				query: {
 					user: userUuid,
 					type: 'facilitator,co-facilitator',
 					private: 1,
 					campaign: campaignUuid,
 				},
-			}));
+			});
 			const conversations = rsvps.map((rsvp) => {
 				// eslint-disable-next-line no-param-reassign
 				rsvp.event.facilitator = rsvp.user;

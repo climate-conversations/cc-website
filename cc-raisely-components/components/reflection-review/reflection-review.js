@@ -1,7 +1,6 @@
 (RaiselyComponents, React) => {
-	const { api, Spinner } = RaiselyComponents;
+	const { Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
-	const { getData } = api;
 	const { get } = RaiselyComponents.Common;
 
 	const Messenger = RaiselyComponents.import('message-send-and-save');
@@ -18,6 +17,7 @@
 			this.load();
 		}
 		componentDidUpdate() {
+			const { props } = this;
 			if (!Conversation) Conversation = ConversationRef().html;
 			const uuid = Conversation.getUuid(props);
 			if (uuid !== this.state.conversationUuid) {

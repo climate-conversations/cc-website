@@ -17,6 +17,7 @@
  */
 (RaiselyComponents) => {
 	const { getCurrentToken } = RaiselyComponents.api;
+	const { qs } = RaiselyComponents.Common;
 
 	const proxyUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/proxy';
 	const upsertUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/upsertUser';
@@ -37,6 +38,12 @@
 					'Content-Type': 'application/json',
 				},
 			}, options);
+
+			if (opts.query) {
+				const queryStr = qs.stringify(opts.query);
+				url = `${url}?${queryStr}`;
+				delete opts.query;
+			}
 
 			try {
 				// Send the users token for authorization
@@ -109,10 +116,10 @@
 		 * @param {object} record
 		 * @returns {object} A limited version of the user record
 		 */
-		static async upsertUser(record) {
+		static async upsertUser(record, options) {
 			return this.doFetch(upsertUrl, {
 				method: 'post',
-				body: { data: record },
+				body: { data: record, ...options },
 			});
 		}
 	};

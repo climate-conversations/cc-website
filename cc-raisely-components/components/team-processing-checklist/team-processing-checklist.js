@@ -228,16 +228,15 @@
 				// frequently when processing a conversation)
 				this.setHrefs(uuid);
 
-				const eventPromise = api.quickLoad({ props: this.props, models: ['event.private'], required: true });
+				const eventPromise = Conversation.loadConversation({ props: this.props, required: true });
 
 				this.setKnownCompletedSteps(eventPromise);
 
 				// Fetch rsvps
-				const [records, rsvps] = await Promise.all([
+				const [conversation, rsvps] = await Promise.all([
 					eventPromise,
 					getData(api.eventRsvps.getAll({ query: { event: uuid } })),
 				]);
-				const { event: conversation } = records;
 
 				const completedSteps = await this.checkCompletedSteps(conversation, rsvps);
 				await this.updateComplete(conversation, completedSteps);

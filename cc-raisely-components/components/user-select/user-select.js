@@ -5,6 +5,9 @@
 	const { Spinner } = RaiselyComponents;
 	const { getData } = RaiselyComponents.api;
 
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let UserSaveHelper;
+
 	const queryHelper = data => ({
 		...data,
 		limit: 5,
@@ -31,7 +34,7 @@
 		search = debounce(
 			(value) => {
 				this.setState({ loading: true });
-				getData(this.props.request(value))
+				this.props.request(value)
 					.then(data => this.setState({
 						items: data.map(i => ({ value: i, label: i })),
 						loading: false,
@@ -58,6 +61,7 @@
 			return this.state.items
 				.map((item, index) => (
 					<li
+						key={item.value.uuid}
 						className="user-select__list-item list__item"
 						{...getItemProps({
 							key: item.value.uuid,
@@ -95,6 +99,18 @@
 		state = {
 			searchValue: '',
 		}
+
+		findUser = async value => {
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			// FIXME, if they don't have access to the user it should
+			// prompt them to request access
+			return UserSaveHelper.proxy('/search', {
+				query: queryHelper({
+					q: value,
+					recordTypes: 'user',
+				}),
+			})
+		};
 
 		render() {
 			const { label } = this.props;
@@ -135,12 +151,7 @@
 										getMenuProps={getMenuProps}
 										inputValue={this.state.searchValue}
 										getItemProps={getItemProps}
-										request={value => this.props.api.search.get({
-											query: queryHelper({
-												q: value,
-												recordTypes: 'user',
-											}),
-										})}
+										request={this.findUser}
 									/>
 								) : null}
 							</div>

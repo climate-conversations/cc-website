@@ -15,23 +15,30 @@
 	class NativeRsvp extends React.Component {
 		state = { loading: true };
 
+		componentDidMount() {
+			this.buildSteps();
+		}
+
 		componentDidUpdate() {
 			const event = staticGetEvent(this.props);
 			if (event !== this.state.event) this.setState({ event }, this.buildSteps);
 		}
 
-		componentDidMount() {
+		getUser = () => {
 			const { example } = this.props;
 			const { mock } = this.props.global.campaign;
-
 			const user = (example || mock) ? null : get(this.props, 'global.user');
-			// Save the current user, if any on the state
-			// to be used to decide if we need to show user fields
-			this.setState({ user }, this.buildSteps);
+
+			return !this.state.skipUser && user;
+		}
+
+		getUserUuid = () => {
+			const user = this.getUser();
+			return user && user.uuid;
 		}
 
 		buildSteps = () => {
-			const { user } = this.state;
+			const user = this.getUser();
 			const { event } = this.props;
 			if (!CCEvent) CCEvent = CCEventRef().html;
 			const rsvpFields = CCEvent.getRsvpFields(event, user);
@@ -45,9 +52,12 @@
 		}
 
 		save = async (values, formToData) => {
-			const { event_rsvp: eventRsvp, user: userUpdate } = formToData(values);
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			const formData = formToData(values);
+			const { user: userUpdate } = formData;
+			let eventRsvp = formData.event_rsvp || {};
 			const { event } = this.props;
-			const existingUser = this.state.user || {};
+			const existingUser = this.getUser() || {};
 			let user = existingUser;
 			const source = get(eventRsvp, 'private.source');
 			if (userUpdate && Object.keys(userUpdate).length) {
@@ -56,7 +66,6 @@
 					...userUpdate,
 					source,
 				};
-				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 				user = await UserSaveHelper.upsertUser(userToSave);
 			}
 
@@ -74,11 +83,12 @@
 		}
 
 		// Remove user from the state to create a new user from the RSVP
-		signOut = () => this.setState({ user: null }, this.buildSteps);
+		signOut = () => this.setState({ skipUser: true }, this.buildSteps);
 
 		render() {
-			const { steps, user, loading } = this.state;
+			const { steps, loading } = this.state;
 			const { example, event } = this.props;
+			const user = this.getUser();
 
 			if (!(event || loading)) {
 				return (
@@ -109,7 +119,7 @@
 							<Button onClick={this.signOut}>{"I'm not"} {user.preferredName}</Button>
 						</div>
 					) : ''}
-					<CustomForm {...{ ...props }} />
+					<CustomForm {...{ ...props }} key={this.getUserUuid()} />
 				</div>
 			);
 		}

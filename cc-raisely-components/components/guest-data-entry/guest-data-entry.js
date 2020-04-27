@@ -3,7 +3,7 @@
 	const { Button, Icon } = RaiselyComponents.Atoms;
 	const { get, set } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
-	const { getCurrentToken, getData, quickLoad } = api;
+	const { getCurrentToken } = api;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
@@ -109,14 +109,14 @@
 		}
 
 		load = async () => {
-			const data = await quickLoad({
-				models: ['event.private'],
+			const event = await Conversation.loadConversation({
 				props: this.props,
 				required: true,
+				private: true,
 			});
 
 			const eventUuid = get(this.props, 'match.params.event');
-			this.setState({ event: data.event, eventUuid });
+			this.setState({ event, eventUuid });
 		}
 
 		save = async (values, formToData) => {
@@ -146,7 +146,7 @@
 			}
 
 			console.log('Upserting user', data.user);
-			const user = await UserSaveHelper.upsertUser(data.user);
+			const user = await UserSaveHelper.upsertUser(data.user, { selfAssign: true });
 			// temporary fix for upsert not returning an email
 			if (!user.email) user.email = data.user.email;
 
@@ -169,9 +169,8 @@
 				.filter(s => s)
 				.map(record => {
 					console.log(`Saving survey ${record.categoryUuid}`, record);
-					return api.interactions.create({ data: record })
-				})
-				.map(getData);
+					return UserSaveHelper.proxy('/interactions', { method: 'POST', body: { data: record } });
+				});
 
 			if (get(data, `interaction.${surveyCategories.postSurvey}.detail.private.host`)) {
 				const hostData = {
@@ -187,9 +186,7 @@
 					},
 				};
 				console.log('Saving host', hostData)
-				promises.push(getData(api.interactions.create({
-					data: hostData,
-				})));
+				promises.push(UserSaveHelper.proxy('/interactions', { method: 'POST', body: { data: hostData } }));
 			}
 
 			// eslint-disable-next-line camelcase
@@ -202,7 +199,7 @@
 
 			console.log('Saving guest rsvp', data.event_rsvp);
 			promises.push(
-				getData(api.eventRsvps.create({ data: data.event_rsvp }))
+				UserSaveHelper.proxy('/event_rsvps', { method: 'POST', body: { data: data.event_rsvp } })
 					.then(rsvp => this.setState({ rsvpUuid: rsvp.uuid }))
 			);
 
@@ -230,9 +227,13 @@
 						currency: 'SGD',
 					};
 					console.log('Saving donation', donation);
-					promises.push(getData(api.donations.create({
-						data: donation,
-					})));
+					promises.push(
+						UserSaveHelper.proxy('/donations', {
+							method: 'POST',
+							body: {
+								data: donation
+							},
+						}));
 				}));
 			}
 
@@ -246,7 +247,10 @@
 
 				console.log('Creating tentative new conversation', data.event);
 
-				const promise = getData(api.events.create({ data: data.event }))
+				const promise = UserSaveHelper.proxy('/events', {
+					method: 'POST',
+					body: { data: data.event },
+				})
 					// Add the facil and host to the conversation
 					.then((event) => {
 						const hostRsvp = {
@@ -262,12 +266,8 @@
 
 						console.log('Assigning host and facilitator to conversation', hostRsvp, facilitatorRsvp);
 						return Promise.all([
-							getData(api.eventRsvps.create({
-								data: hostRsvp,
-							})),
-							getData(api.eventRsvps.create({
-								data: facilitatorRsvp,
-							})),
+							UserSaveHelper.proxy('/event_rsvps', { method: 'POST', body: { data: hostRsvp } }),
+							UserSaveHelper.proxy('/event_rsvps', { method: 'POST', body: { data: facilitatorRsvp } }),
 						]);
 					});
 				promises.push(promise);
