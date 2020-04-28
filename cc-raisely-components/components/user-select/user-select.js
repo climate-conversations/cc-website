@@ -3,7 +3,6 @@
 
 	const { debounce, Downshift } = RaiselyComponents.Common;
 	const { Spinner } = RaiselyComponents;
-	const { getData } = RaiselyComponents.api;
 
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	let UserSaveHelper;
@@ -34,7 +33,7 @@
 		search = debounce(
 			(value) => {
 				this.setState({ loading: true });
-				getData(this.props.request(value))
+				this.props.request(value)
 					.then(data => this.setState({
 						items: data.map(i => ({ value: i, label: i })),
 						loading: false,

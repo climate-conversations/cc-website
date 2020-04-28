@@ -3,7 +3,7 @@
 	const { Button, Icon } = RaiselyComponents.Atoms;
 	const { get, set } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
-	const { getCurrentToken, getData, quickLoad } = api;
+	const { getCurrentToken } = api;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
@@ -247,10 +247,10 @@
 
 				console.log('Creating tentative new conversation', data.event);
 
-				const promise = getData(UserSaveHelper.proxy('/events', {
+				const promise = UserSaveHelper.proxy('/events', {
 					method: 'POST',
 					body: { data: data.event },
-				}))
+				})
 					// Add the facil and host to the conversation
 					.then((event) => {
 						const hostRsvp = {
@@ -266,8 +266,8 @@
 
 						console.log('Assigning host and facilitator to conversation', hostRsvp, facilitatorRsvp);
 						return Promise.all([
-							getData(UserSaveHelper.proxy('/event_rsvps', { method: 'POST', body: { data: hostRsvp } })),
-							getData(UserSaveHelper.proxy('/event_rsvps', { method: 'POST', body: { data: facilitatorRsvp } })),
+							UserSaveHelper.proxy('/event_rsvps', { method: 'POST', body: { data: hostRsvp } }),
+							UserSaveHelper.proxy('/event_rsvps', { method: 'POST', body: { data: facilitatorRsvp } }),
 						]);
 					});
 				promises.push(promise);
