@@ -34,7 +34,7 @@
 		search = debounce(
 			(value) => {
 				this.setState({ loading: true });
-				this.props.request(value)
+				getData(this.props.request(value))
 					.then(data => this.setState({
 						items: data.map(i => ({ value: i, label: i })),
 						loading: false,
