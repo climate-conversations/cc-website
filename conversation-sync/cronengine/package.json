@@ -15,6 +15,6 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "airblast": "^0.2.0"
+    "airblast": "^0.2.1"
   }
 }
