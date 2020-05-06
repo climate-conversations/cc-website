@@ -6,7 +6,7 @@ const tzc = require('timezonecomplete');
 const tagsToSync = ['Facilitator', 'Team Leader', 'Coordinator', 'Corporate', 'Government', 'Partner', 'Supportive']
 	.map(n => _.kebabCase(n));
 
-function mailchimpPayload(person, vip) {
+function mailchimpPayload(person, vip, listInterests) {
 	const fieldMap = {
 		FNAME: 'firstName',
 		PNAME: 'preferredName',
@@ -17,20 +17,44 @@ function mailchimpPayload(person, vip) {
 
 	const values = {
 		vip,
-
-		merge_fields: {
-			// HOST: _.get(person, 'private.host'),
-			// VOLUNTEER: _.get(person, 'private.volunteer'),
-			// HOSTCORPORATE: _.get(person, 'private.hostCorporate'),
-			// FACILITATE: _.get(person, 'private.facilitate'),
-			// NEWSLETTER: _.get(person, 'private.newsleter'),
-		},
+		merge_fields: {},
+		intersts: {},
 	};
+
+	const interestMap = {
+		Host: 'private.host',
+		Volunteer: 'private.volunteer',
+		'Host Corporate': 'private.hostCorporate',
+		Facilitate: 'private.facilitate',
+		MailingList: 'private.mailingList',
+	};
+
+	// Mailchimp needs interests in the form [id]: true/false
+	// So we need to find the interests by name to retrieve their id
+	_.forEach(interestMap, (path, name) => {
+		const interest = listInterests.find(i => i.name.toLowerCase() === name.toLowerCase());
+		if (interest) {
+			const value = _.get(person, path);
+			// Set the key only if it's explicitly set
+			// if it's not, just ignore it
+			if (value || value === false) values.interests[interest.id] = !!value;
+		}
+	});
 
 	_.forEach(fieldMap, (path, key) => {
 		const value = _.get(person, path);
 		if (value) values.merge_fields[key] = value;
 	});
+
+	// Save donor stats if present
+	if (person.donorStats) {
+		Object.assign(values.merge_fields, {
+			LASTGIFTON: new tzc.DateTime(person.donorStats.lastGiftAt).format('YYYY-MM-dd'),
+			LASTGIFT: person.donorStats.lastGiftDollars,
+			TOTALGIFTS: person.donorStats.total,
+		});
+	}
+
 	if (_.get(person, )) values.merge_fields.BIRTHDAY = new tzc.DateTime(person.private.dateOfBirth).format('MM/dd');
 
 	return values;
@@ -43,8 +67,15 @@ class MailchimpService {
 		this.mailchimp = new Mailchimp(key);
 	}
 
-	async addToList(person, listId, vip) {
-		const payload = mailchimpPayload(person, vip);
+	async loadInterests(listId) {
+		const interestCategories = await this.mailchimp.get(`/lists/${listId}/interest-categories`);
+		const category = interestCategories.categories.find(ic => ic.title === 'Interests');
+		const interests = await this.mailchimp.get(`/lists/${listId}/interest-categories/${category.id}/interests`);
+		return interests.interests;
+	}
+
+	async addToList(person, listId, vip, interests) {
+		const payload = mailchimpPayload(person, vip, interests);
 		const signupDate = new tzc.DateTime(person.createdAt).convert(tzc.TimeZone.utc()).format('yyyy-MM-dd HH:mm:ss')
 
 		console.log(`Mailchimp: Add ${person.uuid} to list ${listId}`, signupDate, payload.merge_fields.PHONE);
@@ -67,7 +98,11 @@ class MailchimpService {
 		});
 	}
 
-	async setTags(person, personExistingTags, listId) {
+	async setTags(person, listId, personExistingTags) {
+		if (!person.tags) {
+			console.log('No tags present, skipping');
+			return;
+		}
 		const hash = personHash(person);
 		personExistingTags.forEach(t => { t.kebabName = _.kebabCase(t.name) });
 		const personTags = person.tags.map(t => _.kebabCase(t.path));
@@ -123,9 +158,12 @@ class MailchimpService {
 	}
 
 	async syncPersonToList(person, listId, vip) {
+		const interests = await this.loadInterests(listId);
+
 		const hash = personHash(person);
 		let listEntry;
 		let shouldUpdate = false;
+		// True if the person is successfully subscribed and we can tag and add interests to them
 		let canTag = true;
 		try {
 			listEntry = await this.mailchimp.get(`/lists/${listId}/members/${hash}`);
@@ -136,7 +174,7 @@ class MailchimpService {
 		} catch (e) {
 			// Person is not in the list
 			if (e.status == 404) {
-				listEntry = await this.addToList(person, listId, vip);
+				listEntry = await this.addToList(person, listId, vip, interests);
 			} else {
 				// Unknown error, throw it
 				throw e;
@@ -145,12 +183,12 @@ class MailchimpService {
 		if (shouldUpdate) {
 			// Try and resubscribe it they're not already
 			if (listEntry.status !== 'subscribed') await this.resubscribe(person, listId);
-			const payload = mailchimpPayload(person, vip);
-			console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Updating merge fields (birthday ${payload.merge_fields.BIRTHDAY})`);
+			const payload = mailchimpPayload(person, vip, interests);
+			console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Updating merge fields (birthday ${payload.merge_fields.BIRTHDAY}, last gift on ${payload.merge_fields.LASTGIFTON})`);
 			await this.mailchimp.patch(`/lists/${listId}/members/${hash}`, payload);
 		}
 
-		if (canTag) await this.setTags(person, listEntry.tags, listId);
+		if (canTag) await this.setTags(person, listId, listEntry.tags);
 	}
 }
 

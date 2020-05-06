@@ -11,9 +11,9 @@ const options = {
 
 const partnerTags = ['partner', 'government'];
 
-// Anyone who donates more than $100 is added to vip list
+// Anyone who donates more than $120 is added to vip list
 // (amounts are stored in cents on raisely)
-const VIP_DONOR_THRESHOLD = 10000
+const VIP_DONOR_THRESHOLD = process.env.VIP_DONOR_THRESHOLD_CENTS;
 
 const lists = {
 	standard: {
@@ -52,20 +52,33 @@ class Mailchimp extends AirblastController {
 	async donorSync(data) {
 		const donation = data.data;
 		const { user } = donation;
-		if (donation.campaignAmount < 10000) {
-			// Fetch other donations to see if it's in excess of 100
-			const donations = await raiselyRequest({
-				path: `/user/${user.uuid}/donations?limit=100`,
-				token: process.env.RAISELY_TOKEN,
-			});
-			const sum = donations.reduce((total, d) => d.campaignAmount + total, 0);
-			if (sum < 10000) return;
+		// Fetch other donations to see if it's in excess of VIP_DONOR_THRESHOLD
+		const donations = await raiselyRequest({
+			path: `/users/${user.uuid}/donations?limit=100&sort=createdAt&order=DESC`,
+			token: process.env.RAISELY_TOKEN,
+		});
+		const sum = donations.reduce((total, d) => d.campaignAmount + total, 0);
+		// If they haven't donated more that the threshold amount
+		// don't add them to VIP list
+		const isVIP = (sum >= VIP_DONOR_THRESHOLD);
+
+		const mostRecent = donations[0];
+
+		// Add some recent donor stats to use for filtering
+		user.donorStats = {
+			lastGiftDollars: Math.round(mostRecent.campaignAmount / 100),
+			lastGiftAt: mostRecent.createdAt,
+			// Convert to dollars as integer
+			total: Math.round(sum / 100),
 		}
+
+		console.log(`Syncing donor ${user.uuid}, vip? ${isVIP}, total gifts: $${user.donorStats.total}`);
 
 		// They've donated more than $100, add them to VIP and mark them VIP on standard list
 		if (!this.mailchimp) this.mailchimp = new MailchimpService(process.env.MAILCHIMP_KEY);
-		this.mailchimp.syncPersonToList(user, lists.standard.listId, true);
-		this.mailchimp.syncPersonToList(user, lists.vip.listId, false);
+		const promises = [this.mailchimp.syncPersonToList(user, lists.standard.listId, isVIP)];
+		if (isVIP) promises.push(this.mailchimp.syncPersonToList(user, lists.vip.listId, false));
+		return Promise.all(promises);
 	}
 
 	async updatePerson(data) {
