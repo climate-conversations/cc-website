@@ -12,6 +12,7 @@ const options = {
 	wrapInData: true,
 	corsHosts: ['portal.climate.sg', 'p.climate.sg', 'portal.climateconversations.sg'],
 	authenticate,
+	alwaysAuthenticate: true,
 };
 
 /**
@@ -20,9 +21,10 @@ const options = {
  * a facilitator doing data entry, in which case we need to authenticate
  * them against raisely
  */
-async function authenticate(token) {
+async function authenticate(token, req) {
 	const { RAISELY_WEBHOOK_KEY } = process.env;
 	if (token === RAISELY_WEBHOOK_KEY) return true;
+	if (_.get(req, 'body.secret') === RAISELY_WEBHOOK_KEY) return true;
 
 	const { tags, roles } = await getTagsAndRoles(token);
 
