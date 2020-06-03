@@ -1,5 +1,6 @@
 ## Jan 17 Run Issues
 - [X] Switch everything to monitor prop changes
+- [ ] Copy over donation report images to google folder
 - [ ] Host report look nicer
 - [ ] Last step for team leaders
 - [ ] Populate host report message
@@ -8,7 +9,7 @@
 - [X] Handlebars substitution
 - [ ] Return button from host creation page
 - [ ] Email guests selects wrong conversation
-- [ ] Conversation checklist has wrong links for all conversations
+- [X] Conversation checklist has wrong links for all conversations
 - [ ] Fix retries on google cloud function
 - [ ] Add segment to list all hosts in host list (those that have checked yes, but dont have a host intention)
 
