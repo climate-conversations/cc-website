@@ -18,7 +18,7 @@
 			this.load();
 		}
 		componentDidUpdate() {
-			const eventUuid = get(this.props, 'match.params.event');
+			const eventUuid = get(this.props, 'match.params.conversation');
 
 			if (eventUuid !== this.state.eventUuid) {
 				this.setState({ loading: true });

@@ -92,7 +92,7 @@
 			this.load();
 		}
 		componentDidUpdate() {
-			const eventUuid = get(this.props, 'match.params.event');
+			const eventUuid = get(this.props, 'match.params.conversation');
 			// Reload the conversation and guests if the id has changed
 			if (this.state.eventUuid !== eventUuid) {
 				this.setState({ loading: true });
@@ -146,7 +146,7 @@
 			const { done } = getQuery(get(this.props, 'router.location.search'));
 
 			eventPromise
-				.then(({ event: conversation }) => {
+				.then((conversation) => {
 					const completedSteps = this.getCompletedSteps(conversation);
 					checklist.forEach((item) => {
 						// eslint-disable-next-line no-param-reassign
@@ -216,7 +216,7 @@
 
 		async load() {
 			try {
-				const uuid = get(this.props, 'match.params.event');
+				const uuid = get(this.props, 'match.params.conversation');
 				this.setState({ eventUuid: uuid });
 
 				const isMock = get(this.props, 'global.campaign.mock');
@@ -234,11 +234,10 @@
 				this.setKnownCompletedSteps(eventPromise);
 
 				// Fetch rsvps
-				const [records, rsvpsByType] = await Promise.all([
+				const [conversation, rsvpsByType] = await Promise.all([
 					eventPromise,
 					Conversation.loadRsvps({ props: this.props })
 				]);
-				const { event: conversation } = records;
 				const { rsvps } = rsvpsByType;
 
 				const completedSteps = await this.checkCompletedSteps(conversation, rsvps);

@@ -95,7 +95,7 @@
 			this.load();
 		}
 		componentDidUpdate() {
-			const eventUuid = get(this.props, 'match.params.event');
+			const eventUuid = get(this.props, 'match.params.conversation');
 
 			if (eventUuid !== this.state.eventUuid) {
 				this.setState({ loading: true });
@@ -219,7 +219,7 @@
 
 		async load() {
 			try {
-				const uuid = get(this.props, 'match.params.event');
+				const uuid = get(this.props, 'match.params.conversation');
 				this.setState({ eventUuid: uuid });
 
 				// Complete the url asap so users can just click through

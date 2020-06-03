@@ -94,7 +94,7 @@
 			this.load();
 		}
 		componentDidUpdate() {
-			const eventUuid = get(this.props, 'match.params.event');
+			const eventUuid = get(this.props, 'match.params.conversation');
 			// Reload the conversation and guests if the id has changed
 			if (this.state.eventUuid !== eventUuid) {
 				this.setState({ loading: true });
@@ -111,7 +111,7 @@
 				];
 
 				const eventUuid = this.props.conversation ||
-					get(this.props, 'match.params.event') ||
+					get(this.props, 'match.params.conversation') ||
 					getQuery(get(this.props, 'router.location.search')).event;
 				this.setState({ eventUuid });
 

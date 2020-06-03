@@ -23,7 +23,7 @@
 		}
 
 		load = async ({ dataToForm }) => {
-			const eventUuid = this.props.eventUuid || get(this.props, 'match.params.event');
+			const eventUuid = this.props.eventUuid || get(this.props, 'match.params.conversation');
 			const userUuid = get(this.props, 'global.user.uuid');
 
 			if (!Conversation) Conversation = ConversationRef().html;
