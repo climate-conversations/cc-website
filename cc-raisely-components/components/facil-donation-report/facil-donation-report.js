@@ -7,7 +7,7 @@
 	const { get } = RaiselyComponents.Common;
 
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
-	const UserSaveHelperRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	let Conversation;
 	let UserSaveHelper;
 
@@ -56,15 +56,16 @@
 			console.log('Saving');
 			const data = formToData(values);
 			const { event } = data;
-			if (!UserSaveHelper) UserSaveHelperRef().html;
-			UserSaveHelper.proxy(`/events/${event.uuid}`, {
+			const conversation = { ...event };
+			delete conversation.uuid;
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			return UserSaveHelper.proxy(`/events/${event.uuid}`, {
 				method: 'PATCH',
 				body: {
 					partial: true,
-					data: event,
+					data: conversation,
 				}
-			})
-			return getData(save('event', event, { partial: true }));
+			});
 		}
 
 		renderLeaderNotes() {
