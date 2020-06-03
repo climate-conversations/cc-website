@@ -616,7 +616,7 @@
 
 			let { host } = this.state;
 			if (data.user) {
-				host = await UserSaveHelper.upsertUser(data.user);
+				host = await UserSaveHelper.upsertUser(data.user, { assignSelf: true });
 				this.setState({ host });
 			}
 
