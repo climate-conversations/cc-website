@@ -35,11 +35,13 @@
 			this.testCanSave();
 		}
 		componentDidUpdate() {
-			const eventUuid = get(this.props, 'match.params.event');
+			const eventUuid = get(this.props, 'match.params.conversation');
 			// Reload the conversation and guests if the id has changed
 			if (this.state.eventUuid !== eventUuid) {
 				this.load();
 			}
+			if (!this.state.testingSave) this.testCanSave();
+
 		}
 
 		prepareSteps() {
@@ -115,7 +117,7 @@
 				private: true,
 			});
 
-			const eventUuid = get(this.props, 'match.params.event');
+			const eventUuid = get(this.props, 'match.params.conversation');
 			this.setState({ event, eventUuid });
 		}
 
@@ -146,7 +148,7 @@
 			}
 
 			console.log('Upserting user', data.user);
-			const user = await UserSaveHelper.upsertUser(data.user, { selfAssign: true });
+			const user = await UserSaveHelper.upsertUser(data.user, { assignSelf: true });
 			// temporary fix for upsert not returning an email
 			if (!user.email) user.email = data.user.email;
 
@@ -207,34 +209,32 @@
 			const cashPaymentType = get(data, 'event_rsvp.private.donationIntention');
 			if (['transfer', 'cash'].includes(cashPaymentType)) {
 				if (!Facilitator) Facilitator = FacilitatorRef().html;
-				promises.push(
-					Facilitator.getFacilitatorProfileByUser(this.props, facilitatorUuid)
-				.then(profile => {
-					const donation = {
-						campaignUuid,
-						profileUuid: profile.uuid,
-						userUuid: user.uuid,
-						anonymous: true,
-						mode: 'LIVE',
-						type: 'OFFLINE',
-						method: 'OFFLINE',
-						amount: get(data, 'event_rsvp.private.donationAmount'),
-						email: user.email,
-						private: {
-							conversationUuid: this.state.event.uuid,
-							cashPaymentType,
-						},
-						currency: 'SGD',
-					};
-					console.log('Saving donation', donation);
-					promises.push(
-						UserSaveHelper.proxy('/donations', {
+				promises.push(Facilitator.getFacilitatorProfileByUser(this.props, facilitatorUuid)
+					.then(profile => {
+						const donation = {
+							campaignUuid,
+							profileUuid: profile.uuid,
+							userUuid: user.uuid,
+							anonymous: true,
+							mode: 'LIVE',
+							type: 'OFFLINE',
+							method: 'OFFLINE',
+							amount: get(data, 'event_rsvp.private.donationAmount'),
+							email: user.email,
+							private: {
+								conversationUuid: this.state.event.uuid,
+								cashPaymentType,
+							},
+							currency: 'SGD',
+						};
+						console.log('Saving donation', donation);
+						return UserSaveHelper.proxy('/donations', {
 							method: 'POST',
 							body: {
 								data: donation
 							},
-						}));
-				}));
+						});
+					}));
 			}
 
 			// Add the future conversation
@@ -312,10 +312,19 @@
 				// don't send a request without a token
 				if (!token) return;
 
+				if (!get(this.props, 'global.user')) return;
+
+				this.setState({ testingSave: true })
+
+				const tags = get(this.props, 'global.user.tags', []);
+				if (!tags.find(tag => ['team-leader', 'facilitator'].includes(tag.path))) {
+					throw new Error("You don't appear to be a facilitator or team leader");
+				}
+
 				await UserSaveHelper.doFetch(WEBHOOK_URL, {
-					method: 'post',
-					body: {}
-				});
+						method: 'post',
+						body: {}
+					});
 			} catch (e) {
 				console.error(e);
 				this.setState({
