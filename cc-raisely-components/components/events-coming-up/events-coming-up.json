@@ -3,7 +3,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 38
+            "value": 39
         },
         "categories": {
             "id": "categories",

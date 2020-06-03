@@ -9,7 +9,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 56
+            "value": 57
         },
         "conditions": {
             "id": "conditions",
