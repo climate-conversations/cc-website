@@ -13,7 +13,7 @@
 
 	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
 
-	return class FacilDonationReport extends React.Component {
+	return class ConversationPhoto extends React.Component {
 		generateForm() {
 			const multiFormConfig = [
 				{ title: 'Upload Conversation Photo', fields: ['event.attendeePhotoUrl', 'event.photoConsent'] },
@@ -31,8 +31,17 @@
 		async save(values, formToData) {
 			const data = formToData(values);
 			const { event } = data;
-			await getData(save('event', event, { partial: true }));
+			const conversation = { ...event };
+			delete conversation.uuid;
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+			await UserSaveHelper.proxy(`/events/${event.uuid}`, {
+				method: 'PATCH',
+				body: {
+					partial: true,
+					data: conversation,
+				}
+			});
+
 			const webhookData = {
 				type: 'conversation.photoUploaded',
 				data: {
