@@ -212,28 +212,38 @@
 			const query = getQuery(get(this.props, 'router.location.search'));
 			const eventUuid = this.props.eventUuid ||
 				get(this.props, 'match.params.event') ||
+				get(this.props, 'match.params.conversation') ||
 				query.event;
 
 			let addHost;
+			let rsvps = [];
 			if (query.host) {
 				addHost = query.host && await this.loadHost(query.host);
 				if (!addHost) {
 					console.error('Host could not be found: ', query.host);
 				} else {
-					this.setState({ rsvps: [addHost] });
+					rsvps.push(addHost);
+					this.setState({ rsvps });
 				}
 			}
 
 			// We must be creating a new conversation
 			if (!eventUuid) {
+				// Set the current user as the facil
+				const facilitator = get(this.props, 'global.user');
+				const facilitatorRsvp = { type: 'facilitator', userUuid: facilitator.uuid, user: facilitator };
+				rsvps.push(facilitatorRsvp);
+				console.log('new conv: rsvps', rsvps)
+				this.setState({ rsvps });
 				return {};
 			}
 
 			// Load event and rsvps
-			const [event, rsvps] = await Promise.all([
+			let event;
+			([event, rsvps] = await Promise.all([
 				Conversation.loadConversation({ props: this.props, required: true }),
 				this.loadRsvps(eventUuid),
-			]);
+			]));
 
 			this.oldName = event.name;
 			if (addHost) rsvps.push(addHost);
@@ -250,7 +260,7 @@
 
 		async loadRsvps(eventUuid) {
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-			const rsvps = await UserSaveHelper.proxy(`/events/${eventUuid}?private=1`);
+			const rsvps = await UserSaveHelper.proxy(`/events/${eventUuid}/rsvps?private=1`);
 			return rsvps
 				.filter(({ type }) => type !== 'guest');
 			// eslint-disable-next-line object-curly-newline
@@ -265,10 +275,11 @@
 		save = async (values, formToData) => {
 			const data = formToData(values);
 			// Save the campaign uuid
+			if (!data.event) data.event = {};
 			data.event.campaignUuid = this.props.global.campaign.uuid;
 			console.log('saving event', data.event);
 
-			const newEvent = !this.state.event;
+			let newEvent = !this.state.event;
 			if (!newEvent) {
 				data.event.uuid = this.state.event.uuid;
 			}
@@ -287,10 +298,11 @@
 			let record;
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			if (!data.event.uuid) {
+				newEvent = true;
 				record = await UserSaveHelper.proxy(`/events`, {
 					method: 'POST',
 					body: {
-						data: event,
+						data: data.event,
 					},
 				});
 			} else {
@@ -337,6 +349,8 @@
 						toInsert.push(rsvp);
 					}
 				});
+
+				// If we can't find an old rsvp, it's been removed, so delete it
 				oldRsvps.forEach((rsvp) => {
 					if (!newRsvps.find(({ uuid }) => rsvp.uuid === uuid)) {
 						toDelete.push(rsvp);
@@ -345,7 +359,8 @@
 				promises.push(...toDelete.map(rsvp => UserSaveHelper.proxy(`/event_rsvps/${rsvp.uuid}`, { method: 'DELETE' })));
 			}
 
-			promises.push(toInsert.map(rsvp => UserSaveHelper.proxy(`/event_rsvps`, { method: 'DELETE', body: { data: rsvp } })));
+			promises.push(toInsert.map(rsvp => UserSaveHelper.proxy(`/event_rsvps`, { method: 'POST', body: { data: rsvp } })));
+
 
 			return Promise.all(promises);
 		}
