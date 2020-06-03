@@ -5,14 +5,15 @@
 	const { api, Spinner } = RaiselyComponents;
 	const { getCurrentToken } = api;
 
+	const websiteCampaignUuid = 'f2a3bc70-96d8-11e9-8a7b-47401a90ec39';
+	const websiteProfileUuid = 'f2b41020-96d8-11e9-8a7b-47401a90ec39';
+
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
-	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	const ReturnButton = RaiselyComponents.import('return-button');
 	let UserSaveHelper;
 	let Conversation;
-	let Facilitator;
 
 	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
 	// const WEBHOOK_URL = `http://localhost:8010/conversation-sync/us-central1/raiselyPeople`;
@@ -208,32 +209,29 @@
 			// Save donation / donation intention
 			const cashPaymentType = get(data, 'event_rsvp.private.donationIntention');
 			if (['transfer', 'cash'].includes(cashPaymentType)) {
-				if (!Facilitator) Facilitator = FacilitatorRef().html;
-				promises.push(Facilitator.getFacilitatorProfileByUser(this.props, facilitatorUuid)
-					.then(profile => {
-						const donation = {
-							campaignUuid,
-							profileUuid: profile.uuid,
-							userUuid: user.uuid,
-							anonymous: true,
-							mode: 'LIVE',
-							type: 'OFFLINE',
-							method: 'OFFLINE',
-							amount: get(data, 'event_rsvp.private.donationAmount'),
-							email: user.email,
-							private: {
-								conversationUuid: this.state.event.uuid,
-								cashPaymentType,
-							},
-							currency: 'SGD',
-						};
-						console.log('Saving donation', donation);
-						return UserSaveHelper.proxy('/donations', {
-							method: 'POST',
-							body: {
-								data: donation
-							},
-						});
+				const donation = {
+					campaignUuid: websiteCampaignUuid,
+					profileUuid: websiteProfileUuid,
+					userUuid: user.uuid,
+					anonymous: true,
+					mode: 'LIVE',
+					type: 'OFFLINE',
+					method: 'OFFLINE',
+					amount: get(data, 'event_rsvp.private.donationAmount'),
+					email: user.email,
+					private: {
+						conversationUuid: this.state.event.uuid,
+						cashPaymentType,
+					},
+					currency: 'SGD',
+				};
+				console.log('Saving donation', donation);
+				promises.push(
+					UserSaveHelper.proxy('/donations', {
+						method: 'POST',
+						body: {
+							data: donation
+						},
 					}));
 			}
 
