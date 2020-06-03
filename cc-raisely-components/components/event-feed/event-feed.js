@@ -34,7 +34,11 @@
 				const searchKey = show === 'past' ? 'startAtLT' : 'startAtGTE';
 
 				let events = await getData(api.events.getAll({
-					query: { [searchKey]: now },
+					query: {
+						[searchKey]: now,
+						sort: 'startAt',
+						order: 'ASC',
+					},
 				}));
 
 				if (!get(this.props, 'global.user.uuid')) {
