@@ -18,7 +18,9 @@
 	const { getData, getQuery, qs, quickLoad } = api;
 	const { get, set } = RaiselyComponents.Common;
 
-	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { raw: true });
+	const websiteCampaignUuid = 'f2a3bc70-96d8-11e9-8a7b-47401a90ec39';
+
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	let UserSaveHelper;
 
 	const plural = word => ((word.slice(word.length - 1) === 's') ? word : `${word}s`);
@@ -31,12 +33,14 @@
 
 	async function loadModel({ props, required, private: isPrivate, model }) {
 		try {
-			const uuid = get(props, `match.params.${model}`);
+			let uuid = get(props, `match.params.${model}`);
+			if ((model === 'event') && !uuid ) uuid = get(props, `match.params.conversation`);
 			let url = `/${plural(model)}/${uuid}`;
 			if (isPrivate) url += '?private=1';
 
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			const conversation = await UserSaveHelper.proxy(url, {});
+			console.log('model loaded',uuid, conversation)
 			return conversation;
 		} catch (e) {
 			if (required) throw e;
@@ -52,6 +56,7 @@
 		static getUuid(props) {
 			return props.conversation ||
 				get(props, 'match.params.event') ||
+				get(props, 'match.params.conversation') ||
 				getQuery(get(props, 'router.location.search', {})).event;
 		}
 
@@ -132,6 +137,7 @@
 				const eventUuid = props.eventUuid ||
 					props.conversation ||
 					get(props, 'match.params.event') ||
+					get(props, 'match.params.conversation') ||
 					getQuery(get(props, 'router.location.search')).event;
 
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
@@ -168,7 +174,7 @@
 			const [event, results, donations, surveys] = await Promise.all([
 				UserSaveHelper.proxy(`/events/${eventUuid}?private=1`),
 				this.loadRsvps({ props: { eventUuid }, type: ['co-facilitator', 'facilitator', 'guest']}),
-				UserSaveHelper.proxy(`/donations?conversationUuid=${eventUuid}&private=1`),
+				UserSaveHelper.proxy(`/donations?campaign=${websiteCampaignUuid}&conversationUuid=${eventUuid}&private=1`),
 				UserSaveHelper.proxy(`/interactions?${queryStr}`, { method: 'GET' }),
 			]);
 			const { rsvps } = results;

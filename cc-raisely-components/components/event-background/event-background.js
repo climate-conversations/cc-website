@@ -8,21 +8,21 @@
 
 	return class EventBackground extends React.Component {
 		componentDidMount() {
-			// Prevent duplicate timers being created
-			if (!(this.interval || this.timeout)) {
-				this.getEvents()
-					.catch(console.error);
-			}
+			// // Prevent duplicate timers being created
+			// if (!(this.interval || this.timeout)) {
+			// 	this.getEvents()
+			// 		.catch(console.error);
+			// }
 		}
 		componentWillUnmount() {
-			if (this.interval) {
-				clearInterval(this.interval);
-				this.interval = null;
-			}
-			if (this.timeout) {
-				clearTimeout(this.timeout);
-				this.timeout = null;
-			}
+			// if (this.interval) {
+			// 	clearInterval(this.interval);
+			// 	this.interval = null;
+			// }
+			// if (this.timeout) {
+			// 	clearTimeout(this.timeout);
+			// 	this.timeout = null;
+			// }
 		}
 
 		onTimeout = () => {
@@ -50,7 +50,7 @@
 					const facilitators = await getData(api.users.getAll({ query: { 'private.teamLeaderUuid': userUuid } }));
 					userUuid = facilitators.map(f => f.uuid).join(',');
 				}
-				const rsvps = await getData(api.eventRsvps.getAll({ query: { userUuid, type: 'facilitator,co-facilitator' } }));
+				const rsvps = await UserHelperRef.proxy(`/event_rsvps?private=1&userUuid=${userUuid}&type=facilitator,co-facilitator`);
 				events = rsvps.map(rsvp => rsvp.event);
 			}
 
