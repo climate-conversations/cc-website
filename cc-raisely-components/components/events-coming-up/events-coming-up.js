@@ -78,6 +78,8 @@
 					const [event] = await getData(api.events.getAll({
 						query: {
 							startAtGTE: now,
+							sort: 'startAt',
+							order: 'ASC',
 							[typeKey]: type,
 							'public.canRsvp': true,
 							limit: 1,
