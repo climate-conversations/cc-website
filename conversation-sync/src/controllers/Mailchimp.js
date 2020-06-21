@@ -9,7 +9,7 @@ const options = {
 	wrapInData: true,
 };
 
-const partnerTags = ['partner', 'government'];
+const partnerTags = ['partner', 'government','corporate'];
 
 // Anyone who donates more than $120 is added to vip list
 // (amounts are stored in cents on raisely)
@@ -53,16 +53,27 @@ class Mailchimp extends AirblastController {
 		const donation = data.data;
 		const { user } = donation;
 		// Fetch other donations to see if it's in excess of VIP_DONOR_THRESHOLD
-		const donations = await raiselyRequest({
-			path: `/users/${user.uuid}/donations?limit=100&sort=createdAt&order=DESC`,
-			token: process.env.RAISELY_TOKEN,
-		});
+		const [donations, subscriptions] = await Promise.all([
+			raiselyRequest({
+				path: `/users/${user.uuid}/donations?limit=100&sort=createdAt&order=DESC`,
+				token: process.env.RAISELY_TOKEN,
+			}),
+			raiselyRequest({
+				path: `/users/${user.uuid}/subscriptions?limit=100`,
+				token: process.env.RAISELY_TOKEN,
+			}),
+		]);
 		const sum = donations.reduce((total, d) => d.campaignAmount + total, 0);
 		// If they haven't donated more that the threshold amount
 		// don't add them to VIP list
 		const isVIP = (sum >= VIP_DONOR_THRESHOLD);
 
+		const activeSubscriptionCount = subscriptions.filter(s => s.status === 'OK').length;
+
 		const mostRecent = donations[0];
+		if (!mostRecent) {
+			throw new Error(`Weird, donor ${donation.uuid} doesn't have any donations?`);
+		}
 
 		// Add some recent donor stats to use for filtering
 		user.donorStats = {
@@ -70,6 +81,8 @@ class Mailchimp extends AirblastController {
 			lastGiftAt: mostRecent.createdAt,
 			// Convert to dollars as integer
 			total: Math.round(sum / 100),
+			giftCount: donations.length,
+			activeSubscriptionCount,
 		}
 
 		console.log(`Syncing donor ${user.uuid}, vip? ${isVIP}, total gifts: $${user.donorStats.total}`);

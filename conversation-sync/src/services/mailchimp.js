@@ -2,6 +2,11 @@ const Mailchimp = require('mailchimp-api-v3');
 const md5 = require('md5');
 const _ = require('lodash');
 const tzc = require('timezonecomplete');
+const NanoCache = require('nano-cache');
+const cache = new NanoCache({
+	ttl: 10 * 60 * 1000,
+	limit: 5,
+});
 
 const tagsToSync = ['Facilitator', 'Team Leader', 'Coordinator', 'Corporate', 'Government', 'Partner', 'Supportive']
 	.map(n => _.kebabCase(n));
@@ -18,7 +23,7 @@ function mailchimpPayload(person, vip, listInterests) {
 	const values = {
 		vip,
 		merge_fields: {},
-		intersts: {},
+		interests: {},
 	};
 
 	const interestMap = {
@@ -52,6 +57,8 @@ function mailchimpPayload(person, vip, listInterests) {
 			LASTGIFTON: new tzc.DateTime(person.donorStats.lastGiftAt).format('YYYY-MM-dd'),
 			LASTGIFT: person.donorStats.lastGiftDollars,
 			TOTALGIFTS: person.donorStats.total,
+			GIFTCOUNT: person.donorStats.giftCount,
+			REGGIFTS: person.donorStats.activeSubscriptionCount,
 		});
 	}
 
@@ -62,16 +69,32 @@ function mailchimpPayload(person, vip, listInterests) {
 
 const personHash = (person) => md5(person.email.toLowerCase());
 
+let interestPromises = {};
+
 class MailchimpService {
 	constructor(key) {
 		this.mailchimp = new Mailchimp(key);
 	}
 
 	async loadInterests(listId) {
+		console.log(`Loading interests for ${listId}`)
 		const interestCategories = await this.mailchimp.get(`/lists/${listId}/interest-categories`);
 		const category = interestCategories.categories.find(ic => ic.title === 'Interests');
-		const interests = await this.mailchimp.get(`/lists/${listId}/interest-categories/${category.id}/interests`);
-		return interests.interests;
+		const interestsResponse = await this.mailchimp.get(`/lists/${listId}/interest-categories/${category.id}/interests`);
+		const interests = interestsResponse.interests;
+		return interests;
+	}
+
+	async loadCachedInterests(listId) {
+		const cacheKey = `interests-${listId}`;
+		let interests = cache.get(cacheKey);
+		if (!interests) {
+			if (!interestPromises[cacheKey]) interestPromises[cacheKey] = this.loadInterests(listId);
+			interests = await interestPromises[cacheKey];
+			interestPromises[cacheKey] = null;
+			cache.set(cacheKey, interests);
+		}
+		return interests;
 	}
 
 	async addToList(person, listId, vip, interests) {
@@ -107,9 +130,17 @@ class MailchimpService {
 		personExistingTags.forEach(t => { t.kebabName = _.kebabCase(t.name) });
 		const personTags = person.tags.map(t => _.kebabCase(t.path));
 		// Get tag list
-		const segments = await this.mailchimp.get(`/lists/${listId}/segments?type=static&count=100`);
+		const segmentUrl = `/lists/${listId}/segments?type=static&count=100`;
+		let segments = cache.get(segmentUrl);
+		if (!segments) {
+			if (!this.chimpPromises) this.chimpPromises = {};
+			if (!this.chimpPromises[segmentUrl]) this.chimpPromises[segmentUrl] = this.mailchimp.get(segmentUrl);
+			const segmentsResponse = await this.chimpPromises[segmentUrl]
+			segments = segmentsResponse.segments;
+			cache.set(segmentUrl, segments);
+		}
 		// Tags are a subset of segments, type static
-		const existingTags = segments.segments
+		const existingTags = segments
 			.filter(s => s.type === 'static')
 			.map(t => {
 				t.kebabName = _.kebabCase(t.name);
@@ -158,7 +189,7 @@ class MailchimpService {
 	}
 
 	async syncPersonToList(person, listId, vip) {
-		const interests = await this.loadInterests(listId);
+		const interests = await this.loadCachedInterests(listId);
 
 		const hash = personHash(person);
 		let listEntry;
