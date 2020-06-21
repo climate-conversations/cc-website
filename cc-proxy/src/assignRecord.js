@@ -2,8 +2,13 @@ const RestError = require('./restError');
 const { authorize } = require('./proxy/permissions');
 const raisely = require('./raiselyRequest');
 
-async function assignRecord(req, recordUuid, assignee, recordType = 'user') {
-	if (!assignee) assignee = escalation.originalUser.uuid;
+async function assignRecord(req, recordUuid, assigneeUuid, recordType = 'user') {
+	if (!assigneeUuid) {
+		throw new RestError({
+			message: 'Unknown assignee',
+			status: 400,
+		});
+	}
 	const escalation = await authorize(req, '/assignments');
 	if (!escalation) {
 		throw new RestError({
@@ -12,16 +17,17 @@ async function assignRecord(req, recordUuid, assignee, recordType = 'user') {
 			code: 'unauthorized',
 		});
 	}
+	const mustEscalate = !escalation.originalUser.roles.includes('team-leader');
 	return raisely({
 		method: 'POST',
-		path: `/users/${assignee}/assignments`,
+		path: `/users/${assigneeUuid}/assignments`,
 		body: {
 			data: [{
 				recordUuid,
 				recordType,
 			}],
 		},
-		escalate: true,
+		escalate: mustEscalate,
 	}, req);
 }
 

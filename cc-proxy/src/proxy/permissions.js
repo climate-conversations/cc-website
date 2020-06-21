@@ -46,6 +46,12 @@ function matchPath(e, path) {
 	return e.path === path;
 }
 
+/**
+ * Check that a request is authorized
+ * @param {*} req
+ * @param {*} path
+ * @returns {boolean|object} false if the user is not authorized { originalUser, method, path, roles, tags }
+ */
 async function authorize(req, path) {
 	const { user, tags, roles } = await getTagsAndRoles(req);
 

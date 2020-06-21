@@ -3,6 +3,7 @@ const { get, pick, set } = require('lodash');
 const shortUuid = require('short-uuid');
 const RestError = require('./restError');
 const assignRecord = require('./assignRecord');
+const { authorize } = require('./proxy/permissions');
 
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
 	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName',
@@ -165,6 +166,19 @@ async function upsertUser(req) {
 	}
 	const { assignSelf } = req.body;
 
+	let originalUser;
+
+	if (assignSelf) {
+		const auth = await authorize(req, '/upsert/selfAssign');
+		if (!auth || !auth.originalUser) {
+			throw new RestError({
+				message: 'User may not self assign',
+				status: 403,
+			});
+		}
+		({ originalUser } = auth);
+	}
+
 	let existing;
 	if (!record.uuid) {
 		const promises = [];
@@ -186,12 +200,12 @@ async function upsertUser(req) {
 	if (record.uuid && assignSelf) {
 		await Promise.all([
 			savePromise,
-			assignRecord(req, record.uuid)
+			assignRecord(req, record.uuid, originalUser.uuid),
 		]);
 	} else {
 		const newRecord = (await savePromise).data;
 		if (assignSelf) {
-			await assignRecord(req, newRecord.uuid);
+			await assignRecord(req, newRecord.uuid, originalUser.uuid);
 		}
 	}
 	return savePromise;

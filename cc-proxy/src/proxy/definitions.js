@@ -70,4 +70,7 @@ module.exports = [
 	{ method: 'GET', path: /\/event_rsvps.*/, tags: ['facilitator', 'team-leader'] },
 	{ method: 'POST', path: '/event_rsvps', tags: ['facilitator', 'team-leader'] },
 	{ method: 'PUT', path: /\/event_rsvps\/.*/, tags: ['facilitator', 'team-leader'] },
+
+	/** Upsert with self assign */
+	{ method: 'POST', path: '/upsert/selfAssign', tags: ['facilitator', 'team-leader'] },
 ];
