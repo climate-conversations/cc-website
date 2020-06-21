@@ -2,7 +2,8 @@ const _ = require('lodash');
 const RestError = require('../restError');
 const raiselyRequest = require('../raiselyRequest');
 
-const AUTHENTICATION_TTL = 10 * 60 * 1000;
+// const AUTHENTICATION_TTL = 10 * 60 * 1000;
+const AUTHENTICATION_TTL = 1000;
 
 const escalations = require('./definitions');
 
@@ -48,6 +49,23 @@ function matchPath(e, path) {
 async function authorize(req, path) {
 	const { user, tags, roles } = await getTagsAndRoles(req);
 
+	// Don't let users of other organisations into our campaigns
+	if (user && (user.organisationUuid !== process.env.ORGANISATION_UUID)) {
+		return false;
+	}
+
+	const originalUser = user && {
+		uuid: user.uuid,
+		tags,
+		roles,
+	};
+
+	// ORG_ADMINS can do anything, no need to check the rules
+	if (roles.includes('ORG_ADMIN')) return {
+		noEscalate: true,
+		originalUser,
+	};
+
 	const escalation = escalations.find((e) => {
 		let isMatch = e.method.toLowerCase() === req.method.toLowerCase() && matchPath(e, path);
 		if (e.tags) isMatch = isMatch && _.intersection(e.tags, tags).length;
@@ -67,11 +85,7 @@ async function authorize(req, path) {
 
 	return {
 		...escalation,
-		originalUser: user && {
-			uuid: user.uuid,
-			tags,
-			roles,
-		}
+		originalUser,
 	};
 }
 
