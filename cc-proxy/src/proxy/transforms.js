@@ -14,6 +14,12 @@ function minimalUser(body) {
 
 	const permitted = ['uuid', 'preferredName', 'fullName'];
 
+	if (Array.isArray(data)) {
+		return {
+			data: data.map(u => pick(u, permitted))
+		}
+	}
+
 	const user = pick(data, permitted)
 
 	return {
