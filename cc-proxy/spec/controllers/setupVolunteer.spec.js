@@ -27,6 +27,7 @@ describe('Setup Volunteer', () => {
 				nockSetAdminFlag();
 				nockTagUser([], ['facilitator']);
 				nockSetRole([], ['DATA_LIMITED']);
+				nockAssignment();
 				const req = setupRequest({
 					type: 'facilitator',
 					userUuid,
@@ -49,12 +50,13 @@ describe('Setup Volunteer', () => {
 			itSetsAdminFlag();
 		});
 
-		describe('WHEN nothing needs to change changing', () => {
+		describe('WHEN nothing needs to change', () => {
 			before(() => {
 				clearNocks();
 				nockAuthentication(['DATA_ADMIN'], ['team-leader']);
 				nockSetupProfile('INDIVIDUAL', { parentUuid: newTeamUuid });
 				nockSetAdminFlag();
+				nockAssignment();
 				nockTagUser(['facilitator'], [], true);
 				nockSetRole(['DATA_LIMITED'], []);
 				const req = setupRequest({
@@ -77,6 +79,7 @@ describe('Setup Volunteer', () => {
 				nockAuthentication(['DATA_ADMIN'], ['team-leader']);
 				nockSetupProfile('INDIVIDUAL', { uuid: userProfileUuid, parentUuid: 'an_old_team' }, true);
 				nockSetAdminFlag();
+				nockAssignment();
 				nockTagUser(['facilitator'], [], true);
 				nockSetRole(['DATA_LIMITED'], []);
 				const req = setupRequest({
@@ -189,6 +192,10 @@ function nockSetAdminFlag() {
 function nockAuthentication(roles, tags) {
 	noteRequest('GET /authenticate', 'GET', '/authenticate', 200, { data: { roles: roles.map(role => ({ role })) } });
 	noteRequest('GET /auth/tags', 'GET', '/users/me?private=1', 200, { data: { tags: tags.map(path => ({ path })) } });
+}
+
+function nockAssignment() {
+	noteRequest('POST /users/assignments', 'POST', '/users/a_user_uuid/assignments');
 }
 
 function setupRequest(data) {

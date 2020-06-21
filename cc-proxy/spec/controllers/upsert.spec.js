@@ -112,6 +112,7 @@ describe('upsertUser', () => {
 
 		it('passes merge param', () => {
 			expect(raiselyRequest.body).to.eql({
+				allowExists: true,
 				data: { private: { host: true } },
 				partial: 1,
 			});
@@ -121,7 +122,7 @@ describe('upsertUser', () => {
 	});
 
 	describe('assignment', () => {
-		let assignmentRequest;
+		let assignmentRequest = null;
 		describe('new user', () => {
 			before(() => {
 				results.user = { ...completeUser, uuid: 'some_other_uuid' };
@@ -152,7 +153,7 @@ describe('upsertUser', () => {
 						};
 						return body;
 					});
-				nockAuthentication();
+				nockAuthentication(['facilitator']);
 
 				return upsertUser(results.req, results.res);
 			});
@@ -197,7 +198,7 @@ describe('upsertUser', () => {
 						};
 						return body;
 					});
-				nockAuthentication();
+				nockAuthentication(['facilitator']);
 
 				return upsertUser(results.req, results.res);
 			});
@@ -260,11 +261,11 @@ function setup(results, body, headers) {
 	return prepareRequest(results, theBody, headers);
 }
 
-function nockAuthentication() {
+function nockAuthentication(roles = []) {
 	nock('https://api.raisely.com')
 		.get('/v3/authenticate')
 		.reply(200, {
-			data: { roles: [] },
+			data: { roles },
 		});
 	nock('https://api.raisely.com')
 		.get('/v3/users/me?private=1')
