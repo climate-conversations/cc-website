@@ -8,6 +8,8 @@ const { nockRaisely } = require('../testHelper');
 
 const USER_TOKEN = 'a_user_token';
 
+process.env.RAISELY_WEBHOOK_KEY = 'secret_token_sssh';
+
 describe('People Controller', () => {
 	describe('Authentication', () => {
 		let res;
@@ -27,7 +29,10 @@ describe('People Controller', () => {
 		});
 		describe('raisely token', () => {
 			before(async () => {
-				res = await runController(new PeopleController(), prepRequest(process.env.RAISELY_WEBHOOK_KEY || 'test_raisely_token'));
+				res = await runController(new PeopleController(), {
+					method: 'GET',
+					body: { secret: (process.env.RAISELY_WEBHOOK_KEY || 'test_raisely_token') },
+				});
 			});
 			it('Returns 200', () => expect(res.statusCode).to.eq(200));
 		});
