@@ -3,6 +3,14 @@ const { AirblastController } = require('airblast');
 const _ = require('lodash');
 const tzc = require('timezonecomplete');
 
+/**
+ * This will take webhooks for created donations and assign them
+ * to the profile of the facilitator that conducted the conversation
+ *
+ * If the facilitator doesn't have a profile on the CC website campaign
+ * one will be created
+ */
+
 const { fetchTeam } = require('../helpers/raiselyConversationHelpers');
 const { raiselyRequest } = require('../helpers/raiselyHelpers');
 
@@ -17,9 +25,9 @@ const ATTRIBUTION_WINDOW = new tzc.Duration(14, tzc.TimeUnit.Day);
 
 class DonorFacilMatch extends AirblastController {
 	async process({ data }) {
-		const { WEBSITE_PATH, PORTAL_PATH } = process.env;
+		const { WEBSITE_PATH, PORTAL_PATH, PORTAL_UUID } = process.env;
 
-		if (!['donation.created', 'donation.succeeded'].includes(data.type)) throw new Error(`Unrecognised event ${data.type}`);
+		if (!['donation.created'].includes(data.type)) throw new Error(`Unrecognised event ${data.type}`);
 
 		const donation = data.data;
 
@@ -27,9 +35,21 @@ class DonorFacilMatch extends AirblastController {
 			throw new Error("Donation has no uuid, something's gone wrong.");
 		}
 
-		if (donation.profile.path !== WEBSITE_PATH) {
+		const unassigned = (donation.profile.path === WEBSITE_PATH) || (donation.campaignUuid === PORTAL_UUID);
+
+		if (!unassigned) {
 			this.log(`${donation.uuid} Donation is already assigned a profile, not moving`);
 			return;
+		}
+
+		// If it's an offline donation from the portal, it's already assigned to
+		// the event, so just need to move it over to the website campaign
+		if (donation.campaignUuid === PORTAL_UUID) {
+			const facilitatorProfile = await raiselyRequest({
+				path: `/profiles/${donation.profileUuid}`,
+				token: process.env.RAISELY_TOKEN,
+			});
+			return this.assignToFacilitator({ donation, facilitator: facilitatorProfile.user });
 		}
 
 		const eventWindow = tzc.DateTime.nowUtc().sub(ATTRIBUTION_WINDOW).format('yyyy-MM-dd');
@@ -74,11 +94,16 @@ class DonorFacilMatch extends AirblastController {
 		});
 	}
 
-	async assignToFacilitator(rsvp, donation) {
-		const { facilitator } = await fetchTeam(rsvp.eventUuid);
+	async assignToFacilitator({ rsvp, donation, facilitator }) {
+		let facil = facilitator;
+		if (!facilitator) {
+			if (!rsvp) throw new Error(`assignToFacilitator: Cannot assign facilitator, no rsvp or facilitator passed in`);
+			const team = await fetchTeam(rsvp.eventUuid);
+			facil = team.facilitator;
+		}
 
 		// Get Facilitor for event
-		const profile = await this.upsertProfile(facilitator);
+		const profile = await this.upsertProfile(facil);
 
 		// Assign donation to facilitator profile
 		return raiselyRequest({
