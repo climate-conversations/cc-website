@@ -146,7 +146,7 @@
 						// Multiple hosts may come from the same conversation
 						// so cache the promise to retrieve so we only fetch it
 						// once, and add a then callback to the promise for each host
-						const makePromise = () => UserHelper.proxy(`/evets/${uuid}`)
+						const makePromise = () => UserHelper.proxy(`/events/${uuid}`)
 								.catch(e => this.setState({ error: e }));
 						cachedPromise('conversation', uuid, makePromise)
 							.then((c) => {
@@ -160,7 +160,7 @@
 					host.facilitator = this.facilitators[facilUuid];
 					if (!host.facilitator && facilUuid) {
 						host.facilitator = true;
-						const makePromise = () => UserHelper.proxy(`/evets/${facilUuid}`)
+						const makePromise = () => UserHelper.proxy(`/events/${facilUuid}`)
 							.then(facilitator => this.facilitators[facilUuid] = facilitator);
 						cachedPromise('faciltiator', facilUuid, makePromise)
 							.then(host.facilitator = this.facilitators[facilUuid]);
