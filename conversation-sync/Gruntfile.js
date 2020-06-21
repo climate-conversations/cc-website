@@ -8,7 +8,7 @@ const routes = require('./config/routes');
 const gcloud = require('./config/gcloud');
 
 const GOOGLE_DEFAULTS = {
-	memory: '128MB',
+	memory: '256MB',
 	runtime: 'nodejs8',
 };
 
