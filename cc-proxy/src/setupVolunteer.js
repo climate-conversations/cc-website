@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const { authorize } = require('./proxy/permissions');
 const raiselyRequest = require('./raiselyRequest');
+const assignRecord = require('./assignRecord');
 
 /**
  * Setup a facilitator or team leader
@@ -35,6 +36,8 @@ async function setupVolunteer(req) {
 			parentUuid: teamUuid,
 			req,
 		}));
+		// Assign them to themself so they can see their own interactions
+		promises.push(assignRecord(req, userUuid, userUuid));
 	} else if (type === 'team-leader') {
 		promises.push(setupTagsAndRoles({ tags: ['team-leader'], roles: ['DATA_ADMIN', 'PROFILE_EDITOR', 'CAMPAIGN_ADMIN'], req }));
 		promises.push(setupProfile({
@@ -87,14 +90,12 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
 	let promises = [
 		raiselyRequest({
 			path: `/users/${userUuid}/profiles?type=${type}&campaign=cc-volunteer-portal`,
-			escalate: false
 		}, req),
 	];
 
 	if (!parentUuid) {
 		promises.push(raiselyRequest({
 			path: `/campaigns/cc-volunteer-portal`,
-			escalate: false
 		}, req));
 	}
 
