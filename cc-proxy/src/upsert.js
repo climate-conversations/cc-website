@@ -2,7 +2,7 @@ const raisely = require('./raiselyRequest');
 const { get, pick, set } = require('lodash');
 const shortUuid = require('short-uuid');
 const RestError = require('./restError');
-const { authorize } = require('./proxy/permissions');
+const assignRecord = require('./assignRecord');
 
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
 	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName',
@@ -143,28 +143,6 @@ function prepareUserForSave(existing, user) {
 	});
 }
 
-async function assignRecord(req, recordUuid, recordType = 'user') {
-	const escalation = await authorize(req, '/assignments');
-	if (!escalation) {
-		throw new RestError({
-			status: 403,
-			message: 'Unauthorized',
-			code: 'unauthorized',
-		});
-	}
-	return raisely({
-		method: 'POST',
-		path: `/users/${escalation.originalUser.uuid}/assignments`,
-		body: {
-			data: [{
-				recordUuid,
-				recordType,
-			}],
-		},
-		escalate: true,
-	}, req);
-}
-
 /**
  * Helper to perform upsert of user record
  * @param {object} record User
@@ -203,7 +181,7 @@ async function upsertUser(req) {
 	}
 	prepareUserForSave(existing, record);
 
-	const savePromise = save(record, { partial: 1 }, req);
+	const savePromise = save(record, { partial: 1, allowExists: true }, req);
 
 	if (record.uuid && assignSelf) {
 		await Promise.all([
