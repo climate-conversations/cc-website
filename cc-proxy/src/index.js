@@ -3,6 +3,7 @@ const { get } = require('lodash');
 const { upsertUser } = require('./upsert');
 const { setupVolunteer } = require('./setupVolunteer');
 const proxy = require('./proxy');
+const { assignRecordRequest: assignRecord } = require('./assignRecord');
 
 const logger = require('./config/logging');
 
@@ -125,6 +126,7 @@ const functions = {
 	proxy,
 	upsertUser,
 	setupVolunteer,
+	assignRecord,
 };
 
 const proxiedFunctions = {};

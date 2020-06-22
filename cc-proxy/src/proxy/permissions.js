@@ -3,7 +3,7 @@ const RestError = require('../restError');
 const raiselyRequest = require('../raiselyRequest');
 
 // const AUTHENTICATION_TTL = 10 * 60 * 1000;
-const AUTHENTICATION_TTL = 1000;
+const AUTHENTICATION_TTL = 10000;
 
 const escalations = require('./definitions');
 
@@ -98,4 +98,5 @@ async function authorize(req, path) {
 module.exports = {
 	escalations,
 	authorize,
+	getTagsAndRoles,
 };
