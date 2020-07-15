@@ -666,10 +666,7 @@
 						partial: true,
 					}
 				}),
-				UserSaveHelper.proxy(`/users/${newFacilitator.uuid}/assignments`, {
-					method: 'post',
-					body: { data: assignment },
-				}),
+				UserSaveHelper.assignUser(newFacilitator.uuid, host.uuid),
 			]);
 			set(interaction, 'detail.private.facilitatorUuid', newFacilitator.uuid);
 			this.setState({ facilitator: newFacilitator });

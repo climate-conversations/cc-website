@@ -325,6 +325,7 @@
 			const promises = [];
 			const toInsert = [];
 			const newRsvps = [];
+			const toAssign = [];
 			Object.keys(values[1]).forEach((key) => { newRsvps[key] = values[1][key]; });
 
 			if (newEvent) {
@@ -334,6 +335,10 @@
 					if (rsvp.userUuid) {
 						rsvp.eventUuid = record.uuid;
 						toInsert.push(rsvp);
+
+						if (['host', 'co-host'].includes(rsvp.type)) {
+							toAssign.push(rsvp);
+						}
 					}
 				});
 			} else {
@@ -359,8 +364,17 @@
 				promises.push(...toDelete.map(rsvp => UserSaveHelper.proxy(`/event_rsvps/${rsvp.uuid}`, { method: 'DELETE' })));
 			}
 
-			promises.push(toInsert.map(rsvp => UserSaveHelper.proxy(`/event_rsvps`, { method: 'POST', body: { data: rsvp } })));
+			const failitatorUuids = newRsvps
+				.filter(rsvp => ['facilitator', 'co-facilitator'].includes(rsvp.type))
+				.map(rsvp => rsvp.userUuid);
 
+			promises.push(...toInsert.map(rsvp => UserSaveHelper.proxy(`/event_rsvps`, { method: 'POST', body: { data: rsvp } })));
+			// Assign all hosts to all facilitators
+			if (failitatorUuids.length) {
+				failitatorUuids.forEach(facilitatorUuid => {
+					promises.push(...toAssign.map(rsvp => UserSaveHelper.assignUser(facilUuid, rsvp.userUuid)))
+				});
+			}
 
 			return Promise.all(promises);
 		}
