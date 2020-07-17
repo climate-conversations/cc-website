@@ -35,7 +35,11 @@
 		try {
 			let uuid = get(props, `match.params.${model}`);
 			if ((model === 'event') && !uuid ) uuid = get(props, `match.params.conversation`);
-			let url = `/${plural(model)}/${uuid}`;
+			const path =
+				model === "eventRsvp"
+					? "event_rsvps"
+					: plural(model);
+			let url = `/${path}/${uuid}`;
 			if (isPrivate) url += '?private=1';
 
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;

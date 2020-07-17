@@ -68,8 +68,9 @@
 				if (!Conversation) Conversation =  ConversationRef().html;
 				const eventRsvpUuid = get(this.props, 'match.params.eventRsvp');
 				this.setState({ eventRsvpUuid });
-				const eventRsvp = await Conversation.loadRsvp({ props: this.props, required: true });
+				const eventRsvp = await Conversation.loadRsvp({ props: this.props, required: true, private: true });
 
+				console.log('Event rsvp', eventRsvp)
 				const [user, { pre, post }] = await Promise.all([
 					getData(api.users.get({ id: eventRsvp.userUuid, query: { private: 1 } })),
 					Conversation.loadSurveys(eventRsvp),
