@@ -1,4 +1,5 @@
 ## Jan 17 Run Issues
+- [ ] Review all date code
 - [X] Switch everything to monitor prop changes
 - [ ] Copy over donation report images to google folder
 - [ ] Host report look nicer
