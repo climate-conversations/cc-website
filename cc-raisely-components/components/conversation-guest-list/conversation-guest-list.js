@@ -14,7 +14,7 @@
 	class Guest extends React.Component {
 		guestName = () => {
 			// eslint-disable-next-line object-curly-newline
-			const { preferredName, fullName, phoneNumber } = get(this.props, 'guest', {});
+			const { preferredName, fullName, phoneNumber } = get(this.props, 'guest.user', {});
 			return fullName || preferredName || phoneNumber || '(anonymous)';
 		}
 
@@ -89,8 +89,9 @@
 					throw new Error('No conversation uuid specified');
 				}
 
-				const { guests } = await Conversation.loadRsvps({ props: this.props });
+				const { rsvps } = await Conversation.loadRsvps({ props: this.props });
 
+				const guests = rsvps.filter(rsvp => rsvp.type === 'guest')
 				this.setState({ guests });
 
 				await guests.map(async (guest) => {
