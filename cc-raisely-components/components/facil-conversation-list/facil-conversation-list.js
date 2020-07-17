@@ -5,6 +5,8 @@
 
 	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
 	let Facilitator;
+	const EventRef = RaiselyComponents.import('event', { asRaw: true });
+	let Event;
 
 	const icons = {
 		public: 'public',
@@ -25,7 +27,8 @@
 
 			this.startAt = dayjs(startAt);
 			this.processOverdue = dayjs(processAt || startAt).add(1, 'day');
-			this.displayDate = this.startAt.format('DD MMM');
+			if (!Event) Event = EventRef().html;
+			this.displayDate = Event.displayDate(conversation);
 
 			this.reconciled = cashDonationsNotes ||
 				((cashTransferAmount === cashReceivedAmount) && (cashTransferAmount === cashCtaAmount));

@@ -2,19 +2,19 @@
 	const { dayjs, get } = RaiselyComponents.Common;
 	const { Link } = RaiselyComponents;
 
-	const EventEditRef = RaiselyComponents.import('event-edit', { asRaw: true });
-	let EventEdit;
+	const EventRef = RaiselyComponents.import('event', { asRaw: true });
+	let Event;
 
 	return function EventCard(props) {
 		const { event, short, disableLink, hideEdit } = props;
 		const defaultPhoto = 'https://raisely-images.imgix.net/climate-conversations-2019/uploads/conversation-1-jpg-bc7064.jpg';
 
-		if (!EventEdit) EventEdit = EventEditRef().html;
+		if (!Event) Event = EventRef().html;
 
 		let date = '';
 		let time = '';
 		if (event.startAt) {
-			const startAt = EventEdit.inSingaporeTime(dayjs(event.startAt));
+			const startAt = Event.inSingaporeTime(dayjs(event.startAt));
 			date = startAt.format('dddd, MMMM D');
 			time = startAt.format('h:mm a');
 		}

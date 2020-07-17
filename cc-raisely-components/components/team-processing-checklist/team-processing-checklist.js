@@ -8,6 +8,10 @@
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	let Conversation;
+	const EventRef = RaiselyComponents.import("conversation", {
+		asRaw: true
+	}); ;
+	let Event;
 
 	/** NOTE: See the checklist definition below which defines items on the checklist */
 
@@ -263,11 +267,14 @@
 			if (!Conversation) Conversation = ConversationRef().html;
 
 			const { error, loading, conversation } = this.state;
-			const startAt = get(conversation, 'startAt');
 			const name = get(conversation, 'name', '...');
 
 			const isReviewed = Conversation.isReviewed(conversation);
-			const displayDate = startAt ? dayjs(startAt).format('DD MMM YYYY') : '';
+			if (!Event) Event = EventRef().html;
+			const startAt = Event.inSingaporeTime(
+				dayjs(get(conversations, 'startAt'))
+			);
+			const displayDate = startAt ? startAt.format('D MMM YYYY') : '';
 
 			return (
 				<div className="conversation--checklist__wrapper">

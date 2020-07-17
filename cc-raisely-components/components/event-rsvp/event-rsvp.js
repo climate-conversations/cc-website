@@ -5,8 +5,6 @@
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const EventCard = RaiselyComponents.import('event-card');
 	const CCEventRef = RaiselyComponents.import('event', { asRaw: true });
-	const EventEditRef = RaiselyComponents.import('event-edit', { asRaw: true });
-	let EventEdit;
 	let UserSaveHelper;
 	let CCEvent;
 
@@ -100,8 +98,8 @@
 
 			let eventDate = '';
 			if (event.startAt) {
-				if (!EventEdit) EventEdit = EventEditRef().html;
-				const startAt = EventEdit.inSingaporeTime(dayjs(event.startAt));
+				if (!CCEvent) CCEvent = CCEventRef().html;
+				const startAt = CCEvent.inSingaporeTime(dayjs(event.startAt));
 				const date = startAt.format('dddd, MMMM D');
 				const time = startAt.format('h:mm a');
 				eventDate = `${date} ${time}`;

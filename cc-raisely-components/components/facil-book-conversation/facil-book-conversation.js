@@ -11,8 +11,12 @@
 	const RaiselyButton = RaiselyComponents.import('raiely-button');
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const EventRef = RaiselyComponents.import("event", {
+		asRaw: true
+	});
 	let UserSaveHelper;
 	let Conversation;
+	let Event;
 
 	// eslint-disable-next-line object-curly-newline
 	const rsvpToItem = (rsvp => {
@@ -185,12 +189,29 @@
 
 		generateForm() {
 			const fields = [
-				'event.startAt',
-				'event.conversationType',
-				{ sourceFieldId: 'event.name', help: 'Leave blank to name after host' },
-				'event.status',
-				'event.processAt', 'event.address1', 'event.address2',
-				'event.suburb', 'event.country', 'event.postcode'];
+				"event.startAt",
+				{
+					id: "startTime",
+					type: "text",
+					core: true,
+					default: "19:00",
+					recordType: "event",
+					label: "Start Time",
+					description: 'The time you aim to start the conversation',
+				},
+				"event.conversationType",
+				{
+					sourceFieldId: "event.name",
+					help: "Leave blank to name after host"
+				},
+				"event.status",
+				"event.processAt",
+				"event.address1",
+				"event.address2",
+				"event.suburb",
+				"event.country",
+				"event.postcode"
+			];
 
 			const multiFormConfig = [
 				{ title: 'Conversation Details', fields },
@@ -241,9 +262,11 @@
 			// Load event and rsvps
 			let event;
 			([event, rsvps] = await Promise.all([
-				Conversation.loadConversation({ props: this.props, required: true }),
+				Conversation.loadConversation({ props: this.props, required: true, private: true }),
 				this.loadRsvps(eventUuid),
 			]));
+			if (!Event) Event = EventRef().html;
+			Event.getTime(event);
 
 			this.oldName = event.name;
 			if (addHost) rsvps.push(addHost);
@@ -277,6 +300,10 @@
 			// Save the campaign uuid
 			if (!data.event) data.event = {};
 			data.event.campaignUuid = this.props.global.campaign.uuid;
+			if (!Event)
+				Event = EventRef()
+					.html;
+			Event.setTime(data.event);
 			console.log('saving event', data.event);
 
 			let newEvent = !this.state.event;

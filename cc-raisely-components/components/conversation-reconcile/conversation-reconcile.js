@@ -6,6 +6,8 @@
 	const { Spinner } = RaiselyComponents;
 
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const EventRef = RaiselyComponents.import('event', { asRaw: true });
+	let Event;
 	let Conversation;
 	const CustomForm = RaiselyComponents.import('custom-form');
 	const ReturnButton = RaiselyComponents.import('return-button');
@@ -105,7 +107,8 @@
 		 */
 		facilitatorMessage({ amounts, inconsistent }) {
 			const { failed, conversation } = this.state;
-			const date = dayjs(conversation.startAt).format('MMM DD');
+			if (!Event) Event = EventRef().html;
+			const date = Event.displayDate(conversation);
 			const url = `https://p.climate.sg/conversations/${conversation.uuid}/donations-report`;
 			const ftlName = get(this.props, 'global.user.preferredName');
 
