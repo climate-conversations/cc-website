@@ -1,7 +1,9 @@
 const { get } = require('lodash');
+const _ = require('lodash');
 
 const { upsertUser } = require('./upsert');
 const { setupVolunteer } = require('./setupVolunteer');
+const { hostReport } = require("./hostReport");
 const proxy = require('./proxy');
 const { assignRecordRequest: assignRecord } = require('./assignRecord');
 
@@ -53,7 +55,7 @@ function serializeError(error) {
 	const result = Object.assign({
 		message: error.message,
 		stack: error.stack,
-	}, error);
+	}, _.pickBy(error, x => !_.isObject(x)));
 	return result;
 }
 
@@ -66,6 +68,7 @@ function serializeError(error) {
 function log(name, req, status, meta = {}, level = 'info') {
 	const user = get(req, 'authentication.user', '<public>');
 	const message = `${status} ${req.method} ${user} /${name}${req.originalUrl}`;
+	console.log(meta);
 	logger.log(level, message, meta);
 }
 
@@ -127,6 +130,7 @@ const functions = {
 	upsertUser,
 	setupVolunteer,
 	assignRecord,
+	hostReport,
 };
 
 const proxiedFunctions = {};
