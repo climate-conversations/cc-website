@@ -19,14 +19,18 @@
 	const { getCurrentToken } = RaiselyComponents.api;
 	const { qs } = RaiselyComponents.Common;
 
-	const proxyUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/proxy';
-	const upsertUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/upsertUser';
-	const setupFacilUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/setupVolunteer';
-	const makeAdminUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/makeAdmin';
-	const assignUserUrl = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net/assignUser';
+	const proxyHost = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net';
+
+	const proxyUrl = `${proxyHost}/proxy`;
+	const upsertUrl = `${proxyHost}/upsertUser`;
+	const setupFacilUrl = `${proxyHost}/setupVolunteer`;
+	const makeAdminUrl = `${proxyHost}/makeAdmin`;
+	const assignUserUrl = `${proxyHost}/assignUser`;
 
 	return class UserSaveHelper {
 		static actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'research', 'fundraise'];
+
+		static proxyHost() { return proxyHost; }
 
 		static async doFetch(url, options) {
 			let json;
@@ -139,7 +143,7 @@
 		 * @param {string} recordType
 		 */
 		static async assignUser(userUuid, targetUuid, recordType = 'user') {
-			const url = `${assignUser}`;
+			const url = `${assignUserUrl}`;
 			return this.doFetch(url, {
 				userUuid,
 				recordUuid: targetUuid,

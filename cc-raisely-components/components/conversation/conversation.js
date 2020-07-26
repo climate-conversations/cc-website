@@ -44,7 +44,6 @@
 
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			const conversation = await UserSaveHelper.proxy(url, {});
-			console.log('model loaded',uuid, conversation)
 			return conversation;
 		} catch (e) {
 			if (required) throw e;

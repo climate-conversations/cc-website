@@ -1,91 +1,91 @@
 /* eslint-disable no-use-before-define */
 (RaiselyComponents, React) => {
 	const { get } = RaiselyComponents.Common;
+	const { ProgressBar } = RaiselyComponents.Atoms;
 	const { api, Spinner } = RaiselyComponents;
 	const { getQuery, getData } = api;
 
 	const Messenger = RaiselyComponents.import('message-send-and-save');
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const CCUserSaveRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	let Conversation;
+	let CCUserSave;
 
-	const HIGH_LEVEL = 8;
+	const attitudeLabels = [
+		{
+			id: "increased-talkativeness",
+			label: "now is more likely to talk about the climate crisis",
+			plural: "now are more likely to talk about the climate crisis",
+		},
+		{
+			id: "increased-priority",
+			label: "views the climate crisis as a higher priority",
+			plural: "view climate crisis as a higher priority",
+			sublabel: "(than they did before the conversation)",
+		},
+		{
+			id: "high-priority",
+			label: "now views the climate crisis as the highest priority",
+			plural: "now view the climate crisis as the highest priority",
+			sublabel: "(and they didn't before)",
+		},
+		{
+			id: "increased-hope",
+			label:
+				"feels more hopeful about our ability to act on the climate crisis",
+			plural:
+				"feel more hopeful about our ability to act on the climate crisis",
+		},
+		{
+			id: "increased-agency",
+			label: "feels a greater sense of agency to act on the climate crisis",
+			plural: "feel a greater sense of agency to act on the climate crisis",
+		},
+		{
+			id: "high-agency",
+			label: "feels highly empowered",
+			plural: "feel highly empowered",
+		},
+		{
+			id: "highly-recomends",
+			label: "would highly recommend Climate Conversations",
+		}
+	];
 
-	const attitudeConditions = [{
-		label: 'now is more likely to talk about climate breakdown',
-		plural: 'now are more likely to talk about climate breakdown',
-		fn: ({ pre, post }) => increased(pre, post, 'talkativeness'),
-	}, {
-		label: 'views climate breakdown as a higher priority',
-		plural: 'view climate breakdown as a higher priority',
-		sublabel: '(than they did before the conversation)',
-		fn: ({ pre, post }) => increased(pre, post, 'priority'),
-	}, {
-		label: 'now views climate breakdown as the highest priority',
-		plural: 'now view climate breakdown as the highest priority',
-		sublabel: "(and they didn't before)",
-		fn: ({ pre, post }) => crossed(pre, post, 'priority', HIGH_LEVEL),
-	}, {
-		label: 'feels more hopeful about our ability to act on climate breakdown',
-		plural: 'feel more hopeful about our ability to act on climate breakdown',
-		fn: ({ pre, post }) => increased(pre, post, 'hope'),
-	}, {
-		label: 'feels a greater sense of agency to act on climate breakdown',
-		plural: 'feel a greater sense of agency to act on climate breakdown',
-		fn: ({ pre, post }) => increased(pre, post, 'agency'),
-	}, {
-		label: 'feels highly empowered',
-		plural: 'feel highly empowered',
-		fn: ({ pre, post }) => crossed(pre, post, 'agency', HIGH_LEVEL),
-	}, {
-		label: 'would highly recommend Climate Conversations',
-		fn: ({ post }) => get(post, 'detail.private.recommend') >= HIGH_LEVEL,
-	}];
+	const mockResponse = {
+		actions: ['hosts', 'facilitators', 'donations', 'volunteers']
+			.map((action, index) =>
+				({ label: action, value: index + 1 })),
+		attitudes: [
+			{ id: "increased-talkativeness", value: 7 },
+			{ id: "increased-priority", value: 8 },
+			{ id: "high-priority", value: 3 },
+			{ id: "increased-hope", value: 5 },
+			{ id: "increased-agency", value: 6 },
+			{ id: "high-agency", value: 2 },
+			{ id: "highly-recomends", value: 4 },
+		],
+		startAt: '2020-09-21T12:00',
+	};
 
-	/**
-	 * Helper for counting how many objects match a criteria
-	 * @param {object[]} array Array of objects to match
-	 * @param {*} field Field to pass into fn (if null, will pass in the whole object)
-	 * @param {*} fn All records for which fn returns true will be counted,
-	 * If no function is specified, will count all objects for which field is truthy
-	 */
-	function countIf(array, field, fn) {
-		// eslint-disable-next-line no-param-reassign
-		if (!fn) fn = value => value;
-
-		return array.reduce((total, current) =>
-			(fn(field ? get(current, ['detail', 'private', field]) : current) ? total + 1 : total), 0);
-	}
-
-	/**
-	 * Returns true if a field has increased between pre and post survey
-	 */
-	function increased(pre, post, field) {
-		const before = get(pre, ['detail', 'private', field], 'MISSING');
-		const after = get(post, ['detail', 'private', field], 0);
-
-		// Don't false positive if field is missing
-		if (before === 'MISSING') return false;
-
-		return before < after;
-	}
-
-	/**
-	 * Returns true if a participant survey score became >= threshold since pre survey
-	 * @param {object} pre pre-survey interaction
-	 * @param {object} post post-survey interaction
-	 * @param {*} field name of the private field to check
-	 * @param {*} threshold value that needs to be crossed
-	 */
-	function crossed(pre, post, field, threshold) {
-
-		const before = get(pre, ['detail', 'private', field], 'MISSING');
-		const after = get(post, ['detail', 'private', field], 0);
-
-		// Don't false positive if field is missing
-		if (before === 'MISSING') return false;
-
-		return (before < threshold) && (after >= threshold);
+	function BarChart({ goal, value, id, size }) {
+		const className = `host-report__progress-bar--${id}`
+		return (
+			<div className={className}>
+				<ProgressBar
+					displaySource="custom"
+					statPosition="middle"
+					total={value}
+					goal={goal}
+					showTotal={false}
+					showGoal={false}
+					style="rounded"
+					unit=" "
+					size={size || 'medium'}
+				/>
+			</div>
+		);
 	}
 
 	return class HostReport extends React.Component {
@@ -94,45 +94,52 @@
 			this.load();
 		}
 		componentDidUpdate() {
-			const eventUuid = get(this.props, 'match.params.conversation');
+			const eventUuid = this.getEventUuid();
 			// Reload the conversation and guests if the id has changed
-			if (this.state.eventUuid !== eventUuid) {
+			if (eventUuid && (this.state.eventUuid !== eventUuid)) {
 				this.setState({ loading: true });
 				this.load();
 			}
 		}
 
+		getEventUuid() {
+			const eventUuid =
+				this.props.conversation ||
+				get(this.props, "match.params.conversation") ||
+				getQuery(get(this.props, "router.location.search")).event;
+			return eventUuid;
+		}
+
 		async load() {
 			try {
-				if (!Conversation) Conversation = ConversationRef().html;
-				const surveys = [
-					Conversation.surveyCategories().preSurvey,
-					Conversation.surveyCategories().postSurvey,
-				];
+				let report;
 
-				const eventUuid = this.props.conversation ||
-					get(this.props, 'match.params.conversation') ||
-					getQuery(get(this.props, 'router.location.search')).event;
+				const eventUuid = this.getEventUuid();
 				this.setState({ eventUuid });
 
-				const eventPromise = Conversation.loadConversation({ props: this.props })
-					.then(r => this.setState(r));
-				const rsvpPromise = Conversation.loadRsvps({ props: this.props, type: ['host', 'guest'] })
-					.then(r => this.setState(r));
+				const { mock } = this.props.global.campaign;
+				if (mock) {
+					report = mockResponse;
+				} else {
+					if (!Conversation) Conversation = ConversationRef().html;
+					if (!CCUserSave) CCUserSave = CCUserSaveRef().html;
 
-				const promises = surveys.map(category =>
-					getData(api.interactions.getAll({
-						query: { category, private: 1, reference: eventUuid },
-					})));
-				promises.push(eventPromise, rsvpPromise);
+					const url = `${CCUserSave.proxyHost()}/hostReport/${eventUuid}`;
+					report = await CCUserSave.doFetch(url, {
+						query: {
+							pre: Conversation.surveyCategories().preSurvey,
+							post: Conversation.surveyCategories().postSurvey,
+						},
+					});
+				}
 
-				const [preSurveys, postSurveys] = await Promise.all(promises);
+				this.labelAttitudes(report.attitudes);
+				const maximumValue = this.setMaximum(report);
 
-				const state = { postSurveys, preSurveys };
-				this.setState(state, () => {
-					this.calculateActions();
-					this.calculateAttitudes();
-					this.setState({ loading: false });
+				this.setState({
+					loading: false,
+					...report,
+					maximumValue,
 				});
 			} catch (e) {
 				console.error(e);
@@ -140,56 +147,16 @@
 			}
 		}
 
-		/**
-		 * Summarise actions taken at a conversation
-		 * @param {} postSurveys
-		 * @param {*} rsvps
-		 */
-		calculateActions() {
-			const { postSurveys, rsvps } = this.state;
-			const actions = ['host', 'facilitate', 'volunteer'].map(field =>
-				({
-					label: field === 'facilitate' ? 'facilitators' : `${field}s`,
-					value: countIf(postSurveys, field),
-				}));
-
-			// Count all donation intentions that are present and not 'no'
-			actions.push({
-				label: 'donations',
-				value: countIf(rsvps, 'donationIntention', value => value && value !== 'no'),
-			});
-
-			this.setState({ actions });
+		setMaximum = ({ attitudes, actions }) => {
+			const allValues = [...attitudes, ...actions].map(a => a.value);
+			return Math.max(...allValues);
 		}
 
-		/**
-		 * Summarise the attitude shifts of the guests
-		 * @param {object[]} preSurveys
-		 * @param {object[]} postSurveys
-		 */
-		// eslint-disable-next-line class-methods-use-this
-		calculateAttitudes() {
-			const { postSurveys, preSurveys } = this.state;
-
-			// Match pre with post
-			const matchedSurveys = postSurveys.map(survey => ({
-				pre: preSurveys.find(s => s.userUuid === survey.userUuid),
-				post: survey,
-			}));
-
-			const attitudes = attitudeConditions.map(attitude => {
-				const calculatedAttribute = {
-					label: attitude.label,
-					sublabel: attitude.sublabel,
-					value: countIf(matchedSurveys, null, attitude.fn),
-				};
-				if (attitude.plural && calculatedAttribute.value !== 1) {
-					calculatedAttribute.label = attitude.plural;
-				}
-				return calculatedAttribute;
+		labelAttitudes(attitudes) {
+			attitudes.forEach(attitude => {
+				const labels = attitudeLabels.find(al => al.id === attitude.id);
+				Object.assign(attitude, labels);
 			});
-
-			this.setState({ attitudes });
 		}
 
 		onSendReport = () => {
@@ -227,7 +194,13 @@ ${url}`;
 			let attitudes;
 
 			const { props } = this;
-			const { error, loading, conversation, hasSent } = this.state;
+			const {
+				error,
+				loading,
+				conversation,
+				hasSent,
+				maximumValue,
+			} = this.state;
 
 			if (!loading) {
 				// Only show actions/attitudes that have at least 1 person
@@ -253,8 +226,17 @@ ${url}`;
 						<div className="">Your conversation has inspired the following actions...</div>
 						{actions ? actions.map(action => (
 							<div className="host--report__action-item" key={action.label}>
-								<div className="host--report__action-item-number">{action.value}</div>
-								<div className="host--report__action-item-label">{action.label}</div>
+								<div className="host--report__action-item-description">
+									<div className="host--report__action-item-number">{action.value}</div>
+									<div className="host--report__action-item-label">{action.label}</div>
+								</div>
+								<div className="host--report__action-item-bar">
+									<BarChart
+										value={action.value}
+										goal={maximumValue}
+										id={action.label}
+									/>
+								</div>
 							</div>
 						)) : <Spinner /> }
 					</div>
@@ -262,11 +244,21 @@ ${url}`;
 						<div className="">As a result of your conversation ...</div>
 						{attitudes ? attitudes.map(attitude => (
 							<div className="host--report__attitude-item" key={attitude.label}>
-								<div className="host--report__attitude-item-number">{attitude.value}</div>
-								<div className="host--report__attitude-item-label">
-									{attitude.value === 1 ? 'person' : 'people' } {attitude.label}
-									<div className="host--report__attitude-item-sublabel">
-										{attitude.sublabel}
+								<div className="host--report__attitude-item-bar">
+									<BarChart
+											value={attitude.value}
+											goal={maximumValue}
+											id={attitude.id}
+											size="small"
+										/>
+								</div>
+								<div className="host--report__attitude-item-description">
+									<div className="host--report__attitude-item-number">{attitude.value}</div>
+									<div className="host--report__attitude-item-label">
+										{attitude.value === 1 ? `person ${attitude.label}` : `people ${attitude.plural || attitude.label}` }
+										<div className="host--report__attitude-item-sublabel">
+											{attitude.sublabel}
+										</div>
 									</div>
 								</div>
 							</div>
