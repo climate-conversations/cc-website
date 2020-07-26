@@ -1,5 +1,6 @@
 const { pick } = require('lodash');
 const { expect } = require('chai');
+const nock = require('nock');
 
 function itReturnsMinimalUser(results) {
 	it('returns minimal user', () => {
@@ -15,7 +16,12 @@ function statusOk(results) {
 	});
 }
 
+function nockRaisely() {
+	return nock("https://api.raisely.com/v3").log(console.log);
+}
+
 module.exports = {
 	itReturnsMinimalUser,
 	statusOk,
+	nockRaisely,
 };

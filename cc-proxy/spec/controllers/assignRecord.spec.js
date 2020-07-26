@@ -7,7 +7,7 @@ const MockResponse = require('../utils/mockResponse');
 const MockRequest = require('../utils/mockRequest');
 const { assignRecord } = require('../../src');
 
-const { statusOk } = require('./shared');
+const { statusOk, nockRaisely } = require('./shared');
 
 const { expect } = chai;
 
@@ -80,11 +80,6 @@ function clearNocks() {
 	nock.cleanAll();
 	requests = {};
 	request.cache.clear();
-}
-
-function nockRaisely() {
-	return nock('https://api.raisely.com/v3')
-		.log(console.log);
 }
 
 function nockAuth(isTeamLeader) {
