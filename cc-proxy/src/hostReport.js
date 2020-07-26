@@ -25,47 +25,30 @@ async function getData(promise) {
 const attitudeConditions = [
 	{
 		id: "increased-talkativeness",
-		label: "now is more likely to talk about the climate crisis",
-		plural: "now are more likely to talk about the climate crisis",
 		fn: ({ pre, post }) => increased(pre, post, "talkativeness")
 	},
 	{
 		id: "increased-priority",
-		label: "views the climate crisis as a higher priority",
-		plural: "view climate crisis as a higher priority",
-		sublabel: "(than they did before the conversation)",
 		fn: ({ pre, post }) => increased(pre, post, "priority")
 	},
 	{
 		id: "high-priority",
-		label: "now views the climate crisis as the highest priority",
-		plural: "now view the climate crisis as the highest priority",
-		sublabel: "(and they didn't before)",
 		fn: ({ pre, post }) => crossed(pre, post, "priority", HIGH_LEVEL)
 	},
 	{
 		id: "increased-hope",
-		label:
-			"feels more hopeful about our ability to act on the climate crisis",
-		plural:
-			"feel more hopeful about our ability to act on the climate crisis",
 		fn: ({ pre, post }) => increased(pre, post, "hope")
 	},
 	{
 		id: "increased-agency",
-		label: "feels a greater sense of agency to act on the climate crisis",
-		plural: "feel a greater sense of agency to act on the climate crisis",
 		fn: ({ pre, post }) => increased(pre, post, "agency")
 	},
 	{
 		id: "high-agency",
-		label: "feels highly empowered",
-		plural: "feel highly empowered",
 		fn: ({ pre, post }) => crossed(pre, post, "agency", HIGH_LEVEL)
 	},
 	{
 		id: "highly-recomends",
-		label: "would highly recommend Climate Conversations",
 		fn: ({ post }) => get(post, "detail.private.recommend") >= HIGH_LEVEL
 	}
 ];
