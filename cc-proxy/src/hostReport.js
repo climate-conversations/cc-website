@@ -132,7 +132,7 @@ async function hostReport(req) {
 
 	const [path] = req.originalUrl.split('?');
 
-	const eventUuid = path.split('/')[2];
+	const eventUuid = path.split('/')[1];
 
 	const eventPromise = getData(raiselyRequest(
 		{

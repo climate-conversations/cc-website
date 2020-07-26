@@ -21,7 +21,7 @@ describe('hostReport', () => {
 		before(() => {
 			results.req = new MockRequest({
 				method: "GET",
-				url: `/hostReport/${eventUuid}?pre=pre-category&post=post-category`,
+				url: `/${eventUuid}?pre=pre-category&post=post-category`,
 				headers: {
 					Origin: "https://climateconversations.raisely.com"
 				},
@@ -97,7 +97,7 @@ function setNocks() {
 			]
 		})
 		.get(
-			`/interactions?category=pre-category&private=1&reference=${eventUuid}b`
+			`/interactions?category=pre-category&private=1&reference=${eventUuid}`
 		)
 		.reply(200, {
 			data: [

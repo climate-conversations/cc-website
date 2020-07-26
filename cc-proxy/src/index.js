@@ -68,7 +68,6 @@ function serializeError(error) {
 function log(name, req, status, meta = {}, level = 'info') {
 	const user = get(req, 'authentication.user', '<public>');
 	const message = `${status} ${req.method} ${user} /${name}${req.originalUrl}`;
-	console.log(meta);
 	logger.log(level, message, meta);
 }
 
