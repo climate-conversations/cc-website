@@ -113,6 +113,7 @@
 		async load() {
 			try {
 				let report;
+				let hosts;
 
 				const eventUuid = this.getEventUuid();
 				this.setState({ eventUuid });
@@ -125,12 +126,31 @@
 					if (!CCUserSave) CCUserSave = CCUserSaveRef().html;
 
 					const url = `${CCUserSave.proxyHost()}/hostReport/${eventUuid}`;
-					report = await CCUserSave.doFetch(url, {
+					const promises = [CCUserSave.doFetch(url, {
 						query: {
 							pre: Conversation.surveyCategories().preSurvey,
 							post: Conversation.surveyCategories().postSurvey,
 						},
-					});
+					})];
+
+					// If
+					if (api.getCurrentToken()) {
+						promises.push(Conversation.loadRsvps(
+							{
+								props: this.props,
+								type: ["host"]
+							}
+						).catch(e => {
+							// If this is being loaded by a host without login
+							// then host is not available
+							console.log('Ignoring error', e)
+						}).then(() => {
+							return {};
+						}));
+					}
+
+					[report, attendees] = await promises;
+					({ hosts } = attendess);
 				}
 
 				this.labelAttitudes(report.attitudes);
@@ -140,6 +160,7 @@
 					loading: false,
 					...report,
 					maximumValue,
+					hosts,
 				});
 			} catch (e) {
 				console.error(e);
@@ -165,6 +186,9 @@
 
 		renderSendReport = () => {
 			const { hosts } = this.state;
+			// If there are no hosts, then they are not loaded, or don't have permission to send to them
+			if (!hosts) return;
+
 			const defaultMessage = 'Thank you for hosting a Climate Conversation. Attached is a summary of the impact you enabled';
 			const path = get(this.props, 'location.pathname');
 			const url = `https://p.climate.sg/${path}`;
