@@ -1843,6 +1843,7 @@ ul.host-list {
       display: inline-block;
       font-weight: bold;
       padding-right: 0.25em;
+      vertical-align: top;
     }
     &-label {
       display: inline-block;
@@ -1858,12 +1859,94 @@ ul.host-list {
 }
 
 .host--report {
+  &__action-item-description {
+    width: 50%;
+    display: inline-block;
+  }
+  &__action-item-bar {
+    width: 50%;
+    display: inline-block;
+  }
+  @include respond-to('min-tablet') {
+    &__action-item-description {
+      width: 30%;
+    }
+    &__action-item-bar {
+      width: 70%;
+    }
+  }
+  @include respond-to('min-tablet') {
+    &__attitude-item-bar {
+      max-width: 50%;
+      padding-left: 8%;
+    }
+  }
+  &__attitude-item-description {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.host--report {
   &__attitude-item {
     font-size: 1.3rem;
     &-number {
       width: 10%;
     }
+  }
 }
+
+@mixin progress-color($color) {
+    .progress-bar__bar {
+      background: $color;
+    }
+}  
+
+.host-report__progress-bar {
+	&--hosts  {
+    @include progress-color($accentViolet)
+  }
+  &--donations  {
+    @include progress-color($accentOrange)
+  }
+  &--facilitators  {
+    @include progress-color($accentBlue)
+  }
+  &--volunteers {
+    @include progress-color($accentGreen)
+  }
+
+	&--increased-talkativeness {
+    @include progress-color($accentRed)
+  }
+  &--increased-priority {
+    @include progress-color($accentCyan)
+  }
+  &--high-priority {
+    @include progress-color($accentBlue)
+  }
+  &--increased-hope {
+    // Yellow
+  }
+  &--increased-agency {
+    @include progress-color($accentPink)
+  }
+  &--high-agency {
+    @include progress-color($accentMagenta)
+  }
+  &--highly-recomends {
+    @include progress-color($accentGreen)
+  }
+  /**
+$accentGreen: #33FF66;
+$accentOrange: #FD9035;
+$accentPink: #FF33FF;
+$accentCyan: #33EAFF;
+$accentViolet: #AE32FF;
+$accentRed: #FE4133;
+$accentBlue: #3297FA;
+$accentMagenta: #FF277C;
+  */
+
 }
 
 .conversation-facil {
