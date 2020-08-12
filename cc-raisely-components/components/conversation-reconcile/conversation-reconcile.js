@@ -1,7 +1,8 @@
 (RaiselyComponents, React) => {
 	// eslint-disable-next-line object-curly-newline
-	const { dayjs, displayCurrency, get, kebabCase, set } = RaiselyComponents.Common;
-	const { getData, save } = RaiselyComponents.api;
+	const { startCase, displayCurrency, get, kebabCase, set } = RaiselyComponents.Common;
+	const { api } = RaiselyComponents;
+	const { getData } = RaiselyComponents.api;
 	const { Button } = RaiselyComponents.Atoms;
 	const { Spinner } = RaiselyComponents;
 
@@ -90,6 +91,7 @@
 
 			return (
 				<div className={`reconcile--${className}`}>
+					<h4>{startCase(id)}</h4>
 					<img src={url} alt={imageField} />
 					<p>Is the amount shown in the image {value}?</p>
 					<Button onClick={() => this.imageChecked(false)}>No</Button>
@@ -153,8 +155,14 @@ ${close}`;
 			console.log('Saving');
 			const data = formToData(values);
 			const { event } = data;
-			set(event, 'private.cashDonationsReviewerUuid', get(this.props.global.user.uuid));
-			return getData(save('event', event, { partial: true }));
+			if (get(event, 'private.cashDonationsReviewed')) {
+				set(event, 'private.reconciledBy', get(this.props, 'global.user.uuid'));
+				set(event, 'private.reconciledAt', new Date().toISOString());
+			}
+			return getData(api.events.update({
+				id: event.uuid,
+				data: { data: _.pick(event, ['private']) },
+			}));
 		}
 
 		reconcileStep({ amounts, consistent }) {
@@ -168,7 +176,8 @@ ${close}`;
 				<div className="reconcile--notes">
 					{inconsistent ? (
 						<React.Fragment>
-							<p>The donation amounts are inconsistent, can you please check them with the faciltiator?</p>
+							<h4>The donation amounts are inconsistent</h4>
+							<p>Can you please check them with the faciltiator?</p>
 							<div className="reconcile--amounts">
 								<ul>
 									<li>Sum of amounts in CTA forms: {amounts.cashCtaAmount}</li>
@@ -210,7 +219,7 @@ ${close}`;
 		}
 
 		render() {
-			const { error, step, loading } = this.state;
+			const { error, step, loading, conversation } = this.state;
 			const { props } = this;
 
 			if (loading) return <Spinner />;
@@ -236,20 +245,35 @@ ${close}`;
 
 			return (
 				<div className="conversation--reconcile__wrapper">
+					<h3>Reconcile Conversation</h3>
+					<h4>{conversation.name}</h4>
 					<div className="description">
-						Thank you for taking the time to review the donations and ensure
-						we are keeping good records.
+						Thank you for taking the time to review the
+						donations and ensure we are keeping good
+						records.
 						{" Here's"} what you need to do:
 						<ol>
-							<li>Confirm that the amounts in the pictures match the amounts entered</li>
+							<li>
+								Confirm that the amounts in the
+								pictures match the amounts entered
+							</li>
 							{!consistent ? (
-								<li>Check if {"there's"} a valid reason why the donation amounts {"don't"} match</li>
-							) : ''}
+								<li>
+									Check if {"there's"} a valid
+									reason why the donation amounts{" "}
+									{"don't"} match
+								</li>
+							) : (
+								""
+							)}
 						</ol>
 					</div>
-					{step < 2 ?
-						this.pictureConfirmationStep() :
-						this.reconcileStep({ amounts, consistent })}
+					{step < 2
+						? this.pictureConfirmationStep()
+						: this.reconcileStep({
+								amounts,
+								consistent
+						  })}
 					<ReturnButton {...props} backLabel="Go back" />
 				</div>
 			);
