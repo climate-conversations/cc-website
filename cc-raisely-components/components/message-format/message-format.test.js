@@ -78,7 +78,7 @@ describe('Message Formatter', () => {
 				facilitator: { preferredName: 'Josh' },
 				event: { name: 'Your Event'},
 			}
-			const template = "Hello {{facilitator.preferredName}} thank you for processing {{ event.name}}. Here's the {{missing}} attribute";
+			const template = "Hello [[facilitator.preferredName]] thank you for processing [[ event.name]]. Here's the [[missing]] attribute";
 			const expected = "Hello Josh thank you for processing Your Event. Here's the  attribute";
 			const result = Format.substitute(template, data);
 			expect(result).to.eq(expected);

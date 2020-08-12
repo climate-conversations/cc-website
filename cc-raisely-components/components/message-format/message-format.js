@@ -157,7 +157,7 @@
 		}
 
 		static substitute(template, data) {
-			const subPattern = /{{([A-Za-z._\s]*)}}/gm
+			const subPattern = /\[\[([A-Za-z._\s]*)\]\]/gm
 			return template.replace(subPattern, (sub, group1) => get(data, group1.trim(), ''));
 		}
 	}
