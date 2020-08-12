@@ -44,19 +44,19 @@
 
 	class FormStep extends React.Component {
 		constructor(props) {
-			console.log('FormStep constructor');
+			// console.log('FormStep constructor');
 			super(props);
 			this.state = {};
 		}
 
 		onChange = (values) => {
-			console.log('FormStep.onChange');
+			// console.log('FormStep.onChange');
 			const { pageIndex } = this.props;
 			this.props.updateValues({ [pageIndex]: values });
 		}
 
 		next = async () => {
-			console.log('FormStep.next');
+			// console.log('FormStep.next');
 			const { save, shouldSave } = this.props;
 			if (shouldSave()) {
 				this.setState({ saving: true });
@@ -228,7 +228,7 @@
 					if (value) set(this.recordKeys, key, value);
 				}
 			});
-			console.log('saveUuids', this.recordKeys);
+			// console.log('saveUuids', this.recordKeys);
 		}
 
 		retrieveRecordUuids = (data) => {
@@ -256,7 +256,7 @@
 		 * if it's defined and handles setting up a loading message
 		 */
 		async loadValues() {
-			console.log('CustomForm.loadValues', this.state);
+			// console.log('CustomForm.loadValues', this.state);
 
 			try {
 				const load = get(this.props, 'controller.load');
@@ -271,7 +271,7 @@
 			} finally {
 				this.setState({ loaded: true });
 			}
-			console.log('CustomForm.loadValues (finished)', this.state);
+			// console.log('CustomForm.loadValues (finished)', this.state);
 		}
 
 		/**
@@ -313,7 +313,7 @@
 			while ((!canShow) && (step > 0) && (step < this.state.steps.length - 1)) {
 				const stepConfig = this.props.steps[step];
 				if (stepConfig.condition) {
-					console.log(`Evaluating step ${step} condition`, this.state.values);
+					// console.log(`Evaluating step ${step} condition`, this.state.values);
 				}
 				canShow = stepConfig.condition ? stepConfig.condition(this.state.values) : true;
 
@@ -335,7 +335,7 @@
 		}
 
 		navigate = (step) => {
-			console.log('CustomForm.navigate', this.state);
+			// console.log('CustomForm.navigate', this.state);
 			let canShow;
 
 			// Save the last step so we know if this navigation is going backwards or forwards
@@ -349,7 +349,7 @@
 				const result = onNavigate(step, this.state.values, this.formToData, this.dataToForm);
 				if (result) this.setState({ values: result });
 			}
-			console.log('CustomForm.navigate (finished)', this.state);
+			// console.log('CustomForm.navigate (finished)', this.state);
 
 			this.lastStep = step;
 			return step;
@@ -383,7 +383,7 @@
 		}
 
 		doRedirect = () => {
-			console.log('doRedirect');
+			// console.log('doRedirect');
 			const { history } = this.props;
 			if (this.completeRedirect) history.push(this.completeRedirect);
 		}
@@ -400,7 +400,7 @@
 				if (description.exclude) include = description.exclude.indexOf(field) === -1;
 				if (include) fieldList.push(`interaction.${category}.${field}`);
 			});
-			console.log(`Selected interaction category fields (${category})`, fieldList);
+			// console.log(`Selected interaction category fields (${category})`, fieldList);
 
 			return fieldList;
 		}
@@ -413,7 +413,7 @@
 		resolveSteps(steps) {
 			// Cache steps so we don't rerun this too frequently
 			this.lastSteps = steps;
-			console.log('CustomForm.resolveSteps');
+			// console.log('CustomForm.resolveSteps');
 			if (!(steps && Array.isArray(steps))) return null;
 
 			const resolvedSteps = steps.map((step) => {
@@ -423,7 +423,7 @@
 				}
 				return result;
 			});
-			console.log('Resolved Steps', resolvedSteps);
+			// console.log('Resolved Steps', resolvedSteps);
 
 			return resolvedSteps;
 		}
@@ -432,7 +432,7 @@
 			handleState, // handles state object or state update function
 			afterUpdateCallback // callback after updated
 		) => {
-			console.log('Update called', handleState);
+			// console.log('Update called', handleState);
 
 			const proxyCallback = (...args) => {
 				if (this.props.updateValues) this.props.updateValues(handleState, this.formToData);
@@ -512,7 +512,7 @@
 		 * Build the MultiForm steps from the declared steps
 		 */
 		buildSteps(steps) {
-			console.log('CustomForm.buildSteps');
+			// console.log('CustomForm.buildSteps');
 			if (!(steps && Array.isArray(steps))) return null;
 
 			const builtSteps = steps.map((step, index) => {
@@ -542,7 +542,7 @@
 				if (ReturnButtonClass) {
 					const { getReturnUrl } = ReturnButtonClass.type;
 					finishedProps.completeRedirect = getReturnUrl(this.props, '/dashboard', true);
-					console.log(`set redirect to ${finishedProps.completeRedirect}`);
+					// console.log(`set redirect to ${finishedProps.completeRedirect}`);
 				}
 			}
 
@@ -614,7 +614,7 @@
 	 * @param {boolean} toForm
 	 */
 	function mapFormToData(source, steps, toForm) {
-		console.log('CustomForm.mapFormToData', source, steps);
+		// console.log('CustomForm.mapFormToData', source, steps);
 		const values = {};
 		steps.forEach((step, index) => {
 			// If no fields, then might be a custom step
@@ -644,7 +644,7 @@
 				});
 			}
 		});
-		console.log('CustomForm.mapFormToData (finished)', values);
+		// console.log('CustomForm.mapFormToData (finished)', values);
 
 		return values;
 	}
