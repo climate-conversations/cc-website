@@ -3,6 +3,7 @@
 	const { getData } = api;
 	const { get } = Common;
 	const { Link } = RaiselyComponents;
+	const { Icon } = RaiselyComponents.Atoms;
 
 	const DisplayRecord = RaiselyComponents.import('display-record');
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
@@ -104,16 +105,21 @@
 		}
 
 		render() {
+			const { eventRsvpUuid } = this.state;
 			const name = get(this.state, 'values.user.fullName') ||
 				get(this.state, 'values.user.preferredName');
 			const eventUuid = get(this.state, 'values.event_rsvp.uuid');
 			const suffix = name ? `: ${name}` : '';
 			const returnLink = `/conversations/${eventUuid}/view`;
+			const editLink = `/surveys/${eventRsvpUuid}/edit`;
+
 			return (
 				<div className="survey-review-wrapper">
 					<Link href={returnLink}>Back to Conversation</Link>
+					<Icon name="edit" href={editLink} />
 					<h3>Review Survey{suffix}</h3>
 					{this.renderInner()}
+					<Icon name="edit" href={editLink} />
 					<Link href={returnLink}>Back to Conversation</Link>
 				</div>
 			)

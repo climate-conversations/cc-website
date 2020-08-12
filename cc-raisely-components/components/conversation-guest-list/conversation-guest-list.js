@@ -28,7 +28,7 @@
 		}
 
 		render() {
-			const { guest } = this.props;
+			const { guest, eventUuid } = this.props;
 			const { user } = guest;
 
 			const symbols = [
@@ -41,6 +41,7 @@
 				{ id: 'fundraise', icon: '$' },
 			];
 			const surveyLink = `/surveys/${guest.uuid}`;
+			const editLink = `/surveys/${guest.uuid}/edit`;
 
 			const email = user.email.endsWith('.test') || user.email.endsWith('.invalid') ?
 				'(no email)' : user.email;
@@ -51,6 +52,7 @@
 					<div className="conversation-guest-list__email">{email}</div>
 					<div className="conversation-guest-list__legend">{symbols.map(this.legend)}</div>
 					<div className="conversation-guest-list__buttons">
+						<Icon name="edit" href={editLink} />
 						<Icon name="list_alt" href={surveyLink} />
 						<WhatsappButton phone={guest.phoneNumber} />
 						<RaiselyButton recordType="user" uuid={guest.uuid} />
@@ -126,7 +128,7 @@
 			return (
 				<div className="conversation-guest-list-wrapper">
 					<ul className="conversation-guest-list list__wrapper">
-						{guests.map(guest => <Guest key={guest.uuid} {...this.props} guest={guest} />)}
+						{guests.map(guest => <Guest key={guest.uuid} {...this.props} guest={guest} eventUuid={eventUuid} />)}
 					</ul>
 					<Button href={returningEmailLink}>Email all Guests</Button>
 				</div>
