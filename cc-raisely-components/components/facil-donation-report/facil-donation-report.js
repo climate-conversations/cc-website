@@ -54,18 +54,48 @@
 
 		async save(values, formToData) {
 			console.log('Saving');
+			const { event: existingEvent } = this.state;
 			const data = formToData(values);
 			const { event } = data;
 			const conversation = { ...event };
+			const transferPath = 'private.cashTransferScreenshot';
+			const reportPath = 'private.cashReportScan';
+			const newTransfer = get(conversation, transferPath);
+			const newReport = get(conversation, reportPath);
+			const webhookData = { conversation: event };
+			const promises = [];
+			if (newTransfer && get(existingEvent, transferPath) !== newTransfer) {
+				promises.push(UserSaveHelper.notifySync(
+					'conversation.donationReportUploaded', {
+						...webhookData,
+						url: newTransfer,
+						type: 'transfer'
+					}
+				));
+			}
+			if (newReport && get(existingEvent, reportPath) !== newReport) {
+				promises.push(
+					UserSaveHelper.notifySync(
+						'conversation.donationReportUploaded',
+						{
+							...webhookData,
+							url: newReport,
+							type: "report"
+						}
+					)
+				);
+			}
+
 			delete conversation.uuid;
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-			return UserSaveHelper.proxy(`/events/${event.uuid}`, {
+			promises.push(UserSaveHelper.proxy(`/events/${event.uuid}`, {
 				method: 'PATCH',
 				body: {
 					partial: true,
 					data: conversation,
 				}
-			});
+			}));
+			return Promise.all(promises);
 		}
 
 		renderLeaderNotes() {
