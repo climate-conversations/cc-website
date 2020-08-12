@@ -139,7 +139,8 @@
 
 	function ViewInteraction({ interaction }) {
 		const date = dayjs(interaction.createdAt).format('DD/MM/YYYY');
-		const subject = get(interaction, 'detail.private.subject');
+		const subject = get(interaction, 'detail.private.subject') ||
+			`[${startCase(get(interaction, 'detail.private.messageId', ''))}]`;
 		return (
 			<li className="interaction--tile">
 				<div className="interaction--tile__date">{date}</div>
@@ -166,6 +167,7 @@
 		load = async () => {
 			const { host } = this.props;
 			const messageCategories = 'meeting,personal.message,personal.email,phone';
+			this.setState({ loading: true });
 
 			try {
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
@@ -190,8 +192,7 @@
 				// In case the other failed
 				await initStepsPromise;
 				console.log("messages: ", messages)
-				this.setState({ messages });
-				await this.checkCompleteSteps();
+				this.setState({ messages }, this.checkCompleteSteps);
 			} catch (error) {
 				console.error(error);
 				this.setState({ error: error.message || 'Loading failed', loading: false });
@@ -254,7 +255,27 @@
 				.join('\n');
 		}
 
-		async checkCompleteSteps() {
+		manualStep = async () => {
+			const { sendBy } = this.state.nextStep;
+			const { host } = this.props;
+			const newInteraction = {
+				userUuid: host.uuid,
+				categoryUuid: sendBy === 'email' ? 'personal.email' : 'personal.message',
+				detail: {
+					readOnly: false,
+					private: {
+						...this.getNextStepMeta(),
+						method: sendBy
+					},
+				},
+			};
+			await getData(
+				save("interaction", newInteraction)
+			);
+			this.load();
+		}
+
+		checkCompleteSteps = async () => {
 			const { updateInteraction, interaction } = this.props;
 			const { messages, steps, completedSteps } = this.state;
 
@@ -322,20 +343,27 @@
 			this.setState({ nextStep });
 		}
 
+		getNextStepMeta() {
+			let nextStepMeta;
+			const { nextStep } = this.state;
+			if (nextStep) {
+				nextStepMeta = {
+					forInteraction: 'host-interest',
+					messageId: nextStep.id,
+				}
+				pick(nextStep, ['']);
+			}
+			return nextStepMeta;
+
+		}
+
 		render() {
 			// eslint-disable-next-line object-curly-newline
 			const { messages, loading, error, nextStep } = this.state;
 			const { host, interaction, facilitator } = this.props;
 			if (!(host || interaction)) return '';
 			if (loading) return <Spinner />;
-			let nextStepMeta;
-			if (nextStep) {
-				nextStepMeta = {
-					forInteraction: 'host-interest',
-					actionStepId: nextStep.id,
-				}
-				pick(nextStep, ['']);
-			}
+			const nextStepMeta = this.getNextStepMeta();
 
 			const noun = get(facilitator, 'uuid', 'n/a') === get(this.props, 'global.user.uuid') ?
 				'You' : getFacilitatorName(facilitator);
@@ -371,7 +399,7 @@
 								messageMeta={nextStepMeta}
 								messageData={messageData}
 							/>
-							<Button>{"I've"} already done this</Button>
+							<Button onClick={this.manualStep}>{"I've"} already done this</Button>
 						</div>
 					) : <Messenger
 						{...this.props}
@@ -616,7 +644,7 @@
 
 			let { host } = this.state;
 			if (data.user) {
-				host = await UserSaveHelper.upsertUser(data.user, { assignSelf: true });
+				host = await UserSaveHelper.upsertUser(data.user, { assignSelf: true, assignPointIfNew: true });
 				this.setState({ host });
 			}
 
@@ -639,10 +667,11 @@
 			newInteraction = {
 				...oldInteraction,
 				...newInteraction,
-			}
+			};
+			newInteraction.readOnly = false;
 			newInteraction.detail.private = {
 				...oldInteraction.detail.private,
-				...get(newInteraction, 'detail.private', {}),
+				...get(newInteraction, "detail.private", {})
 			};
 
 			const interaction = await getData(save('interaction', newInteraction, { partial: true }));
@@ -673,6 +702,14 @@
 		}
 
 		updateInteraction = async (interaction) => {
+			if (!UserSaveHelper) UserSaveHelper= UserSaveHelperRef().html
+			const data = { ...interaction };
+			delete data.uuid;
+			await UserSaveHelper.proxy(`/interactions/${interaction.uuid}`, {
+				method: 'PATCH',
+				body: { data },
+			});
+
 			await save('interaction', interaction, { partial: true });
 			this.setState({ interaction });
 		}
