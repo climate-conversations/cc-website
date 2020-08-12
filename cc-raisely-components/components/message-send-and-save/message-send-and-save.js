@@ -179,7 +179,7 @@
 			const { sendBy, body, subject, emailClient } = Object.assign(contactDefaults, this.props);
 
 			// this.setState({ body });
-			// contactFields.find(f => f.id === 'body').default = body;
+			contactFields.find(f => f.id === 'body').default = body;
 
 			const contactSettings = {
 				sendBy,
@@ -202,7 +202,7 @@
 				this.onContactChange([newContactSettings]);
 				newContactSettings = { ...contactSettings, body, sendBy };
 				this.onContactChange([newContactSettings]);
-			} , 250)
+			}, 250);
 		}
 
 		initRecipients() {
