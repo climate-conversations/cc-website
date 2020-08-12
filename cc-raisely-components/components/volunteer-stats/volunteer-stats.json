@@ -1,0 +1,26 @@
+{
+    "fields": {
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 1
+		},
+		"show": {
+            "id": "show",
+            "type": "select",
+            "label": "Show stats for",
+            "value": "facilitator",
+            "options": [
+                {
+                    "label": "Team",
+                    "value": "team"
+                },
+                {
+                    "label": "Facilitator",
+                    "value": "facilitator"
+				}
+			]
+		}
+    },
+    "uuid": "cc210f90-daa1-11ea-8fcf-17f7e5baec8c"
+}
