@@ -8,7 +8,7 @@
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	let Conversation;
-	const EventRef = RaiselyComponents.import("conversation", {
+	const EventRef = RaiselyComponents.import("event", {
 		asRaw: true
 	}); ;
 	let Event;
@@ -17,7 +17,7 @@
 
 	// These functions determine when to mark an item as done
 	async function atLeastOneGuest(conversation, rsvps) {
-		const hasGuest = !!rsvps.find(r => r.type === 'guest');
+		const hasGuest = !!rsvps.guests.length;
 		return hasGuest;
 	}
 	async function hasReflection(conversation, rsvps) {
@@ -29,13 +29,11 @@
 			},
 		}));
 
-		const facils = rsvps
-			// Find facilitators
-			.filter(rsvp => facilitators.includes(rsvp.type));
+		const facils = rsvps.facilitators.concat(rsvps['co-facilitators']);
 
 		const complete = facils
 			// Check if they've done a reflection
-			.filter(rsvp => reflections.find(r => r.userUuid === rsvp.userUuid));
+			.filter(rsvp => reflections.find(r => r.user.uuid === rsvp.uuid));
 
 		// If at least 1 facil is assigned to the conversation
 		// and they've all submitted a reflection then we're good
@@ -47,12 +45,16 @@
 			get(conversation, 'private.cashTransferScreenshot') &&
 			get(conversation, 'private.cashReportScan'));
 	}
+	const donationsReconciled = (conversation) =>
+		!!get(conversation, 'private.reconciledAt');
+	const conversationReviewed = conversation =>
+		!!get(conversation, 'private.reviewedAt');
 
 	/** CHECKLIST DEFINITION */
 	const checklist = [
 		{ id: 'review-reflection', label: 'Review facilitators Reflection', href: '/conversations/:event/reflections/view', enable: hasReflection },
-		{ id: 'donation-review', label: 'Review Cash Donations', href: '/conversations/:event/reconcile-donations', enable: donationsReported },
-		{ id: 'review-stats', label: 'Review Conversation Outcomes', href: '/conversations/:event/outcomes', enable: atLeastOneGuest },
+		{ id: 'donation-review', label: 'Review Cash Donations', href: '/conversations/:event/reconcile-donations', enable: donationsReported, done: donationsReconciled },
+		{ id: 'review-stats', label: 'Review Conversation Outcomes', href: '/conversations/:event/outcomes', enable: atLeastOneGuest, done: conversationReviewed },
 	];
 	const checklistHelp = {
 		'review-reflection': 'Check and see how your facilitator is feeling about the conversation and if you need to get in touch',
@@ -87,7 +89,7 @@
 		);
 	}
 
-	return class FacilProcessingChecklist extends React.Component {
+	return class TeamLeaderProcessingChecklist extends React.Component {
 		state = { loading: true, checklist };
 
 		// eslint-disable-next-line consistent-return
@@ -168,6 +170,7 @@
 
 		async checkCompletedSteps(conversation, rsvps) {
 			const completedSteps = this.getCompletedSteps(conversation);
+			const enabledSteps = [];
 			// Update any if they are now done
 			await Promise.all(checklist.map(async (item) => {
 				if (!completedSteps.includes(item.id)) {
@@ -175,6 +178,7 @@
 						// eslint-disable-next-line no-param-reassign
 						item.isEnabled = await item.enable(conversation, rsvps);
 					}
+					if (item.isEnabled || !item.enable) enabledSteps.push(item.id);
 					if (item.done) {
 						try {
 							// eslint-disable-next-line no-param-reassign
@@ -191,6 +195,7 @@
 					}
 				}
 			}));
+			this.setState({ enabledSteps: enabledSteps.join(',') });
 			return completedSteps;
 		}
 
@@ -205,20 +210,16 @@
 
 			const hasChanged = (stepsDoneNow !== completedSteps.join(';'));
 
+			const allDone = checklist.reduce((done, i) => (i.isDone && done), true);
 			if (hasChanged) {
 				set(conversation, 'private.ftlCompletedSteps', stepsDoneNow);
-				const allDone = checklist.reduce((done, i) => (i.isDone && done), true);
-				if (allDone) {
-					set(conversation, 'private.reviewedBy', get(this.props, 'global.user.uuid'));
-					set(conversation, 'private.reviewedAt', new Date().toISOString());
-				}
 				await getData(api.events.update({
 					id: conversation.uuid,
-					data: { data: pick(conversation, ['private']), partial: true },
+					data: { data: { private: { ftlCompletedSteps: stepsDoneNow } } },
 				}));
 			}
 			this.setDoNext();
-			this.setState({ loading: false });
+			this.setState({ loading: false, allDone });
 		}
 
 		async load() {
@@ -232,17 +233,18 @@
 				// frequently when processing a conversation)
 				this.setHrefs(uuid);
 
-				const eventPromise = Conversation.loadConversation({ props: this.props, required: true });
+				const eventPromise = Conversation.loadConversation({ props: this.props, required: true, private: 1 });
 
 				this.setKnownCompletedSteps(eventPromise);
 
 				// Fetch rsvps
 				const [conversation, rsvps] = await Promise.all([
 					eventPromise,
-					getData(api.eventRsvps.getAll({ query: { event: uuid } })),
+					Conversation.loadRsvps({ props: this.props, type: ['facilitator', 'co-facilitator', 'guest'] }),
 				]);
 
 				const completedSteps = await this.checkCompletedSteps(conversation, rsvps);
+				this.setState({ conversation });
 				await this.updateComplete(conversation, completedSteps);
 			} catch (e) {
 				console.error(e);
@@ -272,7 +274,7 @@
 			const isReviewed = Conversation.isReviewed(conversation);
 			if (!Event) Event = EventRef().html;
 			const startAt = Event.inSingaporeTime(
-				dayjs(get(conversations, 'startAt'))
+				dayjs(get(conversation, 'startAt'))
 			);
 			const displayDate = startAt ? startAt.format('D MMM YYYY') : '';
 
@@ -289,7 +291,7 @@
 						))}
 					</ul>
 					{ isReviewed ? (
-						<p>Greate work! {"You've"} finished reviewing this conversation.</p>
+						<p>Greate work! Thanks for helping to keep our record keeping accurate</p>
 					) : '' }
 					{loading ? (
 						<div className="conversation--checklist__loading">
