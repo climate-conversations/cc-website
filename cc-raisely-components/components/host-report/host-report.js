@@ -114,6 +114,7 @@
 			try {
 				let report;
 				let hosts;
+				let attendees;
 
 				const eventUuid = this.getEventUuid();
 				this.setState({ eventUuid });
@@ -133,8 +134,10 @@
 						},
 					})];
 
-					// If
+					// If the user is logged in, fetch the hosts
+					// details so we can send the report to them
 					if (api.getCurrentToken()) {
+						console.log('Getting host')
 						promises.push(Conversation.loadRsvps(
 							{
 								props: this.props,
@@ -144,13 +147,12 @@
 							// If this is being loaded by a host without login
 							// then host is not available
 							console.log('Ignoring error', e)
-						}).then(() => {
 							return {};
 						}));
 					}
 
-					[report, attendees] = await promises;
-					({ hosts } = attendess);
+					[report, attendees] = await Promise.all(promises);
+					({ hosts } = attendees);
 				}
 
 				this.labelAttitudes(report.attitudes);
@@ -197,8 +199,11 @@
 ${url}`;
 
 			const messageData = {
-				sender: get(this.props, 'global.user'),
-			}
+				sender: get(this.props, "global.user"),
+				report: {
+					url: `http://p.climate.sg/conversations/86da7d20-3c1f-11ea-827a-9de4da7b5886/host-report`
+				}
+			};
 
 			return (
 				<Messenger
