@@ -20,12 +20,18 @@
 	const { qs } = RaiselyComponents.Common;
 
 	const proxyHost = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net';
+	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
 
 	const proxyUrl = `${proxyHost}/proxy`;
 	const upsertUrl = `${proxyHost}/upsertUser`;
 	const setupFacilUrl = `${proxyHost}/setupVolunteer`;
 	const makeAdminUrl = `${proxyHost}/makeAdmin`;
 	const assignUserUrl = `${proxyHost}/assignUser`;
+
+	const cachedRequests = [];
+	const requestBucket = [];
+
+	const MAX_REQUESTS = 8;
 
 	return class UserSaveHelper {
 		static actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'research', 'fundraise'];
@@ -43,6 +49,7 @@
 				headers: {
 					'Content-Type': 'application/json',
 				},
+				method: 'get',
 			}, options);
 
 			if (opts.query) {
@@ -51,35 +58,72 @@
 				delete opts.query;
 			}
 
+			const key = url;
+			let requestObj = {
+				key,
+				created: new Date().getTime(),
+			};
+			requestObj.expires = requestObj.created + 2 * 1000;
+
+			if (opts.method.toLowerCase() === 'get') {
+				const cached = cachedRequests.find(x => x.key === requestObj.key);
+				if (cached) {
+					if (cached.expires > requestObj.created) {
+						requestObj = cached;
+					} else {
+						requestObj = Object.assign(cached, requestObj);
+					}
+				}
+			}
+
 			try {
-				// Send the users token for authorization
-				const token = getCurrentToken();
-				if (token) opts.headers.Authorization = `Bearer ${token.replace(/"/g, '')}`;
+				if (!requestObj.json) {
+					if (!requestObj.promise) {
+						// Send the users token for authorization
+						const token = getCurrentToken();
+						if (token) opts.headers.Authorization = `Bearer ${token.replace(/"/g, '')}`;
 
-				console.log('Doing fetch', url, opts);
-				if (opts.body && typeof opts.body !== 'string') {
-					opts.body = JSON.stringify(opts.body);
+						console.log('Doing fetch', url, opts);
+						if (opts.body && typeof opts.body !== 'string') {
+							opts.body = JSON.stringify(opts.body);
+						}
+						while (requestBucket.length >= MAX_REQUESTS) {
+							console.log('Bucket full, waiting')
+							await Promise.race(requestBucket);
+						}
+						requestObj.promise = fetch(url, opts);
+						requestBucket.push(requestObj.promise);
+					}
+					const response = await requestObj.promise;
+
+					// If there are multiuple callers, one may already have removed the
+					// promise
+					const indexOfPromise = requestBucket.indexOf(requestObj.promise);
+					if (indexOfPromise > -1) requestBucket.splice(indexOfPromise, 1);
+
+					// If the request didn't succeed, log the error
+					// and try to create a helpful error for the user
+					if (response.status !== 200) {
+						// Default to showing the response text
+						message = `Error: ${response.statusText}`;
+
+						// But try to get a better message if we can
+						json = await response.json();
+						console.error(json);
+						// eslint-disable-next-line prefer-destructuring
+						message = json.errors[0].message;
+
+						const error = new Error(message);
+						error.response = response;
+						throw error;
+					}
+
+					// If the request succeeded with no JSON, that's weird
+					message = 'Sorry, something unusual went wrong';
+
+					if (!requestObj.jsonPromise) requestObj.jsonPromise = response.json();
+					requestObj.json = await requestObj.jsonPromise;
 				}
-				const response = await fetch(url, opts);
-
-				// If the request didn't succeed, log the error
-				// and try to create a helpful error for the user
-				if (response.status !== 200) {
-					// Default to showing the response text
-					message = `Error: ${response.statusText}`;
-
-					// But try to get a better message if we can
-					json = await response.json();
-					console.error(json);
-					// eslint-disable-next-line prefer-destructuring
-					message = json.errors[0].message;
-
-					throw new Error(message);
-				}
-
-				// If the request succeeded with no JSON, that's weird
-				message = 'Sorry, something unusual went wrong';
-				json = await response.json();
 			} catch (error) {
 				// If fetch has thrown an error the message is pretty cryptic
 				// log the message for developers and give the end user a better message
@@ -89,7 +133,25 @@
 				throw error;
 			}
 
-			return json.data;
+			return requestObj.json.data;
+		}
+
+		/**
+		 * Send a payload to the sync webhook to notify it
+		 * to sync some data
+		 * @param {string} type Type of the event
+		 * @param {object} data payload for the hook
+		 */
+		notifySync(type, data) {
+			const webhookData = { type, data };
+			console.log('Sending to conversation-sync webhook', webhookData);
+			// Send the guest to be added to the backend spreadsheet
+			return UserSaveHelper.doFetch(WEBHOOK_URL, {
+				method: 'POST',
+				body: {
+					data: webhookData,
+				}
+			});
 		}
 
 		/**
