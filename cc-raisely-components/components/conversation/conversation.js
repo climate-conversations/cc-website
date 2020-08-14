@@ -15,8 +15,8 @@
  */
 (RaiselyComponents, React) => {
 	const { api } = RaiselyComponents;
-	const { getData, getQuery, qs, quickLoad } = api;
-	const { get, set } = RaiselyComponents.Common;
+	const { getData, getQuery } = api;
+	const { get, qs, set } = RaiselyComponents.Common;
 
 	const websiteCampaignUuid = 'f2a3bc70-96d8-11e9-8a7b-47401a90ec39';
 
@@ -132,26 +132,26 @@
 		 * this.setState(await Conversation.loadRsvps({ props, ['facilitator', 'host'] }))
 		 * const { rsvps, hosts, facilitators, error } = this.state;
 		 */
-		static async loadRsvps({ props, type }) {
+		static async loadRsvps({ props, type, query }) {
 			const result = {};
 			try {
 				const types = Array.isArray(type) ? type.map(t => plural(t)) : type;
 
-				const eventUuid = props.eventUuid ||
-					props.conversation ||
-					get(props, 'match.params.event') ||
-					get(props, 'match.params.conversation') ||
-					getQuery(get(props, 'router.location.search')).event;
+				const fullQuery = { private: 1, ...query };
+				if (props) {
+					fullQuery.event = props.eventUuid ||
+						props.conversation ||
+						get(props, 'match.params.event') ||
+						get(props, 'match.params.conversation') ||
+						getQuery(get(props, 'router.location.search')).event;
+				}
 
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-				result.rsvps = await UserSaveHelper.proxy('/event_rsvps', { query: { event: eventUuid, private: 1 } });
+				result.rsvps = await UserSaveHelper.proxy('/event_rsvps', { query: fullQuery });
 				if (types) types.forEach((key) => { result[key] = []; });
 				result.rsvps.forEach((rsvp) => {
-					// Work around an api bug
-					if (rsvp.eventUuid === eventUuid) {
-						const key = plural(rsvp.type);
-						if (types && types.includes(key)) result[key].push(rsvp.user);
-					}
+					const key = plural(rsvp.type);
+					if (types && types.includes(key)) result[key].push(rsvp.user);
 				});
 			} catch (e) {
 				console.error(e);
@@ -166,37 +166,35 @@
 		 * @param {string} eventUuid the id of the event to fetch and update cache if need be
 		 * @return {Event} with private.cache set
 		 */
-		static async updateStatCache(eventUuid) {
+		static async updateStatCache({ props, eventUuid }) {
 			const query = {
 				category: surveyCategories.postSurvey,
 				reference: eventUuid,
-				recordType: 'event',
 			};
 			const queryStr = qs.stringify(query);
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			const [event, results, donations, surveys] = await Promise.all([
-				UserSaveHelper.proxy(`/events/${eventUuid}?private=1`),
+				this.loadConversation({ props, private: true }),
 				this.loadRsvps({ props: { eventUuid }, type: ['co-facilitator', 'facilitator', 'guest']}),
-				UserSaveHelper.proxy(`/donations?campaign=${websiteCampaignUuid}&conversationUuid=${eventUuid}&private=1`),
+				UserSaveHelper.proxy(`/donations?campaign=${websiteCampaignUuid}&private.conversationUuid=${eventUuid}&private=1`),
 				UserSaveHelper.proxy(`/interactions?${queryStr}`, { method: 'GET' }),
 			]);
-			const { rsvps } = results;
-
 			const cache = {
 				guests: 0,
 				hosts: 0,
+				corporateHosts: 0,
 				facilitators: 0,
 				donations: {
 					online: 0,
 					total: 0,
-					donorCount: 0,
-				},
+					cash: get(event, "private.cashReceivedAmount", 0),
+					donorCount: 0
+				}
 			};
-			rsvps.forEach(guest => {
-				if (guest.type === 'guest') cache.guests++;
-			});
+			cache.guests = results.guests.length;
 			surveys.forEach(survey => {
 				if (get(survey, 'detail.private.host')) cache.hosts += 1;
+				if (get(survey, "detail.private.hostCorporate")) cache.corporateHosts += 1;
 				if (get(survey, 'detail.private.facilitate')) cache.faciltiators += 1;
 			});
 			donations.forEach(donation => {
@@ -205,16 +203,17 @@
 				if (donation.type === 'ONLINE') {
 					cache.donations.online += donation.campaignAmount;
 				} else {
-					const paymentType = get(donation, 'public.paymentType');
+					const paymentType = get(donation, 'private.cashPaymentType');
 					const init = get(cache.donations, paymentType, 0);
 					set(cache.donations, paymentType, init + donation.campaignAmount);
 				}
 			});
 
 			const oldCache = get(event, 'private.statCache', {});
-			if (Object.keys(cache).find(key => cache[key] !== oldCache[key]) ||
+			if (Object.keys(cache).find(key => (key !== 'donations') && (cache[key] !== oldCache[key])) ||
 				Object.keys(cache.donations).find(key => cache.donations[key] !== oldCache.donations[key])) {
 				await UserSaveHelper.proxy(`/events/${event.uuid}`, {
+					method: 'PATCH',
 					body: {
 						data: { private: { statCache: cache } },
 						partial: true,

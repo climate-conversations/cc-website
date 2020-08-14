@@ -142,7 +142,7 @@
 		 * @param {string} type Type of the event
 		 * @param {object} data payload for the hook
 		 */
-		notifySync(type, data) {
+		static notifySync(type, data) {
 			const webhookData = { type, data };
 			console.log('Sending to conversation-sync webhook', webhookData);
 			// Send the guest to be added to the backend spreadsheet

@@ -461,10 +461,12 @@
 		}
 
 		save = async () => {
+			if (this.state.isSaving) return;
 			console.log('CustomForm.save', this.state);
 			const save = this.props.save || get(this.props, 'controller.save');
 			if (save) {
 				try {
+					this.setState({ isSaving: true });
 					// Clear any previous error message
 					this.setState({ error: false });
 					await save(this.state.values, this.formToData);
@@ -473,6 +475,9 @@
 					this.setState({ error: e.message || 'An unknown error occurred' });
 					// Rethrow so that next step is aborted
 					throw e;
+				}
+				finally {
+					this.setState({ isSaving: false });
 				}
 			}
 		}
