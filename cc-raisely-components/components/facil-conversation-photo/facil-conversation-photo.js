@@ -11,8 +11,6 @@
 	let Conversation;
 	let UserSaveHelper;
 
-	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
-
 	return class ConversationPhoto extends React.Component {
 		generateForm() {
 			const multiFormConfig = [
@@ -34,30 +32,21 @@
 			const conversation = { ...event };
 			delete conversation.uuid;
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-			await UserSaveHelper.proxy(`/events/${event.uuid}`, {
-				method: 'PATCH',
-				body: {
-					partial: true,
-					data: conversation,
-				}
-			});
 
-			const webhookData = {
-				type: 'conversation.photoUploaded',
-				data: {
+			await Promise.all([
+					UserSaveHelper.proxy(`/events/${event.uuid}`, {
+					method: 'PATCH',
+					body: {
+						partial: true,
+						data: conversation,
+					}
+				}),
+				UserSaveHelper.notifySync("conversation.photoUploaded", {
 					conversation: event,
 					photoConsent: get(event, 'private.photoConsent'),
 					url: get(event, 'private.attendeePhotoUrl'),
-				}
-			};
-			console.log('Sending to conversation-sync webhook', webhookData);
-			// Send the guest to be added to the backend spreadsheet
-			await UserSaveHelper.doFetch(WEBHOOK_URL, {
-				method: 'post',
-				body: {
-					data: webhookData,
-				}
-			});
+				}),
+			]);
 		}
 
 		render() {
