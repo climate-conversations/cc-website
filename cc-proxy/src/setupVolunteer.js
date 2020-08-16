@@ -2,6 +2,8 @@ const _ = require('lodash');
 const { authorize } = require('./proxy/permissions');
 const raiselyRequest = require('./raiselyRequest');
 const assignRecord = require('./assignRecord');
+const request = require("request-promise-native");
+const logger = require('./config/logging');
 
 /**
  * Setup a facilitator or team leader
@@ -220,8 +222,56 @@ async function setupTagsAndRoles({ tags, roles, userUuid, req }) {
 	}
 
 	await Promise.all(promises);
+
+	return userData;
+}
+
+/**
+ * Trigger an email to a volunteer to log them in
+ * @param {*} req
+ */
+async function resetEmail(req) {
+	const { userUuid } = req.body.data;
+
+	const token = process.env.APP_TOKEN;
+	const campaignUuid = process.env.PORTAL_CAMPAIGN_UUID;
+
+	const userRecord = await raiselyRequest(
+		{
+			path: `/users/${userUuid}?private=1`,
+			escalate: true,
+			cacheKey: `/users/${userUuid}?private=1`,
+			cacheTTL: 10000
+		},
+		req
+	);
+
+	const data = {
+		action: "user.setup",
+		user: {
+			...userRecord.data
+		}
+	};
+	const customEvent = request({
+		url: "https://communications.raisely.com/v1/events",
+		auth: { bearer: `raisely:${token}` },
+		headers: { "User-Agent": "Climate Conversations Proxy" },
+		method: "POST",
+		json: {
+			data: {
+				type: "raisely.custom",
+				source: `campaign:${campaignUuid}`,
+				createdAt: new Date().toISOString(),
+				version: 1,
+				data
+			}
+		}
+	});
+	logger.info(customEvent);
+	return customEvent;
 }
 
 module.exports = {
 	setupVolunteer,
+	resetEmail,
 };
