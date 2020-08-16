@@ -29,7 +29,7 @@
 			firstName: user.firstName,
 			lastName: user.lastName,
 			fullName: user.fullName,
-			prefName: user.prefName,
+			prefName: user.preferredName,
 			email: user.email,
 		};
 	});
@@ -106,7 +106,7 @@
 			const label = rsvp && rsvp.type;
 
 			if (rsvp && rsvp.userUuid) {
-				const name = rsvp.fullName || `${rsvp.firstName} ${rsvp.lastName}`;
+				const name = rsvp.fullName || rsvp.prefName || rsvp.preferredName;
 
 				return (
 					<div className="conversation-team__selected_user field-wrapper">
@@ -116,7 +116,7 @@
 						<div className="user__card">
 							<div className="static-field__title">{name}</div>
 							<div className="static-field__subtitle">{rsvp.email}</div>
-							<Button type="button" onClick={() => this.updateRsvp({})}>Change</Button>
+							<Button type="button" onClick={() => this.updateRsvp({}, null, index)}>Change</Button>
 							<RaiselyButton uuid={rsvp.userUuid} recordType="people" />
 						</div>
 					</div>
@@ -254,7 +254,6 @@
 				const facilitator = get(this.props, 'global.user');
 				const facilitatorRsvp = { type: 'facilitator', userUuid: facilitator.uuid, user: facilitator };
 				rsvps.push(facilitatorRsvp);
-				console.log('new conv: rsvps', rsvps)
 				this.setState({ rsvps });
 				return {};
 			}
@@ -311,17 +310,22 @@
 				data.event.uuid = this.state.event.uuid;
 			}
 
+			let rsvps;
+			// Convert object values to array of rsvps
+			if (values[1]) {
+				rsvps = Object.keys(values[1]).map(key => values[1][key]);
+			} else {
+				({ rsvps } = this.state);
+			}
+
 			if (!data.event.name) {
-				const rsvps = Object.keys(values[1] || {}).map(key => values[1][key]);
-				const hosts = rsvps.filter(rsvp => rsvp.email && rsvp.type === 'host')
+				const hosts = rsvps.filter(rsvp => rsvp.user && rsvp.type === 'host')
 				if (hosts.length) {
 					if (!Conversation) Conversation = ConversationRef().html;
-					data.event.name = Conversation.defaultName(hosts);
+					data.event.name = Conversation.defaultName(hosts.map(h => h.user));
 				}
 			}
 
-
-			// workaround broken save
 			let record;
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			if (!data.event.uuid) {
@@ -346,75 +350,64 @@
 
 			this.setState({ event: record });
 
-			// If we're doing a save between steps, don't save RSVPs as they won't exist
-			if (!values[1]) return null;
-
 			const promises = [];
 			const toInsert = [];
-			const newRsvps = [];
-			const toAssign = [];
-			Object.keys(values[1]).forEach((key) => { newRsvps[key] = values[1][key]; });
+			const toDelete = [];
 
-			if (newEvent) {
-				// newRsvps is an object. convert to array
-				Object.keys(newRsvps).forEach((key) => {
-					const rsvp = newRsvps[key];
-					if (rsvp.userUuid) {
-						rsvp.eventUuid = record.uuid;
-						toInsert.push(rsvp);
+			let oldRsvps = [];
 
-						if (['host', 'co-host'].includes(rsvp.type)) {
-							toAssign.push(rsvp);
-						}
-					}
-				});
-			} else {
-				// Refresh rsvps in case they've changed while the form was open
-				const oldRsvps = await this.loadRsvps(record.uuid);
-				const toDelete = [];
+			if (!newEvent) {
+				// If it's not a new event, and the rsvps have been unchanged
+				// there's nothing more to do
+				if (!values[1]) return;
 
-				// If an rsvp has a user assigned, and doesn't have a uuid (ie is new)
-				// assign the event uuid and save it
-				newRsvps.forEach((rsvp) => {
-					if (!rsvp.uuid && rsvp.userUuid) {
-						rsvp.eventUuid = record.uuid;
-						toInsert.push(rsvp);
-					}
-				});
-
-				// If we can't find an old rsvp, it's been removed, so delete it
-				oldRsvps.forEach((rsvp) => {
-					if (!newRsvps.find(({ uuid }) => rsvp.uuid === uuid)) {
-						toDelete.push(rsvp);
-					}
-				});
-				promises.push(...toDelete.map(rsvp => UserSaveHelper.proxy(`/event_rsvps/${rsvp.uuid}`, { method: 'DELETE' })));
+				// If it's an existing event, load the rsvps in case
+				// they've been changed concurrently
+				oldRsvps = await this.loadRsvps(record.uuid);
+				// If the form has been left unchanged, use
+				// old rsvp values
 			}
 
-			const failitatorUuids = newRsvps
+			// Check rsvp for equality either by id or value
+			const sameRsvp = (a, b) => a.uuid === b.uuid ||
+				((a.type === b.type) && (a.userUuid === b.userUuid) && (a.eventUuid === b.eventUuid));
+
+			// Queue new rsvps to add
+			rsvps.forEach(rsvp => {
+				if (rsvp.userUuid) {
+					if (!oldRsvps.find(r => sameRsvp(r, rsvp))) {
+						toInsert.push({
+							userUuid: rsvp.userUuid,
+							type: rsvp.type,
+							eventUuid: record.uuid,
+						})
+					}
+				}
+			});
+			// Delete rsvps that are not present in the new list
+			oldRsvps.forEach(rsvp => {
+				if (!rsvps.find(r => sameRsvp(r, rsvp))) {
+					toDelete.push(rsvp);
+				}
+			});
+
+			const toAssign = toInsert.filter(rsvp => ['host', 'co-host'].includes(rsvp.type));
+			const failitatorUuids = rsvps
+				.filter(rsvp => rsvp.userUuid)
 				.filter(rsvp => ['facilitator', 'co-facilitator'].includes(rsvp.type))
 				.map(rsvp => rsvp.userUuid);
 
-			promises.push(...toInsert.map(rsvp => UserSaveHelper.proxy(`/event_rsvps`, { method: 'POST', body: { data: rsvp } })));
 			// Assign all hosts to all facilitators
 			if (failitatorUuids.length) {
 				failitatorUuids.forEach(facilitatorUuid => {
-					promises.push(...toAssign.map(rsvp => UserSaveHelper.assignUser(facilUuid, rsvp.userUuid)))
+					promises.push(...toAssign.map(rsvp => UserSaveHelper.assignUser(facilitatorUuid, rsvp.userUuid)))
 				});
 			}
 
+			promises.push(...toDelete.map(rsvp => UserSaveHelper.proxy(`/event_rsvps/${rsvp.uuid}`, { method: 'DELETE' })));
+			promises.push(...toInsert.map(rsvp => UserSaveHelper.proxy(`/event_rsvps`, { method: 'POST', body: { data: rsvp } })));
+
 			return Promise.all(promises);
-		}
-
-		updateStep = (step, values, formToData, dataToForm) => {
-			const data = formToData(values);
-
-			if (step === 1) {
-				// Save the form as we go
-				this.save(values, formToData).catch(e => console.error(e));
-			}
-
-			return null;
 		}
 
 		render() {
