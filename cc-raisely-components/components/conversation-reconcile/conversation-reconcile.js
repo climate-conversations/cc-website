@@ -4,7 +4,7 @@
 	const { api } = RaiselyComponents;
 	const { getData } = RaiselyComponents.api;
 	const { Button } = RaiselyComponents.Atoms;
-	const { Spinner } = RaiselyComponents;
+	const { Link, Spinner } = RaiselyComponents;
 
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	const EventRef = RaiselyComponents.import('event', { asRaw: true });
@@ -92,7 +92,9 @@
 			return (
 				<div className={`reconcile--${className}`}>
 					<h4>{startCase(id)}</h4>
-					<img src={url} alt={imageField} />
+					<Link href={url} target="_image">
+						<img src={url} alt={imageField} className="reconcile-photo" />
+					</Link>
 					<p>Is the amount shown in the image {value}?</p>
 					<Button onClick={() => this.imageChecked(false)}>No</Button>
 					<Button onClick={() => this.imageChecked(true)}>Yes</Button>
