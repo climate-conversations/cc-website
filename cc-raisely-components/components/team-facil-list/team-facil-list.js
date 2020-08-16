@@ -1,11 +1,13 @@
 (RaiselyComponents, React) => {
-	const { Button } = RaiselyComponents.Atoms;
+	const { Button, Icon } = RaiselyComponents.Atoms;
 	const { get } = RaiselyComponents.Common;
-	const { api, Spinner } = RaiselyComponents;
+	const { api, Link, Spinner } = RaiselyComponents;
 	const { getData } = api;
 
 	const WhatsappButton = RaiselyComponents.import('whatsapp-button');
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
+	const CCUserSaveRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	let CCUserSave;
 
 	const ProfileImage = (props) => {
 		const fallbackImage = 'https://storage.googleapis.com/raisely-assets/default-profile.svg';
@@ -23,8 +25,28 @@
 	};
 
 	class Profile extends React.Component {
+		state = {};
+		sendPasswordReset = async () => {
+			console.log('Sending reset')
+			const { profile } = this.props;
+			try {
+				const data = { userUuid: profile.user.uuid }
+				if (!CCUserSave) CCUserSave = CCUserSaveRef().html;
+				this.setState({ sendingEmail: true });
+				const url = `${CCUserSave.proxyHost()}/resetEmail`;
+				await CCUserSave.doFetch(url, {
+					method: "post",
+					body: { data }
+				});
+				this.setState({ emailSent: true, sendingEmail: false });
+			} catch (error) {
+				console.error(error);
+			}
+		}
+
 		buttons() {
 			const { profile, props } = this.props;
+			const { sendingEmail, emailSent } = this.state;
 			const profileLink = (profile.type === 'GROUP') ?
 				`/t/${profile.path}` :
 				`/${profile.path}`;
@@ -32,11 +54,16 @@
 			if (!profile.parentUuid) {
 				return <div className="team-facil-list__buttons" />;
 			}
+			let icon = sendingEmail ? "autorenew" : "vpn_key";
+			if (emailSent) icon = 'check';
 			return (
 				<div className="team-facil-list__buttons">
 					{ profile.type === 'GROUP' ? (
 						<WhatsappButton url={profile.teamChatUrl} label="Group Chat" />
 					) : '' }
+					<span className="reset-password-button" size="small" disabled={sendingEmail} onClick={!sendingEmail && this.sendPasswordReset}>
+						<Icon name={icon} size="small" />
+					</span>
 					<WhatsappButton phone={profile.user.phoneNumber} />
 					<Button href={profileLink} label="View" />
 					<RaiselyButton
@@ -168,7 +195,7 @@
 				this.setState({ profiles }, this.filterTeams);
 			} catch(error) {
 				console.error(error);
-				this.setState({ error });
+				this.setState({ error: error.message || 'An unknown error occurred' });
 			};
 
 		}
