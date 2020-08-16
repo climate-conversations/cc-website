@@ -12,19 +12,48 @@
 			this.load();
 		}
 
+		addClasses(classList) {
+			const toAdd = [];
+			classList.forEach(c => {
+				if (!document.body.classList.contains(c)) {
+					document.body.classList.add(c);
+				}
+			});
+		}
+
 		async load() {
-			try {
-				if (!Facilitator) Facilitator = FacilitatorRef().html;
-				const [teams, profile, authenticate] = await Promise.all([
-					Facilitator.getTeams(),
-					Facilitator.getFacilitatorProfile(this.props),
-					getData(api.users.authenticate())
-				]);
-				const isAdmin = get(authenticate, 'roles', []).includes('ORG_ADMIN');
-				this.setState({ profile, teams, isAdmin });
-			} catch (e) {
-				this.setState({ error: e.message || 'Failed to load' });
+			let classList = [];
+			if (get(this.props, 'global.campaign.mock')) {
+				this.setState({
+					profile: { path: '/' },
+					teams: [{
+						name: 'Team A',
+						path: '/',
+					}, {
+						name: 'Team B',
+						path: '/',
+					}],
+					isAdmin: true,
+				});
+				classList = ['is-admin', 'is-facilitator', 'is-team-leader'];
+			} else {
+				try {
+					if (!Facilitator) Facilitator = FacilitatorRef().html;
+					const [teams, profile, authenticate] = await Promise.all([
+						Facilitator.getTeams(),
+						Facilitator.getFacilitatorProfile(this.props),
+						getData(api.users.authenticate())
+					]);
+					const isAdmin = get(authenticate, 'roles', []).includes('ORG_ADMIN');
+					this.setState({ profile, teams, isAdmin });
+					if (isAdmin) classList.push('is-admin');
+					if (teams && teams.length) classList.push('is-team-leader');
+					if (profile) classList.push('is-facilitator');
+				} catch (e) {
+					this.setState({ error: e.message || 'Failed to load' });
+				}
 			}
+			this.addClasses(classList);
 		}
 
 		renderTeam(teams) {
