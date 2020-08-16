@@ -1,23 +1,56 @@
 ## Jan 17 Run Issues
-- [ ] Review all date code
+- [X] Portal login
+- [X] Email logs the user in
+- [X] Suggest user sets password using password reset in admin panel
+- [X] forgot your password
+- [X] Fix inconsistencies between paymentType & cashPaymentType
+- [X] Make cashPaymentType private
+- [X] Note facilitator that recruited a person
+- [ ] Note recruiter in sync
+- [ ] Update reconcile / review handling for legacy records
+- [X] Move messaging config from campaign.public to private
+- [ ] Mark all synced conversations prior to 2020 as processed
+- [ ] Sync donations
+- [ ] Sync surveys
+- [ ] Trigger host follow-up emails
+- [X] Throttle proxy
+- [ ] Use conversation messages in host follow up
+- [X] Review all date code in migrations and update existing dates
+- [ ] Team leader checklist has a race condition
+- [X] Copy over donation report images to google folder
+- [ ] Sync person if they are already synced to mailchimp
+- [ ] Fix photo upload
+- [X] Populate host report message
+- [ ] Full walk through and review
+- [X] Set up home page with login only shown when logged out, link to dashboard otherwise
+- [ ] Review all emails
+- [ ] Ensure all non-essential emails only trigger when opted-in
+- [ ] Move donations portal over to main page
+- [ ] Report for Xin Ying on host cycle
+- [ ] Set host status to booked when a conversation is booked
+- [ ] Set host status to interested when a conversation is cancelled
+- [ ] Set a conversation status to complete when a guest is processed
+- [ ] Make link to raisely button open in new window
+- [X] Photo needs to save to private and needs to be synced to a google folder
+- [X] Hide invalid email when listing conversation guests
+- [X] Check syncing of donations report
 - [X] Switch everything to monitor prop changes
-- [ ] Copy over donation report images to google folder
-- [ ] Host report look nicer
-- [ ] Last step for team leaders
-- [ ] Populate host report message
+- [X] Host report look nicer
+- [X] Last step for team leaders
 - [X] Conversation details do not contain user?private=1
-- [ ] Photo sync does not work
 - [X] Handlebars substitution
 - [ ] Return button from host creation page
-- [ ] Email guests selects wrong conversation
+- [ ] Facil/team leader stat notice
+- [X] Email guests selects wrong conversation
 - [X] Conversation checklist has wrong links for all conversations
 - [ ] Fix retries on google cloud function
 - [ ] Add segment to list all hosts in host list (those that have checked yes, but dont have a host intention)
+- [ ] Fix dashboard links
 
 - [X] Add authentication to cloud functions
-- [ ] Auto check donations were received
+- [X] Auto check donations were received
 - [ ] Flag if they enter data without choosing the type of donation
-- [ ] Host report seems to have all conversations
+- [X] Host report seems to have all conversations
 - [X] add missing fields
 - [X] Naming of conversation
 - [X] Facil reflection marked done when it's not
@@ -43,11 +76,11 @@
 - [X] Reflection review form broken
 - [ ] Send single message, give gmail option
 - [X] reflection review, next reflection button when there isn't a next
-- [ ] review conversation broken
+- [X] review conversation broken
 - [X] link to person profile
 - [X] Facil profile should be profile.user.name not current.user.name
 - [ ] Forward back button doesn't really work
-- [ ] Photo needs to save to private and needs to be synced to a google folder
+- [ ] Standardise all headings
 
 ## Outstanding issues
 
@@ -89,12 +122,10 @@
 - [X] Interaction is assigned to null user on creation
 - [X] Interaction findAll user filter doesn't work
 - [ ] Upsert needs to return an email
-- [ ] Move messaging config from campaign.public to private
 - [ ] Return button needed from view conversation
-- [ ] Hide invalid email when listing conversation guests
 
-- [ ] Proxy permissions
+- [X] Proxy permissions
 - [X] Sync reports
 
-- [ ] Host report could do with styling
-- [ ] Host report accessible to logged out users
+- [X] Host report could do with styling
+- [X] Host report accessible to logged out users

@@ -1,3 +1,9 @@
+## To test whenever fixing form registration
+- [ ] Can register with new email
+- [ ] Can register with existing email of non-admin
+- [ ] Can register with existing email of admin account
+
+
 ## To Test
 
 - [ ] Can add new host
