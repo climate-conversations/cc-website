@@ -26,7 +26,7 @@
 	const upsertUrl = `${proxyHost}/upsertUser`;
 	const setupFacilUrl = `${proxyHost}/setupVolunteer`;
 	const makeAdminUrl = `${proxyHost}/makeAdmin`;
-	const assignUserUrl = `${proxyHost}/assignUser`;
+	const assignUserUrl = `${proxyHost}/assignRecord`;
 
 	const cachedRequests = [];
 	const requestBucket = [];
@@ -207,9 +207,14 @@
 		static async assignUser(userUuid, targetUuid, recordType = 'user') {
 			const url = `${assignUserUrl}`;
 			return this.doFetch(url, {
-				userUuid,
-				recordUuid: targetUuid,
-				recordType,
+				method: 'post',
+				body: {
+					data: {
+						userUuid,
+						recordUuid: targetUuid,
+						recordType,
+					},
+				},
 			});
 		}
 	};
