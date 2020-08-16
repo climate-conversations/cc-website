@@ -108,7 +108,7 @@
 			const { eventRsvpUuid } = this.state;
 			const name = get(this.state, 'values.user.fullName') ||
 				get(this.state, 'values.user.preferredName');
-			const eventUuid = get(this.state, 'values.event_rsvp.uuid');
+			const eventUuid = get(this.state, 'values.event_rsvp.eventUuid');
 			const suffix = name ? `: ${name}` : '';
 			const returnLink = `/conversations/${eventUuid}/view`;
 			const editLink = `/surveys/${eventRsvpUuid}/edit`;
