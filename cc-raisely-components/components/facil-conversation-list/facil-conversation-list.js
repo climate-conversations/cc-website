@@ -20,6 +20,8 @@
 
 	class Conversation extends React.Component {
 		setTimes() {
+			const { conversation } = this.props;
+
 			// eslint-disable-next-line object-curly-newline
 			const { cashDonationsNotes, cashTransferAmount, cashReceivedAmount, cashCtaAmount, processAt } = get(this.props, 'conversation.private', {}) || {};
 
@@ -111,12 +113,11 @@
 		setConversations = () => {
 			const { allConversations } = this.state;
 			const isTeam = this.props.getValues().show === 'team';
-			let conversations;
+			let conversations = allConversations;
 			if (this.state.filter) {
 				conversations = allConversations
 					.filter(c =>
 						!get(c, 'private.isReviewed'));
-
 			}
 
 			this.setState({ conversations, loaded: true });
@@ -126,7 +127,6 @@
 			try {
 				const campaignUuid = this.props.global.uuid;
 				let userUuid = await this.getUserUuids();
-				if (userUuid.includes(',')) userUuid = null;
 				const conversations = await Facilitator.loadConversations(campaignUuid, userUuid);
 				this.setState({ allConversations: conversations }, this.setConversations)
 			} catch (error) {
