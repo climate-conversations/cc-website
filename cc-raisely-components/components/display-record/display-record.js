@@ -67,6 +67,9 @@
 		}
 		componentDidUpdate(prevProps) {
 			const { fields } = this.getConfig();
+			const { event } = this.props;
+			const { values } = this.state;
+			if (event && event.private && !values.event.private) this.setState({ values: {...values, event } })
 
 			if (fields !== this.state.prevFields) {
 				this.setState({ loading: true });
