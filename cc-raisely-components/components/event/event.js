@@ -124,8 +124,8 @@
 			/* eslint-disable no-param-reassign */
 			event.timezone = "Singapore/Singapore";
 
-			event.startAt = dataAndTime(event.startAt, event.startTime);
-			event.endAt = dataAndTime(event.endAt, event.endTime);
+			if (event.startAt) event.startAt = dataAndTime(event.startAt, event.startTime);
+			if (event.endAt) event.endAt = dataAndTime(event.endAt, event.endTime);
 			if (event.publicConversationAt) {
 				event.publicConversationAt = dataAndTime(
 					event.publicConversationAt,
