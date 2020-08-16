@@ -564,7 +564,7 @@
 				if (existing)
 					return retry(
 						() =>
-							UserSaveHelper.proxy("/event_rsvps", {
+							UserSaveHelper.proxy(`/event_rsvps/${existing.uuid}`, {
 								method: "PATCH",
 								body: { data: rsvp }
 							}),
@@ -717,6 +717,8 @@
 					);
 				}
 			}
+			// We always want our interactions to be updatable
+			record.detail.readOnly = false;
 			return retry(
 				() =>
 					UserSaveHelper.proxy("/interactions", {
