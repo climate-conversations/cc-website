@@ -651,7 +651,7 @@
 			if (!host) host = values[0];
 			let { interaction: oldInteraction } = this.state;
 
-			let newInteraction = data.interaction['host-interest'];
+			let newInteraction = get(data, 'interaction.host-interest', { });
 			if (!oldInteraction) {
 				const facilitatorUuid = get(this.props, 'global.user.uuid');
 				oldInteraction = {
@@ -660,6 +660,7 @@
 					detail: {
 						private: {
 							facilitatorUuid: facilitatorUuid,
+							status: 'Lead'
 						},
 					},
 				};
@@ -668,7 +669,7 @@
 				...oldInteraction,
 				...newInteraction,
 			};
-			newInteraction.readOnly = false;
+			newInteraction.detail.readOnly = false;
 			newInteraction.detail.private = {
 				...oldInteraction.detail.private,
 				...get(newInteraction, "detail.private", {})
