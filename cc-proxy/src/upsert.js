@@ -164,7 +164,7 @@ async function upsertUser(req) {
 			status: 400,
 		});
 	}
-	const { assignSelf } = req.body;
+	const { assignSelf, assignPointIfNew } = req.body;
 
 	let originalUser;
 
@@ -194,6 +194,11 @@ async function upsertUser(req) {
 		}
 	}
 	prepareUserForSave(existing, record);
+	// Assign point person if it's a new record
+	if (assignPointIfNew && !existing) {
+		record.private.recruitedBy = originalUser.uuid;
+		record.private.pointPerson = originalUser.uuid;
+	}
 
 	const savePromise = save(record, { partial: 1, allowExists: true }, req);
 
