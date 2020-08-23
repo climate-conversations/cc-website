@@ -97,6 +97,7 @@
 			const reflectionLink = `/conversations/${uuid}/reflections/view`;
 			const reconcileLink = `/conversations/${uuid}/reconcile-donations`;
 			const reviewLink = `/conversations/${uuid}/review`;
+			const hostReportLink = `/conversations/${uuid}/host-report`;
 			const displayValues = { event: conversation };
 
 			return (
@@ -120,6 +121,7 @@
 						<Button href={reviewLink}>Review Conversation</Button>
 						<Button href={reflectionLink}>Facilitators Reflection</Button>
 						<Button href={reconcileLink}>Reconcile Donations</Button>
+						<Button href={hostReportLink}>View Host Report</Button>
 					</div>
 					<div className="view-conversation__guest-list">
 						<GuestList {...this.props} conversation={uuid} />
