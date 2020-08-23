@@ -71,7 +71,7 @@
 	 */
 	function dataAndTime(date, time) {
 		const justDate = dayjs(date).format("YYYY-MM-DD");
-		const fullTime = dayjs(`${justDate} ${time}`);
+		const fullTime = dayjs(`${justDate}T${time}`);
 		if (!fullTime.isValid()) {
 			throw new Error(
 				`Cannot understand ${time}. Please specify the time in 24hr format (eg 21:30)`
