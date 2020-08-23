@@ -40,7 +40,7 @@
 				{ id: 'research', icon: 'R' },
 				{ id: 'fundraise', icon: '$' },
 			];
-			const surveyLink = `/surveys/${guest.uuid}`;
+			const surveyLink = `/surveys/${guest.uuid}/view`;
 			const editLink = `/surveys/${guest.uuid}/edit`;
 
 			const email = user.email.endsWith('.test') || user.email.endsWith('.invalid') ?
@@ -54,8 +54,8 @@
 					<div className="conversation-guest-list__buttons">
 						<Icon name="edit" href={editLink} />
 						<Icon name="list_alt" href={surveyLink} />
-						<WhatsappButton phone={guest.phoneNumber} />
-						<RaiselyButton recordType="user" uuid={guest.uuid} />
+						<WhatsappButton phone={guest.user.phoneNumber} />
+						<RaiselyButton recordType="user" uuid={guest.userUuid} />
 					</div>
 				</li>
 			);
