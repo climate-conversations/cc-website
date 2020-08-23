@@ -351,6 +351,9 @@
 			}
 			// console.log('CustomForm.navigate (finished)', this.state);
 
+			// Clear previous error when moving forward
+			if (direction > 0) this.setState({ error: false });
+
 			this.lastStep = step;
 			return step;
 		}
