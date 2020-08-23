@@ -101,8 +101,6 @@
 
 		findUser = async value => {
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-			// FIXME, if they don't have access to the user it should
-			// prompt them to request access
 			return UserSaveHelper.proxy('/search', {
 				query: queryHelper({
 					q: value,
