@@ -113,6 +113,8 @@
 					type: 'facilitator,co-facilitator',
 					private: 1,
 					campaign: campaignUuid,
+					// We should probably revisit this code if we exceed this limit
+					limit: 3000,
 				},
 			});
 			const conversations = rsvps.map((rsvp) => {
