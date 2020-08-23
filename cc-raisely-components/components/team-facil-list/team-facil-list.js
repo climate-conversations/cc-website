@@ -7,6 +7,8 @@
 	const WhatsappButton = RaiselyComponents.import('whatsapp-button');
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const CCUserSaveRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const FacilitatorRef = RaiselyComponents.import('facilitator', { asRaw: true });
+	let Facilitator;
 	let CCUserSave;
 
 	const ProfileImage = (props) => {
@@ -85,15 +87,28 @@
 					teamName = profile.parent.name;
 				}
 			}
-			// FIXME add status (overdue conversation, conversation coming up, host follow up due)
+			// FIXME indicate retired facils
+			// Will need to fetch user record separately and check if it still includes the facilitator tag
+			let status;
+			// FIXME add latest conversation status (overdue conversation, conversation coming up, host follow up due)
 			return (
 				<li key={profile.uuid} className={className} onClick={onClick} >
 					<div className="team-facil-list__photo"><ProfileImage profile={profile} /></div>
 					<div className="team-facil-list__name">
 						{profile.name}
-						<div className="team-facil-list__leader">
-							{profile.type === 'GROUP' ? profile.user.preferredName : teamName}
-						</div>
+						{teamName && (
+							<div className="team-facil-list__leader">
+								{profile.type === 'GROUP' ? profile.user.preferredName : teamName}
+							</div>
+						)}
+						{status && (
+							<div className="team-facil-list__status">
+								{status}
+							</div>
+						)}
+					</div>
+					<div className="team-facil-list__count">
+						{profile.conversationCount || ''}
 					</div>
 					{this.buttons()}
 				</li>
@@ -193,11 +208,44 @@
 				}
 				const profiles = await getData(api.profiles.getAll({ query }));
 				this.setState({ profiles }, this.filterTeams);
+				this.fetchConversationCount(profiles);
 			} catch(error) {
 				console.error(error);
 				this.setState({ error: error.message || 'An unknown error occurred' });
 			};
+		}
 
+		async fetchConversationCount(profiles) {
+			if (!Facilitator) Facilitator = FacilitatorRef().html;
+			const campaignUuid = this.props.global.uuid;
+			try {
+				const allFacils = profiles.map(p => p.user.uuid);
+				const conversations = await Facilitator.loadConversations(campaignUuid, allFacils);
+
+				const { teamProfileMap } = this.state;
+				// Map from facilitator uuid to array of conversation uuids
+				const facilConversations = {};
+				conversations.map(c => {
+					const facilUuid = c.facilitator.uuid;
+					if (!facilConversations[facilUuid]) facilConversations[facilUuid] = [c.uuid];
+					else facilConversations[facilUuid].push(c.uuid);
+				});
+				profiles.forEach(profile => {
+					if (profile.type === 'INDIVIDUAL') {
+						profile.conversationCount = (facilConversations[profile.user.uuid] || []).length;
+					} else {
+						// Get array of all conversations by team members
+						const conversationList = teamProfileMap[profile.uuid]
+							.reduce((all, profile) => all.concat(facilConversations[profile.user.uuid] || []), []);
+						// Convert to set to get unique elements in case two facils co-facilitated the
+						// same conversation
+						profile.conversationCount = new Set(conversationList).size;
+					}
+				});
+				this.setState({ facilConversations });
+			} catch (error) {
+				console.error('Error loading conversation count', error);
+			}
 		}
 
 		initTeams(profiles, unassignedUuid) {
@@ -208,7 +256,15 @@
 					...teamProfiles,
 				];
 			}
-			this.setState({ teamProfiles });
+			// Create a map from team uuid to array of facilitator profiles
+			const teamProfileMap = {};
+			profiles
+				.filter(p => p.type === 'INDIVIDUAL')
+				.forEach(p => {
+					if (!teamProfileMap[p.parentUuid]) teamProfileMap[p.parentUuid] = [p];
+					else teamProfileMap[p.parentUuid].push(p);
+				});
+			this.setState({ teamProfiles, teamProfileMap });
 		}
 
 		filterTeams = () => {
