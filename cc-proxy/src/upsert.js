@@ -7,9 +7,10 @@ const { authorize } = require('./proxy/permissions');
 
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
 	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName',
-	'private.attendedConversation', 'private.nycConsent', 'user.postcode'];
+	'private.attendedConversation', 'private.nycConsent', 'postcode'];
 const permittedCreateFields = ['fullName', 'firstName', 'preferredName', 'lastName', 'email', 'phoneNumber',
-	'private.alternateEmail', 'private.alternatePhone', 'private.source', ...permittedUpdateFields];
+	'private.alternateEmail', 'private.alternatePhone', 'private.source', ...permittedUpdateFields,
+	'private.gender', 'private.ethnicity', 'private.dateOfBirth', 'residency'];
 
 const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newsletter', 'mailingList', 'attendedConversation'];
 
