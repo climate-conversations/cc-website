@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 (RaiselyComponents, React) => {
 	const { Button, Icon, ProgressBar } = RaiselyComponents.Atoms;
-	const { get, set } = RaiselyComponents.Common;
+	const { get, set, startCase } = RaiselyComponents.Common;
 	const { api, Spinner } = RaiselyComponents;
 	const { getCurrentToken, getData } = api;
 
@@ -12,6 +12,7 @@
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
 	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
 	const ReturnButton = RaiselyComponents.import('return-button');
+	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	let UserSaveHelper;
 	let Conversation;
 
@@ -19,6 +20,15 @@
 	// const WEBHOOK_URL = `http://localhost:8010/conversation-sync/us-central1/raiselyPeople`;
 
 	let actionFields;
+
+	// Fields that can only be set, but not updated
+	const preSurveyReadOnly = ['user.dateOfBirth', 'user.ethnicity', 'user.gender', 'user.residency'];
+	const actionReadOnly = [
+		"user.fullName",
+		"user.preferredName",
+		"user.phoneNumber",
+	];
+
 
 	/**
 	 * Returns true if the error from a request is status code over 500
@@ -150,7 +160,7 @@
 					interactionCategory: Conversation.surveyCategories()
 						.preSurvey
 				},
-				"user.dateOfBirth",
+				{ sourceFieldId: "user.dateOfBirth" },
 				{
 					sourceFieldId: "user.residency",
 					type: "select",
@@ -167,8 +177,8 @@
 						{ label: "Other", value: "Other" }
 					]
 				},
-				"user.ethnicity",
-				"user.gender"
+				{ sourceFieldId: "user.ethnicity" },
+				{ sourceFieldId: "user.gender" },
 			];
 			// Show all questions in the post survey
 			const postSurveyQuestions = [
@@ -187,10 +197,10 @@
 			];
 
 			const guestAction = [
-				"user.fullName",
-				"user.preferredName",
+				{ sourceFieldId: "user.fullName" },
+				{ sourceFieldId: "user.preferredName" },
 				{ sourceFieldId: "user.email", required: false },
-				"user.phoneNumber",
+				{ sourceFieldId: "user.phoneNumber", required: false },
 				"user.postcode",
 				{
 					interactionCategory: Conversation.surveyCategories()
@@ -248,6 +258,25 @@
 					fields: conversationDate,
 					condition: fields => get(fields, "2.private.host")
 				});
+			} else {
+				// This are read-only for updates, display them, but as disabled
+				const setReadOnlyFields = (list, ids) => {
+					list.forEach(q => {
+						const isString = typeof q === 'string';
+						const name = isString ? q : q.sourceFieldId;
+						if (ids.includes(name)) {
+							if (isString) {
+								console.error('Error preparing read only field update');
+								console.error(`Please change field ${q} initial config to { sourceFieldId: '${q}' } so it can`)
+								console.error('be updated')
+								throw new Error(`Bad configuration for field ${q}`);
+							}
+							q.disabled = true;
+						}
+					});
+				}
+				setReadOnlyFields(preSurveyQuestions, preSurveyReadOnly);
+				setReadOnlyFields(guestAction, actionReadOnly);
 			}
 			return allSteps;
 		}
@@ -274,7 +303,7 @@
 					{ method: "GET" }
 				);
 
-				this.setState({ eventUuid: eventRsvp.eventUuid });
+				this.setState({ eventUuid: eventRsvp.eventUuid, userUuid: eventRsvp.userUuid });
 
 				const interactionPromises = [
 					surveyCategories.preSurvey,
@@ -961,6 +990,56 @@
 			);
 		}
 
+		renderHint(isNew) {
+			if (isNew) {
+				return (
+					<div className="hint">
+						<p>
+							<strong>Hint:</strong> To get throught your
+							surveys faster, press <strong>Tab</strong>{" "}
+							between fields and type in the answers.
+						</p>
+						<p>
+							For scale fields, type in the number that was
+							ticked.
+						</p>
+						<p>
+							For multiple choice fields, press the down arrow
+							or type the first few characters of the answer
+							you want to choose
+						</p>
+						<p>
+							For checkboxes press spacebar to check/uncheck
+							the box
+						</p>
+						<p>
+							(You can do this on all forms in the volunteer
+							portal, not just this one)
+						</p>
+					</div>
+				);
+			}
+			const { userUuid } = this.state;
+			const readOnlyFields = [
+				...preSurveyReadOnly,
+				...actionReadOnly
+			]
+				.map(f => startCase(f.split('.')[1]))
+				.join(', ');
+			return (
+				<div className="hint">
+					<p>
+						<strong>Note</strong> If you need to make changes to a {"person's "}
+						{readOnlyFields} you'll need to edit the person's record in the
+						Raisely Admin.
+					</p>
+					{userUuid && (
+						<RaiselyButton label="Edit Person in Raisely" recordType="user" uuid={userUuid} style={{ marginTop: '10px' }} />
+					)}
+				</div>
+			);
+		}
+
 		render() {
 			const {
 				error,
@@ -1001,30 +1080,7 @@
 
 			return (
 				<div className="guest-data-entry-wrapper" key={key}>
-					<div className="hint">
-						<p>
-							<strong>Hint:</strong> To get throught your
-							surveys faster, press <strong>Tab</strong>{" "}
-							between fields and type in the answers.
-						</p>
-						<p>
-							For scale fields, type in the number that was
-							ticked.
-						</p>
-						<p>
-							For multiple choice fields, press the down arrow
-							or type the first few characters of the answer
-							you want to choose
-						</p>
-						<p>
-							For checkboxes press spacebar to check/uncheck
-							the box
-						</p>
-						<p>
-							(You can do this on all forms in the volunteer
-							portal, not just this one)
-						</p>
-					</div>
+					{this.renderHint(!this.getRsvpUuid())}
 					{this.renderCanSave()}
 					<CustomForm
 						{...this.props}
