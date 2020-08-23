@@ -84,7 +84,7 @@
 				<div className="col col--4 manage-profile-block">
 					<h3>Program Coordinator Tools</h3>
 					<p>Manage teams, and communications templates.</p>
-					<Button href="/dashboards/admin">Administrator Tools</Button>
+					<Button href="/dashboards/admin">Administrator Dashboard &amp; Tools</Button>
 				</div>
 			);
 		}
