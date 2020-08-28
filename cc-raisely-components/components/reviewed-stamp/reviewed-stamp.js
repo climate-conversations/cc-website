@@ -36,7 +36,7 @@
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 				let reviewerName;
 				if (typeof conversation !== 'object') conversation = await Conversation.loadConversation({ props, private: true });
-				const reviewedBy = get(conversation, `private.${type}By`);
+				let reviewedBy = get(conversation, `private.${type}By`);
 				if (reviewedBy) {
 					const reviewer = await UserSaveHelper.proxy(`/users/${reviewedBy}?private=1`);
 					reviewerName = reviewer.fullName || reviewer.preferredName;
