@@ -37,7 +37,8 @@
 					query: {
 						[searchKey]: now,
 						sort: 'startAt',
-						order: 'ASC',
+						order: show === 'past' ? 'DESC' : 'ASC',
+						limit: 20,
 					},
 				}));
 
