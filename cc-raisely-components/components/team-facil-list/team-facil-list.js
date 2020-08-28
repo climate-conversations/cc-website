@@ -233,8 +233,9 @@
 				profiles.forEach(profile => {
 					if (profile.type === 'INDIVIDUAL') {
 						profile.conversationCount = (facilConversations[profile.user.uuid] || []).length;
-					} else {
+					} else if (teamProfileMap) {
 						// Get array of all conversations by team members
+						// if teams were loaded
 						const conversationList = teamProfileMap[profile.uuid]
 							.reduce((all, profile) => all.concat(facilConversations[profile.user.uuid] || []), []);
 						// Convert to set to get unique elements in case two facils co-facilitated the
