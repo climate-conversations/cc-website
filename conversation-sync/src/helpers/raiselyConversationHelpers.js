@@ -7,7 +7,7 @@ const { raiselyRequest } = require('./raiselyHelpers');
  */
 async function fetchTeam(conversationUuid) {
 	const rsvps = await raiselyRequest({
-		path: `/events/${conversationUuid}/rsvps`,
+		path: `/events/${conversationUuid}/rsvps?private=1`,
 		qs: {
 			// FIXME need to know how to specify facilitator, host
 		},
