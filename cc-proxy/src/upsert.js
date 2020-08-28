@@ -2,7 +2,7 @@ const raisely = require('./raiselyRequest');
 const { get, pick, set } = require('lodash');
 const shortUuid = require('short-uuid');
 const RestError = require('./restError');
-const assignRecord = require('./assignRecord');
+const { assignRecord } = require('./assignRecord');
 const { authorize } = require('./proxy/permissions');
 
 const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
