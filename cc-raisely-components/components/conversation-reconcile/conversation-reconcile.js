@@ -92,9 +92,13 @@
 			return (
 				<div className={`reconcile--${className}`}>
 					<h4>{startCase(id)}</h4>
-					<Link href={url} target="_image">
-						<img src={url} alt={imageField} className="reconcile-photo" />
-					</Link>
+					{url ? (
+						<Link href={url} target="_image">
+							<img src={url} alt={imageField} className="reconcile-photo" />
+						</Link>
+					) : (
+						<p>(No image uploaded)</p>
+					)}
 					<p>Is the amount shown in the image {value}?</p>
 					<Button onClick={() => this.imageChecked(false)}>No</Button>
 					<Button onClick={() => this.imageChecked(true)}>Yes</Button>
