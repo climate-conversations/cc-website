@@ -6,11 +6,13 @@ const DonationFacilMatchController = require('../../src/controllers/DonorFacilMa
 
 const baseDonation = {
 	uuid: 'mock-donation-uuid',
+	userUuid: 'mock-user-uuid',
 	email: 'donor@cc.test',
 	profile: { path: process.env.WEBSITE_PATH },
 };
 
 let patchBody = null;
+let patchDonationBody = null;
 let movedProfileUuid = null;
 let createdProfile = null;
 
@@ -27,7 +29,7 @@ describe('Donation Facilitator Matching', () => {
 
 	describe('WHEN no matching rsvp', () => {
 		before(() => {
-			nockCollection(nockRaisely(), /\/eventRsvps.*/, []);
+			nockCollection(nockRaisely(), /\/event_rsvps.*/, []);
 			return process(baseDonation);
 		});
 		itDoesNothing();
@@ -48,11 +50,16 @@ describe('Donation Facilitator Matching', () => {
 		});
 		itMovesDonation('existing-profile');
 		itMarksIntentionFulfilled();
+		itSetsDonationConversationSource();
 	});
 	describe('WHEN profile does not exist', () => {
 		before(() => {
 			({ facilitator } = setupNocks([]));
 			nockCreateProfile();
+			patchDonationBody = null;
+			patchBody = null;
+			movedProfileUuid = null;
+			createdProfile = null;
 			return process(baseDonation);
 		});
 		it('creates a profile', () => {
@@ -65,6 +72,7 @@ describe('Donation Facilitator Matching', () => {
 		})
 		itMovesDonation('created-profile');
 		itMarksIntentionFulfilled();
+		itSetsDonationConversationSource();
 	});
 
 	async function process(donation) {
@@ -78,6 +86,18 @@ describe('Donation Facilitator Matching', () => {
 	function itMovesDonation(profileUuid) {
 		it('moves donation', () => {
 			expect(movedProfileUuid).to.eq(profileUuid);
+		})
+	}
+
+	function itSetsDonationConversationSource() {
+		it('sets donaton conversation source', () => {
+			expect(patchDonationBody).to.containSubset({
+				data: {
+					private: {
+						conversationUuid: "mock-event-uuid",
+					},
+				},
+			});
 		})
 	}
 
@@ -115,7 +135,7 @@ function setupNocks(profiles) {
 	const date = new Date(new Date() - 14 * days).toISOString().slice(0,10);
 
 	// FIXME test the exact date as it looks like it's wrong
-	nockCollection(n, `/eventRsvps?startAtGTE=${date}&user.email=${encodeURIComponent(baseDonation.email)}`, [rsvp]);
+	nockCollection(n, `/event_rsvps?campaign=${process.env.PORTAL_PATH}&startAtGTE=${date}&user=mock-user-uuid`, [rsvp]);
 	const team = nockEventTeam();
 	const { facilitator } = team;
 	nockCollection(n, `/users/${facilitator.uuid}/profiles?type=INDIVIDUAL`, profiles);
@@ -125,7 +145,12 @@ function setupNocks(profiles) {
 			movedProfileUuid = body.data.profileUuid;
 			return [200, {}];
 		})
-		.patch(`/eventRsvps/${rsvp.uuid}`)
+		.patch(`/donations/${baseDonation.uuid}`)
+		.reply((uri, body) => {
+			patchDonationBody = body;
+			return [200, {}];
+		})
+		.patch(`/event_rsvps/${rsvp.uuid}`)
 		.reply((uri, body) => {
 			patchBody = body;
 			return [200, {}];

@@ -43,7 +43,7 @@ function nockCollection(n, path, result, token) {
 }
 
 function nockEventTeam() {
-	nockCollection(nockRaisely(), /\/events\/.*\/rsvps/, [
+	nockCollection(nockRaisely(), /events\/.*\/rsvps/, [
 		{ type: 'facilitator', user: facilitator },
 		{ type: 'host', user: host },
 	], process.env.RAISELY_TOKEN);

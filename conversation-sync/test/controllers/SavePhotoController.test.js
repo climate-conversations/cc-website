@@ -19,6 +19,8 @@ describe('Save Photo Controller', () => {
 	let controller;
 	let expectedName;
 	before(() => {
+		process.env.GOOGLE_PROJECT_CREDENTIALS = './test/controllers/fixtures/mockDriveCreds.json';
+
 		requestPromiseCache.cache.clear();
 		controller = new SavePhotoControler({
 			log: console.log,
@@ -32,7 +34,7 @@ describe('Save Photo Controller', () => {
 			res = await processController({
 				conversation: {
 					uuid: 'fake-uuid',
-					startAt: '2019-04-15',
+					startAt: '2019-04-15T12:00:00Z',
 				},
 				url: photoUrl,
 				photoConsent: true,
