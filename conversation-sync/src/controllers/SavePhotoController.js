@@ -5,6 +5,7 @@ const { AirblastController } = require('airblast');
 const request = require('request-promise-native');
 const { authorize, uploadFile } = require('../services/googleDrive');
 const { fetchTeam } = require('../helpers/raiselyConversationHelpers');
+const { isoToSgDateAndTime } = require("../helpers/dateHelpers");
 
 const options = {
 	wrapInData: true,
@@ -20,9 +21,10 @@ function getName(user) {
 }
 
 function createFileName({ facilitator, host, conversation }) {
-	const startAt = new tzc.DateTime(conversation.startAt);
-	const date = startAt.format('yyyy-MM-dd');
-	const name = `${date} - host ${getName(host)} - facil ${getName(facilitator)}`;
+	const startAt = isoToSgDateAndTime(conversation.startAt).date;
+	const name = `${startAt} - host ${getName(host)} - facil ${getName(
+		facilitator
+	)}`;
 	return name;
 }
 

@@ -54,9 +54,31 @@ function isoToSgDateAndTime(isoDate) {
 	return { date, time };
 }
 
+/**
+ * Takes a date and time and converts them to an ISO8601 date
+ * The time is interpreted as Signapore time
+ * @param {string} date
+ * @param {string} time Singapore time in 24hr format
+ * @returns {string} ISO8601 string
+ */
+function singaporeToISO(date, time) {
+	const justDate = dayjs(date).format("YYYY-MM-DD");
+	const fullTime = dayjs(`${justDate} ${time}`);
+	if (!fullTime.isValid()) {
+		throw new Error(
+			`Cannot understand ${time}. Please specify the time in 24hr format (eg 21:30)`
+		);
+	}
+	const adjustedTime = singaporeTimezone(fullTime);
+	// Make the time in Singapore time
+	return adjustedTime.toISOString();
+}
+
+
 module.exports = {
 	isoToSgDateAndTime,
 	isoDateToKeplaDate,
 	sheetsToIsoDate,
+	singaporeToISO,
 	dateKeys,
 };
