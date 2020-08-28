@@ -55,7 +55,7 @@ class Mailchimp extends AirblastController {
 		// Fetch other donations to see if it's in excess of VIP_DONOR_THRESHOLD
 		const [donations, subscriptions] = await Promise.all([
 			raiselyRequest({
-				path: `/users/${user.uuid}/donations?limit=100&sort=createdAt&order=DESC`,
+				path: `/users/${user.uuid}/donations?limit=100&sort=createdAt&order=DESC&status=OK`,
 				token: process.env.RAISELY_TOKEN,
 			}),
 			raiselyRequest({
