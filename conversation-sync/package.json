@@ -19,7 +19,7 @@
   "homepage": "https://github.com/chrisjensen/conversation-sync#readme",
   "dependencies": {
     "@google-cloud/datastore": "^1.4.0",
-    "@google-cloud/debug-agent": "^4.2.2",
+    "@google-cloud/debug-agent": "^5.1.2",
     "@google-cloud/pubsub": "^0.18.0",
     "airblast": "^0.2.2",
     "datastore-env": "^1.2.5",
@@ -32,8 +32,13 @@
     "md5": "^2.2.1",
     "nano-cache": "^1.1.2",
     "node-fetch": "^2.2.0",
+    "p-map": "^4.0.0",
+    "p-queue": "^6.4.0",
+    "p-throttle": "^3.1.0",
     "request-promise-cache": "^2.0.1",
-    "timezonecomplete": "^5.6.2",
+    "short-uuid": "^3.1.1",
+    "timezonecomplete": "^5.11.1",
+    "tzdata-asia": "^1.0.19",
     "uuid-validate": "0.0.3"
   },
   "devDependencies": {

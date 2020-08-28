@@ -8,8 +8,10 @@ const routes = require('./config/routes');
 const gcloud = require('./config/gcloud');
 
 const GOOGLE_DEFAULTS = {
-	memory: '256MB',
-	runtime: 'nodejs8',
+	memory: "256MB",
+	runtime: "nodejs10",
+	project: "climate-conversations-sync",
+	region: "asia-northeast1",
 };
 
 const googleConfig = Object.assign(GOOGLE_DEFAULTS, gcloud);
@@ -45,12 +47,12 @@ async function deployRoute(route) {
 	let description;
 
 	if (route.type === 'http') {
-		args.push('alpha', 'functions', 'deploy', route.path);
+		args.push('functions', 'deploy', route.path);
 		args.push(...functionDeployArgs);
 		args.push('--trigger-http');
 		description = `HTTP function ${route.path}`;
 	} else if (route.type === 'pubsub') {
-		args.push('alpha', 'functions', 'deploy', route.path, '--trigger-resource', route.topic);
+		args.push('functions', 'deploy', route.path, '--trigger-resource', route.topic);
 		args.push(...functionDeployArgs);
 		args.push('--trigger-event', 'google.pubsub.topic.publish');
 		description = `pubsub function ${route.path} on topic ${route.topic}`;
