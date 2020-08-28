@@ -55,11 +55,11 @@ class DonorFacilMatch extends AirblastController {
 		const eventWindow = tzc.DateTime.nowUtc().sub(ATTRIBUTION_WINDOW).format('yyyy-MM-dd');
 
 		const rsvps = await raiselyRequest({
-			path: '/eventRsvps',
+			path: '/event_rsvps',
 			qs: {
 				campaign: PORTAL_PATH,
 				startAtGTE: eventWindow,
-				'user.email': donation.email,
+				user: donation.userUuid,
 			},
 			token: process.env.RAISELY_TOKEN,
 		});
@@ -72,7 +72,7 @@ class DonorFacilMatch extends AirblastController {
 					(!_.get(r, 'private.donationUuid')))) || rsvps[0];
 
 			await Promise.all([
-				this.assignToFacilitator(rsvp, donation),
+				this.assignToFacilitator({ rsvp, donation }),
 				this.markFulfilled(rsvp, donation),
 			]);
 		} else {
@@ -82,7 +82,7 @@ class DonorFacilMatch extends AirblastController {
 
 	async markFulfilled(rsvp, donation) {
 		return raiselyRequest({
-			path: `/eventRsvps/${rsvp.uuid}`,
+			path: `/event_rsvps/${rsvp.uuid}`,
 			method: 'PATCH',
 			body: {
 				partial: true,
@@ -106,12 +106,24 @@ class DonorFacilMatch extends AirblastController {
 		const profile = await this.upsertProfile(facil);
 
 		// Assign donation to facilitator profile
-		return raiselyRequest({
+		await raiselyRequest({
 			path: `/donations/${donation.uuid}/move`,
 			method: 'PATCH',
 			data: { profileUuid: profile.uuid },
 			token: process.env.RAISELY_TOKEN,
-		})
+		});
+
+		// Note the uuid of the conversation
+		await raiselyRequest({
+			path: `/donations/${donation.uuid}`,
+			method: "PATCH",
+			data: {
+				private: {
+					conversationUuid: rsvp.eventUuid,
+				},
+			},
+			token: process.env.RAISELY_TOKEN,
+		});
 	}
 
 	async upsertProfile(user) {
