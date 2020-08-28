@@ -59,8 +59,8 @@ With gratitude,
 
 				this.setState({ loading: false, event, rsvps, guestCount });
 			} catch (e) {
-				console.error(e);
-				this.setState({ loading: false, error: e.message });
+				const message = get(e, 'response.data.errors[0].message') || e.message || 'An unknown error ocurred';
+				this.setState({ loading: false, error: message || 'An unknown error occurred' });
 			}
 		}
 

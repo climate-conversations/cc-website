@@ -23,6 +23,11 @@
 		return (word[word.length - 1]) === 's' ? word : `${word}s`;
 	}
 
+	const errorMessage = e =>
+		get(e, "response.data.errors[0].message") ||
+		e.message ||
+		"An unknown error ocurred";
+
 	// eslint-disable-next-line object-curly-newline
 	function DefaultComplete({ completeText, completeLabel, history, doRedirect }) {
 		// If there's a redirect, but no labels, just redirect straight away
@@ -267,7 +272,8 @@
 				}
 			} catch (e) {
 				console.error(e);
-				this.setState({ error: e.message || 'An unknown error occurred' });
+				const message = errorMessage(e);
+				this.setState({ error: message });
 			} finally {
 				this.setState({ loaded: true });
 			}
@@ -475,7 +481,8 @@
 					await save(this.state.values, this.formToData);
 				} catch (e) {
 					console.error(e);
-					this.setState({ error: e.message || 'An unknown error occurred' });
+					const message = errorMessage(e);
+					this.setState({ error: message });
 					// Rethrow so that next step is aborted
 					throw e;
 				}
@@ -600,7 +607,7 @@
 
 			return (
 				<div className="custom-form-wrapper">
-					{this.state.error ? <div className="custom-form--error">{this.state.error}</div> : ''}
+					{this.state.error ? <div className="custom-form--error error"><p>{this.state.error}</p></div> : ''}
 					<MultiForm {...{
 						name: 'custom-form',
 						...this.props,

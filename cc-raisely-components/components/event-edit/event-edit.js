@@ -4,9 +4,9 @@
 	const { getData, getQuery, save } = api;
 	const { get, set } = RaiselyComponents.Common;
 
-	const CustomForm = RaiselyComponents.import('custom-form');
-	const EventRsvp = RaiselyComponents.import('event-rsvp');
-	const CCEventRef = RaiselyComponents.import('event', { asRaw: true });
+	const CustomForm = RaiselyComponents.import("custom-form");
+	const EventRsvp = RaiselyComponents.import("event-rsvp");
+	const CCEventRef = RaiselyComponents.import("event", { asRaw: true });
 	let CCEvent;
 
 	return class EventEdit extends React.Component {
@@ -133,12 +133,12 @@
 				}));
 			}
 
+			if (!CCEvent) CCEvent = CCEventRef().html;
 			if (event) {
-				this.constructor.getTime(event);
+				CCEvent.getTime(event);
 			}
 			const newState = { event };
 			if (!event) {
-				if (!CCEvent) CCEvent = CCEventRef().html;
 				const defaultRsvpFields = CCEvent.getDefaultRsvpFields().join(
 					";"
 				);
@@ -156,7 +156,8 @@
 		save = async (values, formToData) => {
 			const { event } = formToData(values);
 
-			this.constructor.setTime(event);
+			if (!CCEvent) CCEvent = CCEventRef().html;
+			CCEvent.setTime(event);
 
 			if (!event.uuid) {
 				event.userUuid = get(this, "props.global.user.uuid");
@@ -207,4 +208,3 @@
 		}
 	};
 };
-
