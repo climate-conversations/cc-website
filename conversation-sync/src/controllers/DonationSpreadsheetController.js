@@ -21,6 +21,7 @@ const headers = [
 	{ id: 'event.uuid', label: 'ConversationId' },
 	{ id: 'event.date', label: 'Date'},
 	{ id: 'event.private.statCache.donations.cash', label: 'Total from CTA forms' },
+	// Not currently collected
 	{ id: 'event.private.statCache.donations.transfer', label: 'Total reported bank transfers' },
 	{ id: 'event.cashReceivedAmount', label: 'Scanned Report Total' },
 	{ id: 'event.cashTransferAmount', label: 'Cash Transferred According to screenshot' },
