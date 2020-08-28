@@ -365,7 +365,7 @@
 		};
 
 		save = async (values, formToData) => {
-			const { eventUuid } = this.state;
+			const { eventUuid, event } = this.state;
 			const data = formToData(values);
 			const facilitatorUuid = this.props.global.user.uuid;
 			const campaignUuid = this.props.global.campaign.uuid;
@@ -439,6 +439,7 @@
 					.filter(s => s)
 					.map(record => {
 						record.detail.readOnly = false;
+						record.detail.occurredAt = event.startAt;
 						console.log(
 							`Saving survey ${record.categoryUuid}`,
 							record
@@ -459,6 +460,7 @@
 						...interactionBase,
 						categoryUuid: "host-interest",
 						detail: {
+							occurredAt: event.startAt,
 							private: {
 								facilitatorUuid,
 								status: "lead",
