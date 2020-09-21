@@ -38,10 +38,20 @@
 				if (typeof conversation !== 'object') conversation = await Conversation.loadConversation({ props, private: true });
 				let reviewedBy = get(conversation, `private.${type}By`);
 				if (reviewedBy) {
-					const reviewer = await UserSaveHelper.proxy(`/users/${reviewedBy}?private=1`);
-					reviewerName = reviewer.fullName || reviewer.preferredName;
+					if (reviewedBy.startsWith('(')) {
+						reviewerName = reviewedBy;
+					} else {
+						const reviewer = await UserSaveHelper.proxy(`/users/${reviewedBy}?private=1`);
+						if (reviewer) {
+							reviewerName =
+								reviewer.fullName ||
+								reviewer.preferredName;
+						} else {
+							reviewerName = '(person unknown)';
+						}
+					}
 				} else {
-					reviewedBy = '(unknown)';
+					reviewedBy = '(unknown, prior to new system)';
 				}
 
 				this.setState({ conversation, reviewerName, loading: false })
