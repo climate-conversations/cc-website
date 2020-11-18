@@ -90,9 +90,20 @@ async function raiselyRequest(options) {
 	}
 
 	const request = options.cacheKey ? requestCache : requestNative;
-	const result = await request(requestOptions);
+	let retries = 3;
+	do {
+		try {
+			retries -= 1;
+			const result = await request(requestOptions);
 
-	return options.fullResult ? result : result.data;
+			return options.fullResult ? result : result.data;
+		} catch (error) {
+			// Gateway failure, retry
+			console.log('Status code', error.statusCode, typeof error.statusCode);
+			if (retries === 0 || parseInt(error.statusCode) < 500) throw error;
+			console.log(`Got ${error.statusCode} error, retrying`);
+		}
+	} while (retries);
 }
 
 
