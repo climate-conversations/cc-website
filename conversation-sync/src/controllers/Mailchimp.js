@@ -96,6 +96,8 @@ class Mailchimp extends AirblastController {
 
 	async updatePerson(data) {
 		const person = data.data;
+		if (!this.mailchimp) this.mailchimp = new MailchimpService(process.env.MAILCHIMP_KEY);
+
 		if (person.unsubscribedAt) {
 			this.log(`(Person ${person.uuid}) is unsubscribed, skipping`);
 			return;
@@ -105,17 +107,23 @@ class Mailchimp extends AirblastController {
 			return;
 		}
 		const personTags = _.get(person, 'tags', []).map(t => t.path);
-		const onLists = _.map(lists, (config, name) => {
-			let onList = false;
-			// Do they have a tag
-			if (config.tags) onList = _.intersection(config.tags, personTags).length;
-			// See if at least one of those fields is truthy
-			if (!onList && config.fields) onList = config.fields.find(field => _.get(person, field));
-			if (!onList && config.condition) onList = config.condition(person, personTags);
+		const onLists = (await Promise.all(_.map(lists, async (config, name) => {
+			// Check if the person is already on the list
+			let onList = await this.mailchimp.isOnList(config.listId, person);
+
+			// If they're already on the list, may as well update rather than let them
+			// go stale regardless of if they're supposed to be there
+			if (!onList) {
+				// Do they have a tag
+				if (config.tags) onList = _.intersection(config.tags, personTags).length;
+				// See if at least one of those fields is truthy
+				if (!onList && config.fields) onList = config.fields.find(field => _.get(person, field));
+				if (!onList && config.condition) onList = config.condition(person, personTags);
+			}
 
 			// If they're on the list, sync them
 			return onList ? name : null;
-		})
+		})))
 		// Filter out lists that they didn't qualify for
 			.filter(l => l);
 
@@ -126,7 +134,6 @@ class Mailchimp extends AirblastController {
 			// Sync them to all lists they should be on
 			await Promise.all(onLists.map((listName) => {
 				const { listId } = lists[listName];
-				if (!this.mailchimp) this.mailchimp = new MailchimpService(process.env.MAILCHIMP_KEY);
 				return this.mailchimp.syncPersonToList(person, listId, !!((listName === 'standard') && vip));
 			}));
 		} else {

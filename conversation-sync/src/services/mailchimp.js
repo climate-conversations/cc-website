@@ -76,6 +76,10 @@ class MailchimpService {
 		this.mailchimp = new Mailchimp(key);
 	}
 
+	flushCache() {
+		cache.clear();
+	}
+
 	async loadInterests(listId) {
 		console.log(`Loading interests for ${listId}`)
 		const interestCategories = await this.mailchimp.get(`/lists/${listId}/interest-categories`);
@@ -136,6 +140,7 @@ class MailchimpService {
 			if (!this.chimpPromises) this.chimpPromises = {};
 			if (!this.chimpPromises[segmentUrl]) this.chimpPromises[segmentUrl] = this.mailchimp.get(segmentUrl);
 			const segmentsResponse = await this.chimpPromises[segmentUrl]
+			this.chimpPromises[segmentUrl] = null;
 			segments = segmentsResponse.segments;
 			cache.set(segmentUrl, segments);
 		}
@@ -150,6 +155,7 @@ class MailchimpService {
 		// Create any missing tags
 		const missingTags = personTags
 			.filter(name => !existingTags.find(t => t.kebabName === name));
+
 		for (const i in missingTags) {
 			const kebabName = missingTags[i];
 			const newTag = await this.mailchimp.post(`/lists/${listId}/segments`, {
@@ -188,6 +194,30 @@ class MailchimpService {
 		console.log(`Mailchimp list ${listId}, Person ${person.uuid}: Untagged ${tagsToDelete.map(t => t.name).join(',') || '(none)'}`);
 	}
 
+	/**
+	 * Check if a person is on the given list
+	 * @param {string} listId
+	 * @param {object} person Must contain { email }
+	 * @returns {boolean} True if the person is on that list
+	 */
+	async isOnList(listId, person) {
+		const hash = personHash(person);
+
+		try {
+			const listEntry = await this.mailchimp.get(`/lists/${listId}/members/${hash}`);
+			const canUpdate = listEntry.status === "subscribed";
+			return canUpdate;
+		} catch (error) {
+			// Person is not in the list
+			if (error.statusCode == 404) {
+				return false;
+			} else {
+				// Unknown error, throw it
+				throw error;
+			}
+		}
+	}
+
 	async syncPersonToList(person, listId, vip) {
 		const interests = await this.loadCachedInterests(listId);
 
@@ -204,7 +234,7 @@ class MailchimpService {
 			if (!canTag) console.log(`Mailchimp list ${listId}, Person ${person.uuid} person is unsubscribed`);
 		} catch (e) {
 			// Person is not in the list
-			if (e.status == 404) {
+			if (e.statusCode == 404) {
 				listEntry = await this.addToList(person, listId, vip, interests);
 			} else {
 				// Unknown error, throw it

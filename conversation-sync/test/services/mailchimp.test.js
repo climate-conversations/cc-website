@@ -43,17 +43,40 @@ describe('Mailchimp service', () => {
 	let service;
 	before(() => {
 		service = new MailchimpService('test-us16');
-	})
+	});
+
+	describe('isOnList', () => {
+		after(() => {
+			nocks.reset()
+			service.flushCache();
+		});
+		it('on list returns true', async () => {
+			nocks = new MailchimpNock(LIST_ID, EMAIL);
+			nocks.getUser(200, { status: 'subscribed' });
+			const result = await service.isOnList(LIST_ID, person);
+			expect(result).to.eq(true);
+		});
+		it("off list returns false", async () => {
+			nocks = new MailchimpNock(LIST_ID, EMAIL);
+			nocks.reset();
+			nocks.getUser(404, { detail: "person not found" });
+			const result = await service.isOnList(LIST_ID, person);
+			expect(result).to.eq(false);
+		});
+	});
 
 	describe('syncPersonToList', () => {
 		describe('WHEN new record', () => {
 			before(async () => {
+				service.flushCache();
 				nocks = new MailchimpNock(LIST_ID, EMAIL);
 				nocks.getUser(404, { detail: 'person not found' });
 				nocks.createUser(200, { tags: [] });
 				nocks.getTags([]);
 				nocks.createTags();
 				nocks.addTags();
+				nocks.getInterests();
+				nocks.getInterestCategories();
 				await service.syncPersonToList(personWithTags, LIST_ID, false);
 			});
 			after(() => nocks.reset());
@@ -74,6 +97,7 @@ describe('Mailchimp service', () => {
 
 		describe('WHEN updated', () => {
 			before(async () => {
+				service.flushCache();
 				nocks = new MailchimpNock(LIST_ID, EMAIL);
 				nocks.getUser(200, { tags: nocks.formatTags(tagsOnList), status: 'subscribed' });
 				nocks.updateUser(200, {});
@@ -81,6 +105,8 @@ describe('Mailchimp service', () => {
 				nocks.createTags();
 				nocks.addTags();
 				nocks.removeTags();
+				nocks.getInterests();
+				nocks.getInterestCategories();
 				await service.syncPersonToList(personWithTags, LIST_ID, true);
 			});
 			after(() => nocks.reset());
@@ -94,19 +120,23 @@ describe('Mailchimp service', () => {
 			it('creates tags', () => {
 				expect(nocks.calls.tags).to.deep.eq({
 					get: 1,
-					create: ['government'],
-					add: ['scientist', 'government'],
-					remove: ['partner']
+					create: ["government"],
+					add: ["scientist", "government"],
+					remove: ["partner"],
 				});
 			});
 		});
 
 		describe('WHEN unsubscribed', () => {
 			before(async () => {
+				service.flushCache();
 				nocks = new MailchimpNock(LIST_ID, EMAIL);
+				nocks.reset();
 				nocks.getUser(200, { tags: [], status: '' });
 				nocks.updateUser(200, {});
 				nocks.getTags(mailchimpTags);
+				nocks.getInterests();
+				nocks.getInterestCategories();
 				await service.syncPersonToList(person, LIST_ID, false);
 			});
 			after(() => nocks.reset());
@@ -114,12 +144,12 @@ describe('Mailchimp service', () => {
 			it('subscribes', () => {
 				expect(nocks.calls.user).to.deep.eq({
 					get: 1,
-					update: 2,
+					update: 0,
 				});
 			});
 			it('does not create tags', () => {
 				expect(nocks.calls.tags).to.deep.eq({
-					get: 1,
+					get: 0,
 				});
 			});
 		});

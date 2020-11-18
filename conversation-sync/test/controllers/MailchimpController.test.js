@@ -75,6 +75,7 @@ describe('Mailchimp Controller', () => {
 
 	async function process(person) {
 		sandbox = sinon.createSandbox();
+		stub = sandbox.stub(MailchimpService.prototype, "isOnList").returns(false);
 		stub = sandbox.stub(MailchimpService.prototype, 'syncPersonToList');
 
 		data = person;
