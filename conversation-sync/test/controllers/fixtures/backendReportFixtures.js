@@ -1,5 +1,6 @@
 const headers = [
 	'GuestId',
+	'UserId',
 	'Full Name',
 	'Conversation Name',
 	'Conversation Date',
@@ -92,6 +93,7 @@ const guestData = {
 	rsvp: {
 		uuid: 'rsvp-uuid',
 		eventUuid: 'conversation-uuid',
+		userUuid: 'person-uuid',
 		private: {
 			donationIntention: 'cash',
 			donationAmount: 2000,
@@ -132,6 +134,7 @@ function getExpectedRow({ facilitator, host }) {
 		'Host Corporate': true,
 		'Donation Intention': 'cash',
 		'Donation Amount': 20.00,
+		UserId: guestData.rsvp.userUuid,
 	};
 }
 
