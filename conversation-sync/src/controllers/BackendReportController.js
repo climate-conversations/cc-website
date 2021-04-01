@@ -50,6 +50,7 @@ function idToHeaders(headers) {
 		}
 	});
 	idMap['rsvp.uuid'] = 'GuestId';
+	idMap['rsvp.userUuid'] = 'UserId';
 
 	return idMap;
 }
@@ -68,6 +69,7 @@ function selectFields(data, { facilitator, host }) {
 			donationIntention: getField({ rsvp }, 'rsvp.donationIntention'),
 			donationAmount,
 			uuid: rsvp.uuid,
+			userUuid: rsvp.userUuid,
 		},
 		facilitator,
 		host,
@@ -105,7 +107,10 @@ class BackendReport extends AirblastController {
 		const row = raiselyToRow(preparedData, headerMap);
 
 		// Create row
-		await upsertRow(sheet, { GuestId: rsvp.uuid }, row);
+		// Because duplicate RSVPs are not unusual :-(
+		// de-dupe by userId & conversationId
+		// (but also match existing entries)
+		await upsertRow(sheet, (row) => (row['UserId'] === rsvp.userUuid && row['Conversation Uuid'] === rsvp.eventUuid) || row.GuestId === rsvp.uuid, row);
 	}
 
 	async getHeaders(surveyVersion) {
@@ -144,6 +149,7 @@ class BackendReport extends AirblastController {
 	getOrderedFields({ preSurveyFields, postSurveyFields }) {
 		const headers = [
 			'rsvp.uuid',
+			'rsvp.userUuid',
 			'user.fullName',
 			'conversation.name',
 			'conversation.date',

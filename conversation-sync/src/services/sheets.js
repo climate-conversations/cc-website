@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const GoogleSpreadsheet = require('./sheetsProvider');
 const path = require('path');
 
@@ -29,7 +30,7 @@ async function findOrCreateWorksheet(document, worksheetTitle, headers) {
 /**
  * Insert or update a row in the spreadsheet
  * @param {GoogleWorksheet} sheet The worksheet
- * @param {object} match Column name / value pairs
+ * @param {object|fn} match Column name / value pairs
  * @param {object} row The row values to insert / update
  */
 async function doUpsertRow(sheet, match, newRow) {
@@ -38,10 +39,11 @@ async function doUpsertRow(sheet, match, newRow) {
 	let rows;
 	let matchingRow;
 	const searchKeys = Object.keys(match)
+	const searchFn = _.isFunction(match) ? match : row => searchKeys.reduce((all, key) => all && (row[key] === match[key]), true);
 
 	do {
 		rows = await sheet.getRows({ limit, offset });
-		matchingRow = rows.find(row => searchKeys.reduce((all, key) => all && (row[key] === match[key]), true));
+		matchingRow = rows.find(searchFn);
 		offset += limit;
 	} while (!matchingRow && rows.length === limit)
 
@@ -50,10 +52,10 @@ async function doUpsertRow(sheet, match, newRow) {
 	if (matchingRow) {
 		// Update
 		Object.assign(matchingRow, newRow);
-		return matchingRow.save({ raw: true });
+		return matchingRow.save();
 	} else {
 		// Insert
-		return sheet.addRow(newRow, { raw: true });
+		return sheet.addRow(newRow);
 	}
 }
 
