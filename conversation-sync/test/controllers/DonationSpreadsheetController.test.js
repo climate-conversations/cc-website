@@ -43,16 +43,16 @@ describe('Donation Spreadsheet Controller', () => {
 
 	function getExpectedRow() {
 		return {
-			"Cash Transferred (according to screenshot)": 30.00,
-			"Cash donation report (url)": 'report.jpg',
+			"Cash Transferred According to screenshot": 30.00,
+			"Cash donation report URL": 'report.jpg',
 			"ConversationId": "mocked-event",
 			"Date": "2020-01-16",
-			"Date of Transfer (in screenshot)": '2020-01-18',
+			"Date of Transfer in screenshot": '2020-01-18',
 			"Facilitator": facilitator.fullName,
 			"Facilitator Notes": 'Fixed now',
 			"Host": host.fullName,
 			"Scanned Report Total": 50.00,
-			"Screenshot of transfer (url)": 'transfer.jpg',
+			"Screenshot of transfer URL": 'transfer.jpg',
 			"Team Leader Notes": 'This does not look right',
 			"Total from CTA forms": 20.00,
 			"Total reported bank transfers": 5.00,
@@ -62,8 +62,9 @@ describe('Donation Spreadsheet Controller', () => {
 
 	describe('WHEN sheet exists', () => {
 		before(() => {
-			mockSheet = setup([{ title: 'Donations 2020', rows: [] }]);
-			return process(baseEvent);
+			mockSheet = setup([{ title: 'Donations 2020 TEST', rows: [] }]);
+			process(baseEvent);
+			// return process(baseEvent);
 		});
 		after(() => {
 			sandbox.restore();
@@ -80,38 +81,36 @@ describe('Donation Spreadsheet Controller', () => {
 	describe('WHEN sheet does not exist', () => {
 		before(() => {
 			mockSheet = setup([{ title: 'Donations 2019' }]);
-			return process(baseEvent);
+			process(baseEvent);
+			// return process(baseEvent);
 		});
 		after(() => {
 			sandbox.restore();
 		});
 		if (WITH_MOCK) {
 			it('creates sheet', () => {
-				mockSheet.assertCall('addWorksheet', [{
-					title: 'Donations 2020',
+				mockSheet.assertCall('addSheet', [{
+					title: 'Donations 2020 TEST',
+					headerValues: [
+						"Host",
+						"Facilitator",
+						"ConversationId",
+						"Date",
+						"Total from CTA forms",
+						"Total reported bank transfers",
+						"Scanned Report Total",
+						"Cash Transferred According to screenshot",
+						"Screenshot of transfer URL",
+						"Date of Transfer in screenshot",
+						"Transfer Reference",
+						"Cash donation report URL",
+						"Cash Received in Bank Account",
+						"Bank Reconcilliation",
+						"Facilitator Notes",
+						"Team Leader Notes",
+						"Other Notes",
+					]
 				}]);
-			});
-			it('sets header', () => {
-				expect(mockSheet.calls).to.haveOwnProperty('setHeaderRow');
-				expect(mockSheet.calls.setHeaderRow).to.deep.eq([[
-					"Host",
-					"Facilitator",
-					"ConversationId",
-					"Date",
-					"Total from CTA forms",
-					"Total reported bank transfers",
-					"Scanned Report Total",
-					"Cash Transferred (according to screenshot)",
-					"Screenshot of transfer (url)",
-					"Date of Transfer (in screenshot)",
-					"Transfer Reference",
-					"Cash donation report (url)",
-					"Cash Received in Bank Account",
-					"Bank Reconcilliation",
-					"Facilitator Notes",
-					"Team Leader Notes",
-					"Other Notes",
-				]]);
 			});
 			itCreatesRow();
 		} else {
@@ -121,7 +120,7 @@ describe('Donation Spreadsheet Controller', () => {
 	describe('WHEN row exists', () => {
 		before(() => {
 			mockSheet = setup([{
-				title: 'Donations 2020',
+				title: 'Donations 2020 TEST',
 				rows: [{
 					ConversationId: baseEvent.uuid,
 				}],

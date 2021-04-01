@@ -13,20 +13,19 @@ class GoogleSpreadsheet extends MockClass {
 	constructor(document)  {
 		super();
 		this.worksheets = (document || []).map(sheet => new Worksheet(this, sheet));
+		this.sheetsByIndex = this.worksheets;
 	}
 
-	useServiceAccountAuth(creds, cb) {
-		cb();
+	async useServiceAccountAuth(creds) {
 	}
-	getInfo(cb) {
-		this.logCall('getInfo');
-		cb(null, { worksheets: this.worksheets });
+	async loadInfo() {
+		this.logCall('loadInfo');
 	}
-	addWorksheet(sheet, cb) {
+	async addSheet(sheet) {
 		const worksheet = new Worksheet(this, sheet);
 		this.worksheets.push(worksheet);
-		this.logCall('addWorksheet', sheet);
-		cb(null, worksheet);
+		this.logCall('addSheet', sheet);
+		return worksheet;
 	}
 }
 
@@ -36,14 +35,14 @@ class Worksheet {
 		this.$document = document;
 		this.rows = (sheet.rows || []).map(row => new Row(this.$document, row));
 	}
-	addRow(row, cb) {
+	async addRow(row) {
 		const newRow = new Row(this.$document, row);
 		this.rows.push(newRow);
 		this.$document.logCall('addRow', row);
-		cb(null, newRow);
+		return newRow;
 	}
-	getRows(query, cb) { cb(null, this.rows) }
-	setHeaderRow(headers, cb) {
+	async getRows(query) { return this.rows }
+	async setHeaderRow(headers, cb) {
 		this.headers = headers;
 		this.$document.logCall('setHeaderRow', headers);
 		cb();
@@ -55,9 +54,8 @@ class Row {
 		Object.assign(this, row);
 		this.$document = document;
 	}
-	save(cb) {
+	async save() {
 		this.$document.logCall('save', { ...this });
-		cb();
 	}
 }
 

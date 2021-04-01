@@ -1,4 +1,4 @@
-const GoogleSpreadsheet = require('google-spreadsheet');
+const {GoogleSpreadsheet} = require('google-spreadsheet');
 
 module.exports = {
 	/**

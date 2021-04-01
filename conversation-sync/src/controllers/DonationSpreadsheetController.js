@@ -91,7 +91,7 @@ class DonationSpreadsheet extends AirblastController {
 		const row = raiselyToRow(record, headersToMap());
 
 		// Create row
-		await upsertRow(sheet, `conversationid = ${record.event.uuid}`, row);
+		await upsertRow(sheet, { ConversationId: record.event.uuid }, row);
 	}
 }
 

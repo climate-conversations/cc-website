@@ -29,7 +29,7 @@ describe('Backend Report Controller', () => {
 
 	describe('WHEN sheet exists', () => {
 		before(() => {
-			mockSheet = setup([{ title: 'Surveys 2020', rows: [] }]);
+			mockSheet = setup([{ title: 'Surveys 2020 TEST', rows: [] }]);
 			return processController(guestData);
 		});
 		after(() => {
@@ -54,10 +54,10 @@ describe('Backend Report Controller', () => {
 		});
 		if (WITH_MOCK) {
 			it('creates sheet', () => {
-				mockSheet.assertCall('addWorksheet', [{ title: 'Surveys 2020 TEST' }]);
+				mockSheet.assertCall('addSheet', [{ title: 'Surveys 2020 TEST' }]);
 			});
 			it('sets header', () => {
-				mockSheet.assertCall('addWorksheet', [{ headers }]);
+				mockSheet.assertCall('addSheet', [{ headerValues: headers }]);
 			});
 			itCreatesRow();
 		} else {
@@ -69,7 +69,7 @@ describe('Backend Report Controller', () => {
 			mockSheet = setup([{
 				title: 'Surveys 2020 TEST',
 				rows: [{
-					guestid: guestData.rsvp.uuid,
+					GuestId: guestData.rsvp.uuid,
 				}],
 			}]);
 			return processController(guestData);

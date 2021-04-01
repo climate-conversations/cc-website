@@ -1,10 +1,10 @@
 const GoogleSpreadsheet = require('./sheetsProvider');
-const { promisify } = require('util');
 const path = require('path');
 
-function instancePromisify(obj, fnName) {
-	return promisify(obj[fnName]).bind(obj);
-}
+// If two events come in quick succession for the same
+// conversation, upsert might create a duplicate
+// this prevents more than one from occurring
+const upsertLocks = {};
 
 async function setAuth(document, credentialsPath) {
 	const fullPath = path.join(process.cwd(), credentialsPath);
@@ -12,15 +12,15 @@ async function setAuth(document, credentialsPath) {
 	// eslint-disable-next-line global-require, import/no-dynamic-require
 	const creds = require(fullPath);
 
-	return instancePromisify(document, 'useServiceAccountAuth')(creds);
+	return document.useServiceAccountAuth(creds);
 }
 
 async function findOrCreateWorksheet(document, worksheetTitle, headers) {
-	const info = await instancePromisify(document, 'getInfo')();
+	await document.loadInfo();
 	let isNew = false;
-	let sheet = info.worksheets.find(w => w.title === worksheetTitle);
+	let sheet = document.sheetsByIndex.find(w => w.title === worksheetTitle);
 	if (!sheet) {
-		sheet = await instancePromisify(document, 'addWorksheet')({ title: worksheetTitle, headers });
+		sheet = await document.addSheet({ title: worksheetTitle, headerValues: headers, gridProperties: { columnCount: headers.length } });
 		isNew = true;
 	}
 	return { sheet, isNew };
@@ -29,21 +29,50 @@ async function findOrCreateWorksheet(document, worksheetTitle, headers) {
 /**
  * Insert or update a row in the spreadsheet
  * @param {GoogleWorksheet} sheet The worksheet
- * @param {string} query A query that returns exactly 1 row
- * @param {object} row
+ * @param {object} match Column name / value pairs
+ * @param {object} row The row values to insert / update
  */
-async function upsertRow(sheet, query, row) {
-	const rows = await instancePromisify(sheet, 'getRows')({ query });
-	if (rows.length > 1) {
-		throw new Error('upsert found more than one row, aborting upsert');
-	} else if (rows.length) {
+async function doUpsertRow(sheet, match, newRow) {
+	let offset = 0;
+	let limit = 1000;
+	let rows;
+	let matchingRow;
+	const searchKeys = Object.keys(match)
+
+	do {
+		rows = await sheet.getRows({ limit, offset });
+		matchingRow = rows.find(row => searchKeys.reduce((all, key) => all && (row[key] === match[key]), true));
+		offset += limit;
+	} while (!matchingRow && rows.length === limit)
+
+	await new Promise(r => setTimeout(r, 2000));
+
+	if (matchingRow) {
 		// Update
-		Object.assign(rows[0], row);
-		return instancePromisify(rows[0], 'save')();
+		Object.assign(matchingRow, newRow);
+		return matchingRow.save({ raw: true });
 	} else {
 		// Insert
-		return instancePromisify(sheet, 'addRow')(row);
+		return sheet.addRow(newRow, { raw: true });
 	}
+}
+
+/**
+ * Wraps the upsert to lock on a per record basis
+ * @param {*} sheet
+ * @param {*} match
+ * @param {*} newRow
+ * @returns
+ */
+async function upsertRow(sheet, match, newRow) {
+	const key = JSON.stringify(match);
+	while (upsertLocks[key]) {
+		await upsertLocks[key];
+	}
+	upsertLocks[key] = doUpsertRow(sheet, match, newRow);
+	const result = await upsertLocks[key];
+	delete upsertLocks[key];
+	return result;
 }
 
 async function getSpreadsheet(key) {
@@ -56,54 +85,24 @@ async function getSpreadsheet(key) {
 async function fetchRows(count) {
 	const { SPREADSHEET_KEY, WORKSHEET_TITLE, GOOGLE_PROJECT_CREDENTIALS } = process.env;
 
-	console.log(`Authenticating to spreadsheet ${SPREADSHEET_KEY}`);
 	// spreadsheet key is the long id in the sheets URL
 	const document = GoogleSpreadsheet.load(SPREADSHEET_KEY);
 	await setAuth(document, GOOGLE_PROJECT_CREDENTIALS);
 
-	const info = await instancePromisify(document, 'getInfo')();
+	await document.loadInfo();
 
 	// Find worksheet
-	console.log(`Finding worksheet ${WORKSHEET_TITLE}`);
-	const sheet = info.worksheets.find(w => w.title === WORKSHEET_TITLE);
+	const sheet = document.sheetsByIndex.find(w => w.title === WORKSHEET_TITLE);
 	if (!sheet) throw new Error(`Could not find worksheet '${WORKSHEET_TITLE}'`);
 
-	console.log('Calculating last row');
-	const rowCount = await getTrueLength(sheet);
-
-	const offset = Math.max(1, rowCount - count);
+	const offset = Math.max(1, sheet.rowCount - count);
 	console.log(`Fetching last ${count} rows (starting at row: ${offset})...`);
-	const rows = await instancePromisify(sheet, 'getRows')({
+	const rows = await sheet.getRows({
 		offset,
 		limit: count,
 	});
 
 	return rows;
-}
-
-async function getTrueLength(sheet) {
-	const pageSize = 100;
-	let offset = 1;
-	let trueLength;
-
-	do {
-		// eslint-disable-next-line no-await-in-loop
-		const cells = await instancePromisify(sheet, 'getCells')({
-			'min-row': offset,
-			'max-row': offset + pageSize,
-			'min-col': 1,
-			'max-col': 1,
-			'return-empty': true,
-		});
-		offset += pageSize;
-
-		const emptyRow = cells.find(cell => !cell.value);
-		if (emptyRow) trueLength = emptyRow.row - 1;
-	} while (!trueLength && (offset < sheet.rowCount));
-
-	if (!trueLength) trueLength = sheet.rowCount;
-
-	return trueLength;
 }
 
 module.exports = {

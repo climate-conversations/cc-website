@@ -105,7 +105,7 @@ class BackendReport extends AirblastController {
 		const row = raiselyToRow(preparedData, headerMap);
 
 		// Create row
-		await upsertRow(sheet, `guestid = ${rsvp.uuid}`, row);
+		await upsertRow(sheet, { GuestId: rsvp.uuid }, row);
 	}
 
 	async getHeaders(surveyVersion) {
