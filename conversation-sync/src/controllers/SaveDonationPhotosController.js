@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 const tzc = require("timezonecomplete");
+const _  =require('lodash');
 const { PassThrough } = require("stream");
 const { AirblastController } = require("airblast");
 const request = require("request-promise-native");
@@ -22,7 +23,7 @@ function getName(user) {
 
 function createFileName({ facilitator, host, conversation, type }) {
 	const startAt = isoToSgDateAndTime(conversation.startAt).date;
-	const name = `${startAt} - ${type} - host ${getName(
+	const name = `${startAt} - ${conversation.uuid} - ${type} - host ${getName(
 		host
 	)} - facil ${getName(facilitator)}`;
 	return name;
