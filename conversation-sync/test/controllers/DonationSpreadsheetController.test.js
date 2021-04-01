@@ -4,6 +4,15 @@ const mockSheets = require('../helpers/mockSheets');
 const { expect } = require('chai');
 const sinon = require('sinon');
 
+/**
+ * This tests the event handling and processing to the Google Sheet
+ * By default this runs against mocks, but you can also safely test it against
+ * the live spreadsheet by running LIVE_TEST=1 npx mocha <this file>
+ *
+ * Setting LIVE_TEST will cause a worksheet "Donations 2020 TEST" to be created (if it doesn't already exist)
+ * and test values will be saved to that worksheet
+ */
+
 const baseEvent = {
 	uuid: 'mocked-event',
 	startAt: '2020-01-16T12:00:00 +00:00',
@@ -63,8 +72,7 @@ describe('Donation Spreadsheet Controller', () => {
 	describe('WHEN sheet exists', () => {
 		before(() => {
 			mockSheet = setup([{ title: 'Donations 2020 TEST', rows: [] }]);
-			process(baseEvent);
-			// return process(baseEvent);
+			return process(baseEvent);
 		});
 		after(() => {
 			sandbox.restore();
@@ -81,8 +89,7 @@ describe('Donation Spreadsheet Controller', () => {
 	describe('WHEN sheet does not exist', () => {
 		before(() => {
 			mockSheet = setup([{ title: 'Donations 2019' }]);
-			process(baseEvent);
-			// return process(baseEvent);
+			return process(baseEvent);
 		});
 		after(() => {
 			sandbox.restore();

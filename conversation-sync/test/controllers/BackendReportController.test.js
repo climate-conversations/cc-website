@@ -4,6 +4,15 @@ const { nockEventTeam, nockRaisely } = require('../testHelper');
 const mockSheets = require('../helpers/mockSheets');
 const sinon = require('sinon');
 
+/**
+ * This tests the event handling and processing to the Google Sheet
+ * By default this runs against mocks, but you can also safely test it against
+ * the live spreadsheet by running LIVE_TEST=1 npx mocha <this file>
+ *
+ * Setting LIVE_TEST will cause a worksheet "Survey 2019 TEST" to be created (if it doesn't already exist)
+ * and test values will be saved to that worksheet
+ */
+
 const {
 	guestData,
 	campaignConfig,
