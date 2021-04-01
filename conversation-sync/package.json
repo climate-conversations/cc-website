@@ -5,7 +5,16 @@
   "main": "server.js",
   "scripts": {
     "dev": "node dev",
-    "test": "mocha test/**/*.test.js"
+    "test": "mocha test/**/*.test.js",
+	"deploy": "grunt airblast",
+	"deploy:scheduler": "",
+	"deploy:backendReport": "gcloud functions deploy backendReportProcess --max-instances=1 --trigger-resource BackendReport --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish && gcloud functions deploy backendReport --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy backendReportRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http",
+	"deploy:donationSpreadsheet": "gcloud functions deploy donationSpreadsheetProcess --max-instances=1 --trigger-resource DonationSpreadsheet --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish && gcloud functions deploy donationSpreadsheet --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy donationSpreadsheetRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http",
+	"deploy:donorFacilMatch": "gcloud functions deploy donorFacilMatchProcess --trigger-resource DonorFacilMatch --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish && gcloud functions deploy donorFacilMatch --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy donorFacilMatchRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http",
+	"deploy:mailchimp": "gcloud functions deploy mailchimpProcess --trigger-resource Mailchimp --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish && gcloud functions deploy mailchimp --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy mailchimpRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http",
+	"deploy:raiselyPeople": "gcloud functions deploy raiselyPeople --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy raiselyPeopleRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy raiselyPeopleProcess --trigger-resource RaiselyPeople --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish",
+	"deploy:saveDonationPhotos": "gcloud functions deploy saveDonationPhotosProcess --trigger-resource SaveDonationPhotos --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish && gcloud functions deploy saveDonationPhotos --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy saveDonationPhotosRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http",
+	"deploy:savePhoto": "gcloud functions deploy savePhotoProcess --trigger-resource SavePhoto --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish && gcloud functions deploy savePhoto --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy savePhotoRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http"
   },
   "repository": {
     "type": "git",
@@ -51,7 +60,7 @@
     "express": "^4.17.1",
     "google-datastore-emulator": "^2.0.0",
     "google-pubsub-emulator": "^2.0.2",
-    "grunt": "^1.0.3",
+    "grunt": "^1.3.0",
     "mocha": "^5.2.0",
     "nock": "^10.0.0",
     "sinon": "^7.5.0"
