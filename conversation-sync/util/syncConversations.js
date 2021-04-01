@@ -4,6 +4,8 @@
  * into Raisely CRM
  */
 
+/* eslint-disable no-console */
+
 require('dotenv').config();
 
 const _ = require('lodash');
@@ -13,11 +15,20 @@ const cache = require('nano-cache');
 const { raiselyRequest: callRaisely } = require('../src/helpers/raiselyHelpers');
 const cachePromises = {};
 const tzc = require('timezonecomplete');
+const { default: PQueue } = require('p-queue');
 
 const SPREADSHEET_KEY = process.env.SPREADSHEET_KEY;
 const SHEET_NAME = process.env.SHEET_NAME;
 const RAISELY_TOKEN = process.env.RAISELY_TOKEN;
 const CAMPAIGN_UUID = process.env.CAMPAIGN_UUID;
+const WEBSITE_UUID = process.env.WEBSITE_UUID;
+const WEBSITE_CAMPAIGN_PROFILE_UUID = process.env.WEBSITE_CAMPAIGN_PROFILE_UUID;
+
+// Maximum concurrent requests to raisely
+const MAX_REQUESTS = 3;
+
+// Create a queue for our raisely promises so we don't flood raisely
+const queue = new PQueue({ concurrency: MAX_REQUESTS });
 
 const sgTime = tzc.zone('Asia/Singapore');
 
@@ -25,9 +36,9 @@ const sgTime = tzc.zone('Asia/Singapore');
 const convertDate = (excelDate) => {
 	const localDate = (new tzc.DateTime(new Date(1900, 0, --excelDate), tzc.DateFunctions.Get));
 	const sgDate = new tzc.DateTime(localDate.format('YYYY-MM-dd HH:mm'), sgTime);
+	sgDate.convert(tzc.TimeZone.utc());
 	return sgDate;
 }
-
 
 const toBool = val => {
 	return (val && val.length);
@@ -44,12 +55,13 @@ const gender = g => {
 }
 const residency = (r) => {
 	if (r && r.toLowerCase().includes('singapor')) return 'Singapore Citizen';
+	if (r && r.toLowerCase().includes("permanent")) return "Permanent Resident";
 	return r;
 }
 
 async function raiselyRequest(opts) {
 	opts.token = RAISELY_TOKEN;
-	return callRaisely(opts);
+	return queue.add(() => callRaisely(opts));
 }
 
 /**
@@ -101,7 +113,7 @@ async function findUserBy(attribute, record) {
  * Upsert a user record
  * @param {object} user The user record to upsert
  */
-const upsertPerson = cachify(async (user, opts) => {
+const upsertPerson = cachify(async (user, opts = {}) => {
 	const promises = [
 		findUserBy('email', user),
 		findUserBy('phoneNumber', user),
@@ -112,13 +124,13 @@ const upsertPerson = cachify(async (user, opts) => {
 	let [userRecord] = results.reduce((all, c) => all.concat(c), []);
 	if (userRecord) {
 		console.log(`Found person ${user.email || user.fullName}`);
-		const updateKeys = ['private.residency', 'phoneNumber', 'private.gender', 'private.ethnicity', 'private.dateOfBirth', 'fullName'];
+		const updateKeys = ['private.residency', 'phoneNumber', 'private.gender', 'private.ethnicity', 'private.dateOfBirth', 'fullName', 'host', 'facilitate', 'volunteer', 'mailingList'];
 		const toUpdate = {};
 		let shouldUpdate;
 		updateKeys.forEach(key => {
 			const oldValue = _.get(userRecord, key);
 			const newValue = _.get(user, key);
-			if (newValue && !oldValue) {
+			if (newValue && (oldValue === null || oldValue === '')) {
 				_.set(toUpdate, key, newValue);
 				shouldUpdate = true;
 			}
@@ -127,13 +139,16 @@ const upsertPerson = cachify(async (user, opts) => {
 		if (opts.recruiter) {
 			['private.recruitedBy', 'private.pointPerson'].forEach(key => {
 				if (!_.get(user, key)) {
-					_.set(user, key, opts.recruiter)
+					_.set(toUpdate, key, opts.recruiter)
 					shouldUpdate = true;
 				}
 			});
 		}
 		// If email was just a place holder and we have a real one, replace it
-		if (user.email && userRecord.email.endsWith('.invalid')) toUpdate.email = userRecord.email;
+		if (user.email && userRecord.email.endsWith('.invalid')) {
+			toUpdate.email = userRecord.email;
+			shouldUpdate = true;
+		}
 
 		if (shouldUpdate) {
 			console.log(`Updating user`, toUpdate)
@@ -149,7 +164,7 @@ const upsertPerson = cachify(async (user, opts) => {
 	const shortRand = shortUuid();
 	const unique = shortRand.new();
 	// eslint-disable-next-line no-param-reassign
-	user.email = `no-email-${_.camelCase(user.fullName)}-${unique}@noemail.invalid`;
+	if (!user.email) user.email = `no-email-${_.camelCase(user.fullName)}-${unique}@noemail.invalid`;
 
 	console.log(`Creating person ${user.email}`);
 
@@ -185,9 +200,51 @@ const upsertConversation = cachify(async (details) => {
 		},
 	});
 	// Find an exact match by legacy ID
-	const rsvp = allRsvps.find(r => _.get(r, 'event.private.legacyId') === details.legacyId);
+	let rsvp = allRsvps.find(r => _.get(r, 'event.private.legacyId') === details.legacyId);
 
-	const existingEvent = _.get(rsvp, 'event');
+	let existingEvent = _.get(rsvp, 'event');
+
+	// Allow for events in the wrong timezone
+	const wrongTimeZone = details.date.clone().add(8, tzc.TimeUnit.Hour);
+
+	if (existingEvent) {
+		const eventStartAt = new tzc.DateTime(existingEvent.startAt);
+		if (eventStartAt.lessThan(details.date) || eventStartAt.greaterThan(wrongTimeZone)) {
+			console.log(`Event ${existingEvent.name} marked with wrong legacy id, removing`);
+			await raiselyRequest({
+				path: `/events/${existingEvent.uuid}`,
+				method: "PATCH",
+				data: {
+					private: {
+						legacyId: null,
+					},
+				},
+			});
+			existingEvent = null;
+		}
+	}
+
+	if (!existingEvent) {
+		const matchingRsvp = allRsvps.find(
+			(r) => {
+				const eventStartAt = new tzc.DateTime(r.event.startAt);
+				return eventStartAt.greaterEqual(details.date) && eventStartAt.lessEqual(wrongTimeZone);
+			}
+		);
+		existingEvent = _.get(matchingRsvp, "event");
+	}
+
+	const privateValues = {
+		reconciledBy: "(prior system)",
+		reconciledAt: details.date.toIsoString(),
+		reviewedBy: "(prior system)",
+		reviewedAt: details.date.toIsoString(),
+		status: "completed",
+		conversationType: "private",
+		isProcessed: true,
+		legacyId: details.legacyId,
+	};
+
 	if (existingEvent) {
 		console.log(`Found existing conversation ${existingEvent.uuid}`);
 
@@ -195,75 +252,245 @@ const upsertConversation = cachify(async (details) => {
 		if (legacyId && legacyId !==  details.legacyId) {
 			throw new Error(`Conversation has wrong legacy ID (expected none or ${details.legacyId} got ${legacyId})`);
 		}
-		// Set correct event start date
-		await raiselyRequest({
-			path: `/events/${existingEvent.uuid}`,
-			method: "PATCH",
-			data: {
-				startAt: singaporeToISO
-			},
+		const toUpdate = { private: {}};
+		const toSet = privateValues;
+		if (existingEvent.startAt !== details.date.toIsoString()) {
+			toUpdate.startAt = details.date.toIsoString();
+		}
+		// Set extra values only if they're not already set in the event
+		Object.keys(toSet).forEach(key => {
+			if (!existingEvent[key]) toUpdate.private[key] = toSet[key];
 		});
+		if (Object.keys(toUpdate).length) {
+			// Set correct event start date
+			await raiselyRequest({
+				path: `/events/${existingEvent.uuid}`,
+				method: "PATCH",
+				data: toUpdate,
+			});
+		}
 		return existingEvent;
 	}
 
 	console.log(`Creating conversation`);
 	const conversation = await raiselyRequest({
 		path: `/campaigns/${CAMPAIGN_UUID}/events`,
-		method: 'POST',
+		method: "POST",
 		data: {
 			name: details.name,
 			startAt: details.date.toIsoString(),
 			userUuid: details.facilitator.uuid,
 			isPrivate: true,
-			private: {
-				conversationType: 'private',
-				isProcessed: true,
-				status: 'completed',
-				legacyId: details.legacyId,
-			},
+			private: privateValues,
 		},
 	});
 
 	return conversation;
 }, (details) => `conv-${details.host.uuid}-${details.date.toIsoString()}`);
 
+const upsertFacilitatorProfile = cachify(async (user) => {
+	let profiles = await raiselyRequest({
+		path: `/users/${user.uuid}/profiles`,
+		qs: {
+			type: 'INDIVIDUAL',
+			campaign: WEBSITE_UUID,
+		},
+	});
+	if (profiles.length > 1) {
+		console.log(profiles);
+		throw new Error('Unexpected number of profiles')
+	}
+	let [profile] = profiles;
+	if (profile) {
+		if (profile.campaignUuid !== WEBSITE_UUID) {
+			throw new Error('Profile found in wrong campaign');
+		}
+	} else {
+		console.log(`No user profile for ${user.uuid}, creating`)
+		profile = await raiselyRequest({
+			path: `/profiles/${WEBSITE_CAMPAIGN_PROFILE_UUID}/members`,
+			method: "POST",
+			data: {
+				userUuid: user.uuid,
+				campaignUuid: WEBSITE_UUID,
+				name: user.fullName || user.prefferedName,
+				photoUrl: user.photoUrl,
+				goal: 20000,
+				currency: 'SGD',
+			},
+		});
+	}
+	return profile;
+}, f => f.uuid);
+
 /**
  * Upsert a cash donation, and associate a donation with the conversation if it should be
  */
-function upsertDonation({ conversation, guest, cashDonation }) {
+async function upsertDonation({ conversation, guest, facilitator, cashDonation }) {
 	// Find donations within 2 weeks of the conversation
+	const twoWeeksLater = new tzc.DateTime(conversation.startAt).add(2, tzc.TimeUnit.Week);
+
 	const donations = await raiselyRequest({
-		path: '/donations',
+		path: "/donations",
 		query: {
 			user: guest.uuid,
 			private: 1,
-			campaign: CAMPAIGN_UUID,
+			campaign: WEBSITE_UUID,
+			createdAtGTE: conversation.startAt,
+			// Donation createdAt is not the same as when the donation
+			// occurred at, so need to fetch all donations for the user
+			// that occurred after the conversation
+			// createdAtLTE: twoWeeksLater.toIsoString(),
 		},
 	});
-	donations.map(d => {
-		if (_.get(d, 'private.'))
-	})
-	// Associate the donation if it isn't already
+	// Sort possible matches by earliest first, and filtering on those
+	// that exactly match the amount
+	const possibleMatches = _.sortBy(donations, d => d.createdAt)
+		.filter(d => d.amount === cashDonation);
+
+	const profile = await upsertFacilitatorProfile(facilitator);
+
+	if (possibleMatches.length) {
+		const exactMatch = possibleMatches.find(
+			(d) => _.get(d, "private.conversationUuid") === conversation.uuid
+		);
+
+		let matchingDonation;
+
+		if (exactMatch) {
+			matchingDonation = exactMatch;
+		} else {
+			matchingDonation = possibleMatches[0];
+			const conversationUuid = _.get(matchingDonation, "private.conversationUuid");
+			// if (conversationUuid && conversationUuid !== conversation.uuid) {
+			// 	throw new Error(`Donation has wrong conversation uuid. Expected none or ${conversation.uuid} got ${conversationUuid}`);
+			// }
+			// Note the matching conversation
+			// if (!conversationUuid) {
+				await raiselyRequest({
+					path: `/donations/${matchingDonation.uuid}`,
+					method: "PATCH",
+					data: {
+						private: {
+							conversationUuid: conversation.uuid,
+						},
+					},
+				});
+			// }
+		}
+
+		// Move to correct facil profile if necessary
+		if (matchingDonation.profileUuid !== profile.uuid) {
+			await raiselyRequest({
+				path: `/donations/${matchingDonation.uuid}/move`,
+				method: "PATCH",
+				data: { profileUuid: profile.uuid },
+			});
+		}
+
+		// Associate the donation if it isn't already
+		return matchingDonation;
+	}
+
 	// Create cash donation if one doesn't exist
+	await raiselyRequest({
+		path: `/profiles/${profile.uuid}/donations`,
+		method: "POST",
+		body: {
+			data: {
+				fullName: guest.fullName,
+				preferredName: guest.preferredName,
+				email: guest.email,
+				anonymous: true,
+				userUuid: guest.uuid,
+				amount: cashDonation,
+				mode: 'LIVE',
+				type: 'OFFLINE',
+				method: 'OFFLINE',
+
+				currency: 'SGD',
+				campaign: WEBSITE_UUID,
+				private: {
+					conversationUuid: conversation.uuid
+				}
+			},
+		},
+	});
 }
+
+const upsertInteraction = cachify(async (interaction) => {
+	const interactions = await raiselyRequest({
+		path: `/interactions`,
+		query: {
+			private: 1,
+			user: interaction.userUuid,
+			category: interaction.categoryUuid,
+			limit: 100,
+		},
+	});
+	const existing = interactions.find(i => i.recordUuid === interaction.recordUuid);
+	if (existing) return existing;
+
+	return raiselyRequest({
+		method: 'POST',
+		path: `/interactions`,
+		body: {
+			data: interaction,
+		},
+	});
+}, i => `${i.userUuid} ${i.categoryUuid} ${i.recordUuid}`);
 
 /**
  * @param {object} rsvp.conversation
  * @param {object} rsvp.guest
  */
 const upsertRsvp = cachify(async (rsvp) => {
-	const record = await raiselyRequest({
-		path: `/events/${rsvp.conversation.uuid}/rsvps`,
+	const allRsvps = await raiselyRequest({
+		path: `/event_rsvps`,
 		query: {
 			private: 1,
 			user: rsvp.guest.uuid,
 			type: rsvp.type,
+			campaign: CAMPAIGN_UUID,
 		},
 	});
-	if (record[0]) {
-		console.log(`Exising RSVP for ${rsvp.type} found`)
-		return record[0];
+	// if (allRsvps[0]) {
+	// 	console.log(`Exising RSVP for ${rsvp.type} found`);
+	// 	return allRsvps[0];
+	// }
+
+	const rightRsvp = allRsvps.find(
+		(r) => r.eventUuid === rsvp.conversation.uuid
+	);
+	if (rightRsvp) return rightRsvp;
+
+	let wrongRsvp = allRsvps.find(r => !_.get(r, 'private.migrated'))
+	if (wrongRsvp) {
+		console.log("Found rsvp likely from wrong event, moving");
+
+		await raiselyRequest({
+			path: `/event_rsvps/${wrongRsvp.uuid}/move`,
+			method: "PUT",
+			data: {
+				eventUuid: rsvp.conversation.uuid,
+			},
+		});
+
+		await raiselyRequest({
+			path: `/event_rsvps/${wrongRsvp.uuid}`,
+			method: "PATCH",
+			data: {
+				private: {
+					// Mark it having gone through the fixed migration so
+					// we don't later mess with it if someone attended twice
+					migrated: true,
+				},
+			},
+		});
+
+		return wrongRsvp;
 	}
+
 	console.log(`Creating RSVP for ${rsvp.type || 'guest'}`)
 
 	return raiselyRequest({
@@ -273,9 +500,59 @@ const upsertRsvp = cachify(async (rsvp) => {
 			userUuid: rsvp.guest.uuid,
 			type: rsvp.type || 'guest',
 			attended: true,
+			private: {
+				// Mark it having gone through the fixed migration so
+				// we don't later mess with it if someone attended twice
+				migrated: true,
+			}
 		}
-	})
+	});
 }, (rsvp) => `rsvp-${rsvp.conversation.uuid}-${rsvp.type || 'guest'}-${rsvp.guest.uuid}`);
+
+/**
+ *
+ * @param {*} param0
+ */
+async function upsertSurvey({ interactionBase, row }) {
+	return Promise.all([
+		await upsertInteraction({
+			...interactionBase,
+			categoryUuid: "cc-pre-survey-2020",
+			detail: {
+				private: {
+					societyPriority:
+						row[
+							"How high should society proritise climate change? Before"
+						],
+					talkativeness:
+						row["Likely to have a conversation about CC? Before"],
+					agency: row["Sense of Agency Before"],
+					hope: row["Sense of Hope Before"],
+				},
+			},
+		}),
+		await upsertInteraction({
+			...interactionBase,
+			categoryUuid: "cc-post-survey-2020",
+			detail: {
+				private: {
+					societyPriority:
+						row[
+							"How high should society proritise climate change? After"
+						],
+					talkativeness:
+						row["Likely to have a conversation about CC? After"],
+					recommend: row["Would you recommend CC? Score"],
+					agency: row["Sense of Agency After"],
+					hope: row["Sense of Hope After"],
+					host: toBool(row["[Host]"]),
+					facilitate: toBool(row["[Facilitate]"]),
+					volunteer: toBool(row["[Volunteer]"]),
+				},
+			},
+		}),
+	]);
+}
 
 /**
  * Extract the header row from a GoogleWorksheet
@@ -289,8 +566,12 @@ async function getHeaderRow(sheet) {
 		.forEach((column) => {
 			let header = (sheet.getCell(0, column).value || '').trim();
 			// If it's a duplicate, concat the prior header to get a unique value
-			if (header && headers.includes(header)) {
-				header = _.last(headers) + ' ' + header;
+			if (header && headers.includes(header) || header === 'After') {
+				let lastHeader = _.last(headers);
+				if (lastHeader.endsWith('Before')) lastHeader = lastHeader.split('Before')[0].trim();
+				if (lastHeader.endsWith("After"))
+					lastHeader = lastHeader.split("After")[0].trim();
+				header = lastHeader + ' ' + header;
 			}
 			// If it's still not unique, we're in trouble
 			if (header && headers.includes(header)) {
@@ -333,12 +614,12 @@ async function paginateRows(callback) {
 
 	const header = await getHeaderRow(worksheet);
 
+	console.log(header)
 	const limit = 100;
 	let offset = process.env.OFFSET || 1;
 	let row;
 
-	do {
-		if (offset > worksheet.rowCount) return;
+	while (offset <= worksheet.rowCount) {
 		console.log('Loading new rows from offset:', offset);
 		const upperLimit = Math.min(offset + limit, worksheet.rowCount);
 		await worksheet.loadCells({ startRowIndex: offset, endRowIndex: upperLimit });
@@ -350,7 +631,7 @@ async function paginateRows(callback) {
 			}
 		}
 		offset += limit;
-	} while (true);
+	}
 }
 
 async function syncConversations() {
@@ -395,7 +676,14 @@ async function syncConversations() {
 			facilitator,
 			legacyId: row['Conversation ID'],
 		});
-		const [rsvp] = await Promise.all([
+
+		const interactionBase = {
+			recordUuid: conversation.uuid,
+			recordType: "event",
+			userUuid: guest.uuid
+		};
+
+		const promises = [
 			upsertRsvp({
 				conversation,
 				guest,
@@ -411,19 +699,43 @@ async function syncConversations() {
 				guest: host,
 				type: 'host',
 			}),
-			upsertDonation({
-				conversation,
-				guest,
-				cashDonation: row['Cash Donation']
-			}),
 			upsertSurvey({
+				interactionBase,
 				conversation,
 				guest,
 				row
-			})
-		]);
-		// TODO find or create donation
-		// TODO find or create surveys
+			}),
+		];
+
+		if (row['Cash Donation']) {
+			promises.push(
+				upsertDonation({
+					conversation,
+					guest,
+					facilitator,
+					cashDonation: row["Cash Donation"] * 100,
+				})
+			);
+		}
+
+		if (toBool(row["[Host]"])) {
+			console.log('Adding host lead')
+			promises.push(upsertInteraction({
+				...interactionBase,
+				categoryUuid: "host-interest",
+				detail: {
+					occurredAt: conversation.startAt,
+					private: {
+						facilitatorUuid: facilitator.uuid,
+						status: "lead",
+						source: "conversation",
+						conversationUuid: conversation.uuid
+					},
+				}
+			}));
+		}
+
+		await Promise.all(promises);
 	});
 }
 

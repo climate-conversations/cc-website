@@ -1,11 +1,12 @@
 const _ = require('lodash');
+const pMap = require('p-map');
 
 require('../config');
 
 const MailchimpController = require('../src/controllers/Mailchimp');
 const { raiselyRequest } = require('../src/helpers/raiselyHelpers');
 
-const CONCURRENCY=5;
+const CONCURRENCY = 2;
 
 const controller = new MailchimpController({
 	log: console.log,
@@ -32,16 +33,15 @@ async function paginateRaisely(url, callback) {
 		const records = body.data;
 		console.log('nextUrl will be', next);
 
-		for (let i = 0; i < records.length; i++) {
-			const promise = callback(records[i], i + offset).catch(err => error = err);
-			promises.push(promise);
-			promise.then(() => {
-				_.remove(promises, x => x === promise);
-			});
-
-			if (promises.length > CONCURRENCY) await Promise.race(promises);
-			if (error) throw error;
-		}
+		await pMap(records, async (record, i) => {
+			if (error) return;
+			try {
+				await callback(records[i], i + offset)
+			} catch(e) {
+					console.log(e);
+					error = e;
+			}
+		}, { concurrency: CONCURRENCY });
 		offset += limit;
 
 		if (error) throw error;
@@ -76,9 +76,12 @@ async function syncRaiselyToMailchimp() {
 			type: 'user.updated',
 			data: user,
 		}
-		if (user.email !== 'hills.gemma@gmail.com') return;
 		console.log(`**** Syncing person ${i} ${user.uuid} ${user.email} ****`);
-		return controller.process({ data });
+		await controller.process({ data });
+		await controller.process({ data: {
+			type: 'donation.updated',
+			data: { user },
+		} });
 	});
 }
 
