@@ -33,7 +33,7 @@ function getField(data, key, defaultValue) {
 		value = _.get(data, `${recordName}.private.${fieldName}`);
 		if (value === undefined) value = _.get(data, `${recordName}.public.${fieldName}`);
 	}
-	return value || defaultValue;
+	return value === undefined ? defaultValue : value;
 }
 
 /**
@@ -58,7 +58,7 @@ function raiselyToRow(data, headerMap) {
 
 /**
  *
- * @param {string} options.url Path to send request to (eg /users)
+ * @param {string} options.path Path to send request to (eg /users)
  * @param {string|object} options.query
  * @param {object} options.body
  */
