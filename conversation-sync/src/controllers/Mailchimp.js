@@ -52,6 +52,18 @@ class Mailchimp extends AirblastController {
 	async donorSync(data) {
 		const donation = data.data;
 		const { user } = donation;
+
+		if (
+			!user.email ||
+			user.email.endsWith(".invalid") ||
+			user.email.indexOf("@") === -1
+		) {
+			this.log(
+				`(Person ${user.uuid}) has dummy email address (${user.email}). Skipping`
+			);
+			return;
+		}
+
 		// Fetch other donations to see if it's in excess of VIP_DONOR_THRESHOLD
 		const [donations, subscriptions] = await Promise.all([
 			raiselyRequest({
@@ -64,6 +76,10 @@ class Mailchimp extends AirblastController {
 			}),
 		]);
 		const sum = donations.reduce((total, d) => d.campaignAmount + total, 0);
+		if (sum === 0) {
+			console.log('Donor has given $0 must be a mistake, skipping')
+			return;
+		}
 		// If they haven't donated more that the threshold amount
 		// don't add them to VIP list
 		const isVIP = (sum >= VIP_DONOR_THRESHOLD);
@@ -120,7 +136,6 @@ class Mailchimp extends AirblastController {
 				if (!onList && config.fields) onList = config.fields.find(field => _.get(person, field));
 				if (!onList && config.condition) onList = config.condition(person, personTags);
 			}
-
 			// If they're on the list, sync them
 			return onList ? name : null;
 		})))

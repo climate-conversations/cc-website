@@ -209,7 +209,7 @@ class MailchimpService {
 			return canUpdate;
 		} catch (error) {
 			// Person is not in the list
-			if (error.statusCode == 404) {
+			if (error.statusCode == 404 || error.status === 404) {
 				return false;
 			} else {
 				// Unknown error, throw it
@@ -234,7 +234,7 @@ class MailchimpService {
 			if (!canTag) console.log(`Mailchimp list ${listId}, Person ${person.uuid} person is unsubscribed`);
 		} catch (e) {
 			// Person is not in the list
-			if (e.statusCode == 404) {
+			if (e.statusCode == 404 || e.status === 404) {
 				listEntry = await this.addToList(person, listId, vip, interests);
 			} else {
 				// Unknown error, throw it
