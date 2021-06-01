@@ -26,7 +26,7 @@ RaiselyComponents => {
 			const isOrgAdmin = (roles || []).includes("ORG_ADMIN");
 			if (isAdmin) classList.push("is-admin");
 			if (isOrgAdmin) classList.push("is-org-admin");
-			const tags = _.get(this.props, "global.user.tags", []);
+			const tags = get(this.props, "global.user.tags", []);
 			if (tags.find(t => t.path === "facilitator")) {
 				classList.push("facilitator");
 			}
