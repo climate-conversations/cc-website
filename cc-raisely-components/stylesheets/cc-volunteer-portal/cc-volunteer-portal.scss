@@ -2051,9 +2051,17 @@ ul.contact--form__recipients--whatsapp-list {
   }
 }
 
+.col--12 .team-facil-list__wrapper {
+   width: 50%;
+}
+
+.col--6 .team-facil-list__wrapper {
+   width: 100%;
+}
+
+
 .team-facil-list__wrapper {
     display: inline-block;
-    width: 50%;
     vertical-align: top;
   	padding-right: 2rem;
 
@@ -2065,7 +2073,8 @@ ul.contact--form__recipients--whatsapp-list {
     overflow-y: scroll;
   }
   
-    .team-facil-list__photo {
+    .team-facil-list__photo,
+  	.team-facil-list__count {
       max-width: 50%;
       max-height: 50%;
       flex: 1 1;
@@ -2078,7 +2087,7 @@ ul.contact--form__recipients--whatsapp-list {
       font-weight: bold;
     }
     .team-facil-list__buttons {
-      flex: 2 2;
+      flex: 4 4;
     }
     .team-facil-list__leader {
       font-weight: normal;
@@ -2212,4 +2221,251 @@ section.message-template-list__section {
 .host--form__buttons button, .host--form__buttons .modal__button {
     display: inline-block;
   margin-bottom: 0.5rem;
+}
+
+.conversation-review__checkbox {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.conversation-review__data {
+  @include respond-to('min-tablet') {
+    max-width: 50%;
+  }
+  .data-row.space {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  .data-row.line {
+    border-bottom: 1px solid gray;
+    border-top: 1px solid gray;    
+  }
+  .data-row {
+    display: flex;
+    flex-direction: row;
+    .data-field-label,
+    .data-field-value {
+     	flex: 1 1; 
+    }
+    .conversation-review__check {
+      text-decoration: underline;
+      text-decoration-color: $accentOrange;
+    }
+  }
+}
+
+.view-conversation {
+  .reconciled_stamp__wrapper,
+  .reviewed_stamp__wrapper {
+    display: inline-block;
+  }
+}
+
+.help-box,
+.reconciled_stamp__wrapper,
+.reviewed_stamp__wrapper {
+  background: $primaryLightest;
+  border-radius: $borderRadius;
+  padding: 1rem;
+  color: black;
+}
+
+.reconciled_stamp__wrapper,
+.reviewed_stamp__wrapper {
+  p {
+    font-size: 0.9rem;
+  }
+  max-width: 40%;
+  width: 40%;
+  max-height: 5rem;
+  padding: 0.8rem;
+  margin: 0.8rem;
+}
+
+.view-conversation__legend {
+   @include respond-to('min-tablet') {
+   .legend-block {
+      display: inline-block;
+      width: 45%;
+      vertical-align: top;
+    }
+  }
+  .legend-block {
+    .button--whatsapp {
+      display: inline-block !important;
+    }
+  }
+}
+
+.home__welcome {
+  text-align: center;
+  margin-bottom: 1rem;
+  a {
+    margin-top: 1rem;
+  }
+}
+
+.volunteer-stats {
+  background: $primaryLightest;
+  padding: 2rem;
+  border-radius: $borderRadius;
+  &__label,
+  &__value {
+    display: inline-block;
+  }
+  
+  &__value {
+    margin-left: 1rem;
+    color: $accentMagenta;
+    font-size: 1.5rem;
+  }
+}
+
+.host--interactions {
+  &__list ol {
+    li { 
+      list-style: none;
+      .interaction--tile__date {
+        display: inline-block;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+      }
+      .interaction--subject {
+        font-weight: bold;
+        display: inline-block;
+      }
+    }
+  }
+}
+
+.guest-data__save-progress {
+  @include respond-to('min-tablet') {
+    width: 60%;
+  }
+  .description {
+    text-align: center;
+  }
+  .progress-bar__progress {
+    background: lightgray;
+  }
+  .save-notice {
+    background: pink;
+    padding: 1rem;
+    border-radius: $borderRadius;
+    margin-top: 1rem;
+  }
+  .save-status {
+    margin-top: 1rem;
+    .save-progress__icon--ok {
+      color: $accentGreen;
+    }
+    list-style: none;
+    @include respond-to('min-tablet') {
+     li {
+        width: 50%;
+        display: inline-block;
+      }
+    }
+  }
+  .save-errors {
+    background: $primaryLightest;
+    padding: 1rem;
+    border-radius: $borderRadius;
+    margin-top: 1rem;
+    
+    .item-name { font-weight: bold }
+    .item-stack { 
+      font-size: 0.8rem;
+    }
+  }
+}
+
+.dashboard-welcome {
+     @include respond-to('min-tablet') {
+ width: 50%;
+       margin-left: 40%;
+  }
+}
+
+.button
+.raisely--button__logo {
+  margin-right: 0.5rem;
+}
+
+.page--is-client {
+  .show-team,
+  .show-admin,
+  .show-facilitator {
+    display: none;
+  }
+}
+
+.page--is-editor {
+    .show-admin {
+      &:before {
+        text-transform: capitalize;
+        position: relative;
+        z-index: 1;
+        color: gray;
+        font-weight: bold;
+        content: '<show for admin>';
+      }
+    }
+    .show-team {
+      &:before {
+        text-transform: capitalize;
+        position: relative;
+        z-index: 1;
+        color: gray;
+        font-weight: bold;
+        content: '<show for team leaders>';
+    }
+  }
+    .show-facilitator {
+      &:before {
+        text-transform: capitalize;
+        position: relative;
+        z-index: 1;
+        color: gray;
+        font-weight: bold;
+        content: '<show for facils>';
+      }
+    }
+}
+
+.is-admin {
+  .show-admin {
+    display: block;
+  }
+}
+.is-team-leader {
+  .show-team-leader {
+    display: block;
+  }
+}
+.is-facilitator {
+  .show-facilitator {
+    display: block;
+  }
+}
+
+.dashboard-help-column {
+  margin-bottom: -300px !important;
+}
+
+.legend {
+  .raisely--button,
+  .button {
+    box-shadow: none;
+  }
+}
+
+.reconcile-photo { max-width: 80% }
+
+.team-facil-list__buttons {
+  .reset-password-button {
+    cursor: pointer;
+    vertical-align: top;
+    margin-right: 1.5rem;
+  }
 }

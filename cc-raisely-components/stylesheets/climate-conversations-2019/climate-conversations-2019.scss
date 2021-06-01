@@ -1766,3 +1766,48 @@ ul.list__wrapper, .list__wrapper ul {
     max-width: 100%;
   }
 }
+
+.hint {
+  border-radius: $borderRadius;
+  padding: 1rem;
+  background: rgb(150, 202, 252);
+}
+
+.raisely--button {
+  margin-top: 1rem;
+  &__logo {
+    vertical-align: middle;
+  }
+}
+
+.editor-only {
+  color: gray;
+}
+
+.page--is-client {
+  .editor-only { 
+    display: none
+  }
+}
+
+body:not(.is-org-admin) {
+  .org-admin-only {
+    display: none;
+  }
+}
+
+body:not(.is-admin) {
+  .admin-only {
+    display: none;
+  }
+}
+
+body:not(.is-facilitator) {
+  .facilitator-only {
+    display: none;
+  }
+}
+
+.team-leader-only {
+ 
+}
