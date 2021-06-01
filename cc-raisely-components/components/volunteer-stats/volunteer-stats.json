@@ -1,11 +1,6 @@
 {
     "fields": {
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 1
-		},
-		"show": {
+        "show": {
             "id": "show",
             "type": "select",
             "label": "Show stats for",
@@ -18,9 +13,14 @@
                 {
                     "label": "Facilitator",
                     "value": "facilitator"
-				}
-			]
-		}
+                }
+            ]
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 25
+        }
     },
     "uuid": "cc210f90-daa1-11ea-8fcf-17f7e5baec8c"
 }

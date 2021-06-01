@@ -1,0 +1,23 @@
+{
+	"fields": {
+		"version": {
+			"type": "number",
+			"label": "Current Version of Component",
+			"value": 1
+		},
+		"direction": {
+			"id": "direction",
+			"type": "text",
+			"label": "Direction",
+			"help": "vertical, horizontal",
+			"value": "horizontal"
+		},
+		"limit": {
+			"id": "limit",
+			"type": "number",
+			"label": "Donations to load",
+			"value": 10
+		}
+	},
+	"uuid": "8847eec0-3383-11eb-a943-73a3895684fb"
+}
