@@ -9,9 +9,9 @@
 	const Checkbox = RaiselyComponents.import('checkbox');
 	let UserSaveHelper;
 
-	const DEFAULT_MESSAGE = `Hi {{user.preferredName}},
+	const DEFAULT_MESSAGE = `Hi [[user.preferredName]],
 With gratitude,
-{{sender.preferredName}}`;
+[[sender.preferredName]]`;
 
 
 	return class EventViewRsvps extends React.Component {
@@ -182,6 +182,7 @@ With gratitude,
 								subject={subject}
 								body={DEFAULT_MESSAGE}
 								messageData={messageData}
+								global={this.props.global}
 								launchButtonLabel="Message all Guests"
 							/>
 							<div className="event-view-rsvps__stats">
