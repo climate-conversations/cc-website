@@ -4,6 +4,7 @@
  */
 (RaiselyComponents, React) => class AdminLogin extends React.Component {
 	render() {
-		return <RaiselyComponents.ClientComponents.LoginForm requestAdminToken {...this.props} />
+		const LoginForm = window.CustomComponentRaiselyLoginForm.html;
+		return <LoginForm requestAdminToken {...this.props} />
 	}
 }
