@@ -1,118 +1,118 @@
 {
-	"fields": {
-		"version": {
-			"type": "number",
-			"label": "Current Version of Component",
-			"value": 1
-		},
-		"matchedAmount": {
-			"id": "matchedAmount",
-			"type": "number",
-			"label": "Matched Giving Amount",
-			"value": "50"
-		},
-		"size": {
-			"id": "size",
-			"type": "select",
-			"label": "Size",
-			"value": "medium",
-			"options": [
-				{
-					"label": "small",
-					"value": "small"
-				},
-				{
-					"label": "medium",
-					"value": "medium"
-				},
-				{
-					"label": "large",
-					"value": "large"
-				}
-			],
-			"singular": null
-		},
-		"style": {
-			"id": "style",
-			"type": "select",
-			"label": "Style",
-			"value": "rounded",
-			"options": [
-				{
-					"label": "standard",
-					"value": "standard"
-				},
-				{
-					"label": "hollow",
-					"value": "hollow"
-				},
-				{
-					"label": "rounded",
-					"value": "rounded"
-				}
-			],
-			"singular": null
-		},
-		"statPosition": {
-			"id": "statPosition",
-			"type": "select",
-			"label": "Show values",
-			"value": "top",
-			"options": [
-				{
-					"label": "on top",
-					"value": "top"
-				},
-				{
-					"label": "below",
-					"value": "bottom"
-				},
-				{
-					"label": "not at all",
-					"value": "hidden"
-				}
-			],
-			"singular": null
-		},
-		"showDonated": {
-			"id": "showDonated",
-			"type": "boolean",
-			"label": "Show total donated online",
-			"value": true
-		},
-		"showMatched": {
-			"id": "showMatched",
-			"type": "boolean",
-			"label": "Show matching total",
-			"value": true
-		},
-		"showRaised": {
-			"id": "showRaised",
-			"type": "boolean",
-			"label": "Show total raised",
-			"help": "Total of donations, matching and committed recurring",
-			"value": true
-		},
-		"showCommitted": {
-			"id": "showCommitted",
-			"type": "boolean",
-			"label": "Show committed",
-			"help": "Total committed from recurring gifts (not including already donated)",
-			"value": true
-		},
-		"commitmentMonths": {
-			"id": "commitmentMonths",
-			"type": "number",
-			"label": "Months of commitment",
-			"help": "Number of months to multiply subscriptions by",
-			"value": 12
-		},
-		"showGoal": {
-			"id": "showGoal",
-			"type": "boolean",
-			"label": "Show Goal",
-			"value": true
-		}
-	},
-	"uuid": "e3215840-3347-11eb-ae99-6dd7b368c83f"
+    "fields": {
+        "size": {
+            "id": "size",
+            "type": "select",
+            "label": "Size",
+            "value": "medium",
+            "options": [
+                {
+                    "label": "small",
+                    "value": "small"
+                },
+                {
+                    "label": "medium",
+                    "value": "medium"
+                },
+                {
+                    "label": "large",
+                    "value": "large"
+                }
+            ],
+            "singular": null
+        },
+        "style": {
+            "id": "style",
+            "type": "select",
+            "label": "Style",
+            "value": "rounded",
+            "options": [
+                {
+                    "label": "standard",
+                    "value": "standard"
+                },
+                {
+                    "label": "hollow",
+                    "value": "hollow"
+                },
+                {
+                    "label": "rounded",
+                    "value": "rounded"
+                }
+            ],
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 52
+        },
+        "showGoal": {
+            "id": "showGoal",
+            "type": "boolean",
+            "label": "Show Goal",
+            "value": true
+        },
+        "showRaised": {
+            "id": "showRaised",
+            "help": "Total of donations, matching and committed recurring",
+            "type": "boolean",
+            "label": "Show total raised",
+            "value": true
+        },
+        "showDonated": {
+            "id": "showDonated",
+            "type": "boolean",
+            "label": "Show total donated online",
+            "value": true
+        },
+        "showMatched": {
+            "id": "showMatched",
+            "type": "boolean",
+            "label": "Show matching total",
+            "value": true
+        },
+        "statPosition": {
+            "id": "statPosition",
+            "type": "select",
+            "label": "Show values",
+            "value": "top",
+            "options": [
+                {
+                    "label": "on top",
+                    "value": "top"
+                },
+                {
+                    "label": "below",
+                    "value": "bottom"
+                },
+                {
+                    "label": "not at all",
+                    "value": "hidden"
+                }
+            ],
+            "singular": null
+        },
+        "matchedAmount": {
+            "id": "matchedAmount",
+            "type": "number",
+            "label": "Matched Giving Amount",
+            "value": "50"
+        },
+        "showCommitted": {
+            "id": "showCommitted",
+            "help": "Total committed from recurring gifts (not including already donated)",
+            "type": "boolean",
+            "label": "Show committed",
+            "value": true
+        },
+        "commitmentMonths": {
+            "id": "commitmentMonths",
+            "help": "Number of months to multiply subscriptions by",
+            "type": "number",
+            "label": "Months of commitment",
+            "value": 12
+        }
+    },
+    "uuid": "e3215840-3347-11eb-ae99-6dd7b368c83f"
 }

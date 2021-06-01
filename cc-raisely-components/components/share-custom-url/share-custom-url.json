@@ -1,60 +1,60 @@
 {
-	"fields": {
-		"version": {
-			"type": "number",
-			"label": "Current Version of Component",
-			"value": 1
-		},
-		"size": {
-			"id": "size",
-			"type": "text",
-			"label": "size",
-			"help": "small, medium or large",
-			"value": "medium"
-		},
-		"theme": {
-			"id": "theme",
-			"type": "text",
-			"label": "theme",
-			"help": "filled, outlined, outlined-inverted, filled-inverted",
-			"value": "standard"
-		},
-		"networks": {
-			"id": "networks",
-			"label": "Social Media Networks",
-			"type": "text",
-			"value": "whatsapp"
-		},
-		"url": {
-			"id": "url",
-			"type": "text",
-			"label": "URL to share",
-			"value": ""
-		},
-		"text": {
-			"id": "text",
-			"type": "text",
-			"label": "Share text",
-			"value": ""
-		},
-		"body": {
-			"id": "body",
-			"type": "textarea",
-			"label": "Email body",
-			"value": ""
-		},
-		"subject": {
-			"id": "subject",
-			"type": "text",
-			"label": "Email subject",
-			"value": ""
-		},
-		"hashtags": {
-			"id": "hashtags",
-			"type": "text",
-			"label": "Twitter hashtags",
-			"value": ""
-		}
-	},
-	"uuid": "08943350-33a6-11eb-9ec7-d571a8b6b185"
+    "fields": {
+        "url": {
+            "id": "url",
+            "type": "text",
+            "label": "URL to share",
+            "value": ""
+        },
+        "body": {
+            "id": "body",
+            "type": "textarea",
+            "label": "Email body",
+            "value": ""
+        },
+        "size": {
+            "id": "size",
+            "help": "small, medium or large",
+            "type": "text",
+            "label": "size",
+            "value": "medium"
+        },
+        "text": {
+            "id": "text",
+            "type": "text",
+            "label": "Share text",
+            "value": ""
+        },
+        "theme": {
+            "id": "theme",
+            "help": "filled, outlined, outlined-inverted, filled-inverted",
+            "type": "text",
+            "label": "theme",
+            "value": "standard"
+        },
+        "subject": {
+            "id": "subject",
+            "type": "text",
+            "label": "Email subject",
+            "value": ""
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 15
+        },
+        "hashtags": {
+            "id": "hashtags",
+            "type": "text",
+            "label": "Twitter hashtags",
+            "value": ""
+        },
+        "networks": {
+            "id": "networks",
+            "type": "text",
+            "label": "Social Media Networks",
+            "value": "whatsapp"
+        }
+    },
+    "uuid": "08943350-33a6-11eb-9ec7-d571a8b6b185"
 }
