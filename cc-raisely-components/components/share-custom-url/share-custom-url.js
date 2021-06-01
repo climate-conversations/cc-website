@@ -12,23 +12,16 @@
 
 	return function CustomShare(props) {
 		const values = props.getValues();
-		const { networks, size, theme, url, hashtags, text, subject, body } = values;
+		const { networks, size, theme, url } = values;
 		const networksArray = (networks || "")
 			.split(",")
 			.filter(n => validNetworks.includes(n));
-		const extra = {
-			body,
-			subject,
-			text,
-			hashtags
-		};
 		return (
 			<Share
 				networks={networksArray}
 				theme={theme}
 				size={size}
 				url={url}
-				extra={}
 			/>
 		);
 	};
