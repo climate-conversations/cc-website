@@ -1811,3 +1811,133 @@ body:not(.is-facilitator) {
 .team-leader-only {
  
 }
+
+.yellow-box {
+  background-color: $primaryColor;
+  color: black;
+  border-radius: $borderRadius;
+  .share {
+    margin-bottom: -1rem;
+  }
+}
+
+.page--team-profile {
+  .donation-form {
+    border: none;
+  }
+}
+
+.donation-stream--direction-horizontal {
+  overflow: visible;
+}
+
+.progress-bar__committed {
+    background: $primaryColor;
+}
+
+@include respond-to('mobile') {
+.progress-bar__committed {
+    background: $accentBlue;
+}
+}
+
+.progress-bar__matched {
+  background: $accentGreen;
+}
+
+.progress-bar__donated {
+  background: $accentOrange;
+}
+
+.progress-bar__total-goal {
+	text-align: right;
+  position: absolute;
+  right: 0.5em;
+  width: 50%;
+}
+
+.progress-bar__total-matched {
+	text-align: right;
+  position: absolute;
+  right:0;
+  width: 50%;
+}
+
+.progress-bar__total-raise {
+	text-align: left;
+  position: absolute;
+  left: 0;
+  position: absolute;
+  width: 50%;
+}
+
+
+.align-center {
+  text-align: center;
+}
+
+.progress-bar__stats-outter {
+  font-size: 1.5em;
+}
+
+@include respond-to('mobile') {
+  .progress-bar__stats-outter {
+    font-size: 1em;
+  }
+  
+}
+
+.profile-controls {
+    text-align: center;
+  .button--primary  {
+      background: $accentViolet;
+    	color: white;
+  }
+  .profile-controls__join-team {
+    display: none;
+  }
+}
+
+.donation-stream--direction-horizontal .donation-stream__track .donation-stream__item {
+  min-width: 10ch;
+}
+
+
+.full-width {
+  .row__container {
+  max-width: 100%;
+    width: 100%;
+  }
+}
+
+
+.split__screen {
+  @include respond-to('min-tablet') {
+    width: 50%;
+    display: inline-block;
+    vertical-align: top;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .custom-form-wrapper {
+    @include respond-to('min-tablet') {
+      .custom-form__step-header,
+      form {
+        width: 100%;
+      }
+    }
+  }
+}
+
+.modal__content {
+  max-width: 90%;
+}
+
+ul.contact--form__recipients--whatsapp-list {
+  list-style: none;
+  margin-bottom: 1rem;
+  
+  li {
+    margin-bottom: 0.3rem;
+  }
+}
