@@ -1067,7 +1067,7 @@
 							Please contact your team leader or program
 							co-ordinator to resolve this
 						</p>
-						<p>The error is: {error}</p>
+						<p>The error is: {webhookError.stack || webhookError.message}</p>
 					</div>
 				);
 			}

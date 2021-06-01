@@ -56,9 +56,12 @@
 				get(host, 'user.email') ||
 				'...';
 
-			const facilName = get(host, 'facilitator.preferredName') ||
-				get(host, 'faciltiator.fullName') ||
+			const facilName =
+				get(host, "facilitator.fullName") ||
+				get(host, "facilitator.preferredName") ||
 				"(unknown facil)";
+
+			const facilitatorUuid = get(host, 'detail.private.facilitatorUuid');
 
 			return (
 				<li className="" key={host.uuid}>
@@ -73,7 +76,7 @@
 						{mode === 'full' ? (
 							<React.Fragment>
 								<div className="first-contact list__item--small">
-									{host.facilitatorUUid ? facilName : '(unassigned)'}
+									{facilitatorUuid ? facilName : '(unassigned)'}
 								</div>
 								<div className="first-contact list__item--small">
 									{formatDate(host, 'detail.private.firstContactedAt')}
@@ -124,7 +127,7 @@
 			this.setState({ reloadKey });
 
 			const hostStatus = ['lead', 'interested', 'booked', 'hosted', 'not interested'];
-			const { mode } = this.props.getValues;
+			const mode = this.getMode();
 			const filterStatus = ['lead', 'interested', 'booked'];
 			const isTeam = Facilitator.isTeamMode(this.props) || (mode === 'full');
 
@@ -160,10 +163,13 @@
 					host.facilitator = this.facilitators[facilUuid];
 					if (!host.facilitator && facilUuid) {
 						host.facilitator = true;
-						const makePromise = () => UserHelper.proxy(`/events/${facilUuid}`)
+						const makePromise = () => UserHelper.proxy(`/users/${facilUuid}?private=1`)
 							.then(facilitator => this.facilitators[facilUuid] = facilitator);
 						cachedPromise('faciltiator', facilUuid, makePromise)
-							.then(host.facilitator = this.facilitators[facilUuid]);
+							.then(() => {
+								host.facilitator = this.facilitators[facilUuid];
+								this.setState({ hosts });
+							});
 					}
 				}
 			});
@@ -218,22 +224,43 @@
 		}
 
 		async loadAll() {
-			const [intention] = await Promise.all([
+			const query = {
+				private: 1,
+				category: 'host-interest',
+				join: 'user',
+			};
+			if (!UserHelper) UserHelper = UserHelperRef().html;
+			const segmentRules = {
+				"match": "all",
+				"groups": [
+					{
+						"conditions": [
+							{
+								"type": "field",
+								"field": "private.host",
+								"title": "I would like to host a conversation",
+								"comparison": "present",
+								"logicalOperator": "and not"
+							},
+							{
+								"type": "interaction",
+								"category": "c13c66e9-23f8-446d-b78e-1cfdfefdbb16"
+							}
+						]
+					}
+				]
+			};
+			const [intention, checkboxed] = await Promise.all([
 				getData(api.interactions.getAll({
-					query: {
-						private: 1,
-						category: 'host-interest',
-						join: 'user',
-					},
+					query,
 				})),
-				// FIXME need to use an advanced segment to fetch
-				// hosts without host-interest interactions
-				// getData(api.users.getAll({
-				// 	query: {
-				// 		private: 1,
-				// 		host: true,
-				// 	},
-				// })),
+
+				// UserHelper.doFetch('https://api.raisely.com/v3/segments/users', {
+				// 	method: 'POST',
+				// 	body: {
+				// 		data: { rules: segmentRules },
+				// 	}
+				// }),
 			]);
 			return intention;
 		}
@@ -254,7 +281,6 @@
 					if (!get(this.props, 'global.current.profile.uuid')) return;
 
 					const userUuid = await this.getUserUuids();
-					console.log('get hosts for facils: ', userUuid)
 					this.hosts = await getData(api.interactions.getAll({
 						query: {
 							private: 1,
@@ -322,7 +348,7 @@
 
 		render() {
 			const now = dayjs();
-			const { filter, loading, error } = this.state;
+			const { hosts, filter, loading, error } = this.state;
 			const mode = this.getMode();
 
 			if (loading) return <Spinner />;
@@ -331,6 +357,8 @@
 			const isTeam = Facilitator.isTeamMode(this.props);
 
 			const hideText = (mode === 'full') ? 'Hide Assigned' : 'Hide Complete';
+
+			const adjective = mode === 'full' ? 'unassigned' : 'incomplete';
 
 			return (
 				<div className="host-list__wrapper list__wrapper">
@@ -343,10 +371,10 @@
 									{filter ? 'Show All' : hideText }
 								</Button>
 							) : ''}
-							{this.hosts.length ? (
+							{hosts.length ? (
 								<ul className="host-list">
 									{mode === 'full' ? this.listHeader() :''}
-									{this.hosts.map(host => (
+									{hosts.map(host => (
 										<Host
 											key={host.uuid}
 											{...this.props}
@@ -357,7 +385,7 @@
 									))}
 								</ul>
 							) : (
-								<p>You have no {this.hosts.length ? 'unbooked' : ''} hosts</p>
+								<p>There are no {this.hosts.length ? adjective : ''} hosts</p>
 							)}
 						</React.Fragment>
 					)}
