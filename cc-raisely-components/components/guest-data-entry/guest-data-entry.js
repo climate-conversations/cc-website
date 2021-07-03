@@ -546,13 +546,13 @@
 							data,
 							`interaction.${
 								surveyCategories.preSurvey
-							}.detail`
+							}.detail`, {}
 						),
 						postSurvey: get(
 							data,
 							`interaction.${
 								surveyCategories.postSurvey
-							}.detail`
+							}.detail`, {}
 						),
 						conversation: this.state.event,
 						rsvp
