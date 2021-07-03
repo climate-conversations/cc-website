@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const { authorize } = require('./proxy/permissions');
 const raiselyRequest = require('./raiselyRequest');
-const assignRecord = require('./assignRecord');
+const { assignRecord } = require('./assignRecord');
 const request = require("request-promise-native");
 const logger = require('./config/logging');
 
