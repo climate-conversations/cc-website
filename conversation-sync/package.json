@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "node dev",
-    "test": "mocha test/**/*.test.js",
+    "test": "mocha --timeout 10000 test/**/*.test.js",
 	"deploy": "grunt airblast",
 	"deploy:scheduler": "",
 	"deploy:backendReport": "gcloud functions deploy backendReportProcess --max-instances=1 --trigger-resource BackendReport --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-event google.pubsub.topic.publish && gcloud functions deploy backendReport --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http && gcloud functions deploy backendReportRetry --memory 256MB --runtime nodejs10 --project climate-conversations-sync --region asia-northeast1 --trigger-http",
