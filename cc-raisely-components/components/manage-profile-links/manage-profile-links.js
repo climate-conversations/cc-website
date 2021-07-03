@@ -22,7 +22,7 @@
 		}
 
 		async load() {
-			let classList = [];
+			let classList = ['components-loaded'];
 			if (get(this.props, 'global.campaign.mock')) {
 				this.setState({
 					profile: { path: '/' },
