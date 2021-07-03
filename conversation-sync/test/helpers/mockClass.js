@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 
 function logCall(document, name, ...args) {
-	console.log('Mock Called: ', name, ...args)
+	if (process.env.DEBUG_MOCKS) console.log('Mock Called: ', name, ...args)
 	document.calls[name] = args;
 }
 
