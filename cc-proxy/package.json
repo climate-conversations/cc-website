@@ -1,0 +1,62 @@
+{
+	"name": "cc-proxy",
+	"version": "1.0.0",
+	"description": "Proxy endpoints for Volunteer Portal",
+	"main": "src/index.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/climate-conversations/cc-proxy.git"
+	},
+	"engines": {
+		"node": ">=10.0.0"
+	},
+	"scripts": {
+		"deploy:assignRecord": "gcloud functions deploy assignRecord --region=asia-northeast1 --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10 --update-env-vars=DATASTORE_PROJECT_ID=climate-conversations-sg-2019",
+		"deploy:upsert": "gcloud functions deploy upsertUser --region=asia-northeast1 --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10 --update-env-vars=DATASTORE_PROJECT_ID=climate-conversations-sg-2019",
+		"deploy:proxy": "gcloud functions deploy proxy --region=asia-northeast1 --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10 --update-env-vars=DATASTORE_PROJECT_ID=climate-conversations-sg-2019",
+		"deploy:setup": "gcloud functions deploy setupVolunteer --region=asia-northeast1 --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10 --update-env-vars=DATASTORE_PROJECT_ID=climate-conversations-sg-2019",
+		"deploy:email": "gcloud functions deploy resetEmail --region=asia-northeast1 --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10 --update-env-vars=DATASTORE_PROJECT_ID=climate-conversations-sg-2019",
+		"deploy:hostReport": "gcloud functions deploy hostReport --region=asia-northeast1 --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10 --update-env-vars=DATASTORE_PROJECT_ID=climate-conversations-sg-2019",
+		"deploy:facilReport": "gcloud functions deploy facilReport --region=asia-northeast1 --project=climate-conversations-sg-2019 --trigger-http --runtime=nodejs10 --update-env-vars=DATASTORE_PROJECT_ID=climate-conversations-sg-2019",
+		"deploy:all": "npm run deploy:proxy && npm run deploy:upsert && npm run deploy:setup && npm run deploy:assignRecord && npm run deploy:hostReport && npm run npm run deploy:facilReport",
+		"deploy": "npm run deploy:all",
+		"g:r:e": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
+		"generate:required:env": "datastore-env generate:required -i .env -o src/config/requiredEnv.js",
+		"test": "mocha spec/**/*.js",
+		"watch": "npm run test -- -w"
+	},
+	"author": "Raisely <engineering@raisely.com> (https://github.com/raisely)",
+	"license": "NoHarm",
+	"devDependencies": {
+		"babel-cli": "^6.26.0",
+		"babel-jest": "^22.4.4",
+		"babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
+		"babel-preset-env": "^1.6.1",
+		"babel-preset-react": "^6.24.1",
+		"chai": "^4.2.0",
+		"chai-subset": "^1.6.0",
+		"eslint": "^4.19.1",
+		"eslint-config-airbnb": "^16.1.0",
+		"eslint-loader": "^2.0.0",
+		"eslint-plugin-import": "^2.11.0",
+		"eslint-plugin-jsx-a11y": "^6.0.3",
+		"eslint-plugin-prettier": "^3.0.1",
+		"eslint-plugin-react": "^7.7.0",
+		"mocha": "^6.2.0",
+		"nock": "^10.0.6",
+		"prettier": "^1.11.1"
+	},
+	"dependencies": {
+		"@google-cloud/logging-winston": "^2.1.0",
+		"babel-eslint": "^10.0.2",
+		"datastore-env": "^1.2.5",
+		"deasync": "^0.1.15",
+		"lodash": "^4.17.15",
+		"qs": "^6.8.0",
+		"request": "^2.88.0",
+		"request-promise-cache": "^2.0.1",
+		"request-promise-native": "^1.0.7",
+		"short-uuid": "^3.1.1",
+		"winston": "^3.2.1"
+	}
+}
