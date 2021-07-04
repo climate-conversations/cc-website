@@ -1,0 +1,86 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"name": "Tests (Sync)",
+			"program": "${workspaceFolder}/conversation-sync/node_modules/mocha/bin/_mocha",
+			"request": "launch",
+			"internalConsoleOptions": "openOnSessionStart",
+			"cwd": "${workspaceFolder}/conversation-sync",
+			"args": [
+				"-w",
+				"-u",
+				"bdd",
+				"--timeout",
+				"999999",
+				"--colors",
+				"${file}"
+			],
+			"skipFiles": ["<node_internals>/**"],
+			"env": {},
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v10.17.0/bin/node"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Tests (cc-proxy)",
+			"program": "${workspaceFolder}/cc-proxy/node_modules/mocha/bin/_mocha",
+			"args": [
+				"-w",
+				"-u",
+				"bdd",
+				"--timeout",
+				"999999",
+				"--colors",
+				"${workspaceFolder}/cc-proxy/spec/**/*.spec.js"
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"skipFiles": ["<node_internals>/**"],
+			"env": {}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Test Current File (cc-proxy)",
+			"program": "${workspaceFolder}/cc-proxy/node_modules/mocha/bin/_mocha",
+			"args": [
+				"-w",
+				"-u",
+				"bdd",
+				"--timeout",
+				"999999",
+				"--colors",
+				"${file}"
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"skipFiles": ["<node_internals>/**"],
+			"outputCapture": "std",
+			"env": {},
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v10.17.0/bin/node"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Test Current File (Components)",
+			"program": "${workspaceFolder}/cc-raisely-components/node_modules/mocha/bin/_mocha",
+			"args": [
+				"-w",
+				"-u",
+				"bdd",
+				"--timeout",
+				"999999",
+				"--colors",
+				"${file}"
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"skipFiles": ["<node_internals>/**"],
+			"outputCapture": "std",
+			"env": {},
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v10.17.0/bin/node"
+		}
+	]
+}
