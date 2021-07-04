@@ -1,0 +1,3 @@
+cron:
+    - url: /retry
+      schedule: every 1 hour from 08:00 to 01:00

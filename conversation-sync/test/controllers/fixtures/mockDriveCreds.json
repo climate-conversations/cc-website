@@ -1,0 +1,12 @@
+{
+	"type": "service_account",
+	"project_id": "test-test",
+	"private_key_id": "017c68c16d66d20edad29cd9e8a1cb67c61e0f6f",
+	"private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQaBADANBgkqhhiG9wDBAQEDAASCBKcwggSjAgEaAoIBAQCG4C5Xu6+UuoHt\nk7wuWyV4Rqy+4WYCg3iD8OKmDKqID25ke425PixzGAcFm+5tRdex9Ql534xhmutS\nIvD2XBZE6AJd6Wm22TAdXPpCCNjNnxBo7Alx7HVifNs0xGVDCiATenjIsMw5Fjrw\nGiGr4m0RAJeG+jnODJO8C7NkYTQF2vmE10UNjwGjv7zcoXjTrN3b5igGVQ63QO+X\nGvhR0zeacYl1kXzM53ZHKJmMejp+17Jx0WR24hDFsfSI/K7SpzcliTDSy8SNzE2Y\nB52QVG4sc0DjfCzqvot0y5n2znaceiijuuHdtkjAxX3cXkeTMVl6NhSYrx2gDhqz\nc2yWNqO5AgMBAAECggEAE43d+idCWfg+TRDtp/Tb9lecxOHN1dB0wQBEA9nzQV2n\nXhcRoYkzjY4uum/0fdAx6OGDObGg2yfINTTOpZENQ3k1mqL0Cifr013/BGLe99S3\nXtbVubgT/q7mYvyUR8dohhpr94C2YxJnghbvyck+kcf5r/6IMejd5FX38LYtAioa\nwEd8DppFjTkJ+OY9YH28Ax30yV+cFxR1YdGl95K4I8v3RR0yGMIN3ooY9BrF/zSh\nPaQPpiuO9HVXLnrD9o38xpiSK8vsjFbbxuTpj6oMbdR+Ozwq6f0/mv3CvSzAwgV3\nbtXhu8g6IxZzwTeL843hOzcqAF9g6/BDqDJNq+GNxwKBgQC665YctWSMgjV69HDj\njPJcZWFxNs6fQshwLlN73XPiqnAqbWBYl2Fd1OzVRDULZn0++p1QkBs5YFpNRmFo\n/SHHCvzowzGxn0m1aog6blAUJpTrxdJFQZHLYz+IUQ2lI4EGlCCVW3D1N+QBBDdK\nArCYI6ZHCtxHkeyWIAdUP6jnKwKBgQC4uLDXWd4tbAx+xe0HftIzvG/IKqZIegUI\ntDSm5cHpMQsOM1Qs315/yLVSHm9Y4mxbLr7JW2vdVhyQNxb70A2ZePzbKRLx5+J3\n6BLVqn6QJ6hBiRoh6FoesyRfRbb1eYGIpvXuN48BIlisvqEJyz5VL5dhr65LGdwR\nxbZvR0+uqwKBgGbe6Qp7ug6qSoyUotxY4bmAAhSwuR5lPrKejEuLIRAKBRkUgQXA\nqlFdscndc+QGT7+tZY7FAHafVJNavJlvVnuYzH+9jUfYBlTVgIvH0kKEyUjI4mRD\nJd3tjTWUhhHwbD4Wn6gTXyNV0yHMFDGjMVVJqWVH0NuCr9YfYmk3b9lpAoGBAIPA\nd6GiH64WGvNxCJcIBbWQ+cmzYdbf8Sc8ITHJPn2s1U3Tnn5C84wBBBMGUjT7in2e\n4cWMx2qfONBD+siwpIKKoQ9QRIr18bnEdWqgqJT5NDFKMLFuoJi0/YRWnSCJAbMO\nIus+BWmxrb3IWeQ6asMnprmuLIq0bxreAjlsi5DxAoGALhcmXWUc9Vo3hOjNIyiA\nsylcj16ehWXAC5I3JUSA5iVEzUyewa+2aTtQ5o2jsV6ogEZ5B/IxBrtwqd5uLKxP\nHrsPMM0o6/VCyoJhhxPjGqOVEqdzU/Aq7xdKALEJlcfORdQQdtF0TFI9irrIqbwH\nmiDqXAGvpV6fNQxx+Uc1mZ0=\n-----END PRIVATE KEY-----\n",
+	"client_email": "test@test.test",
+	"client_id": "111376233656820851597",
+	"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+	"token_uri": "https://oauth2.googleapis.com/token",
+	"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+	"client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/test%40test.test"
+}

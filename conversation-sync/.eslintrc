@@ -1,0 +1,10 @@
+{
+	"extends": "../.eslintrc",
+	"env": {
+		"node": true,
+		"mocha": true
+	},
+	"globals": {
+		"afterRoute": true
+	}
+}
