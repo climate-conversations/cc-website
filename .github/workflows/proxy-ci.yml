@@ -1,0 +1,74 @@
+name: Climate Conversations Proxy
+
+on:
+    push:
+        paths:
+            - 'cc-proxy/**'
+            - '.github/workflows/proxy-ci.yml'
+
+jobs:
+    deploy:
+        name: Deploy Cloud Functions
+        runs-on: ubuntu-latest
+        timeout-minutes: 60
+        container:
+            image: google/cloud-sdk
+
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v1
+              with:
+                  node-version: 12
+
+            - name: Cache node modules
+              uses: actions/cache@v2
+              env:
+                  cache-name: cache-node-modules-proxy
+              with:
+                  # npm cache files are stored in `~/.npm` on Linux/macOS
+                  path: ~/.npm
+                  key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('cc-proxy/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-build-${{ env.cache-name }}-
+                      ${{ runner.os }}-build-
+                      ${{ runner.os }}-
+
+            - run: apt-get install gettext-base
+
+            - name: Install node packages
+              working-directory: ./cc-proxy
+              run: npm ci
+
+            - name: npm install
+              working-directory: ./cc-proxy
+              run: npm test
+
+            - name: Setup Production Environment
+              if: github.ref == 'refs/heads/main'
+              # Set project, load service account credentials, set service account for the function
+              run: |
+                  echo ${GCLOUD_AUTH} | base64 --decode > gcloud-service-account.json;
+                  echo "SERVICE_ACCOUNT=cloud-functions@climate-conversations-sg-2019.iam.gserviceaccount.com" >> $GITHUB_ENV
+                  echo "GCLOUD_PROJECT=${GCLOUD_PROJECT}" >> $GITHUB_ENV
+              env:
+                  GCLOUD_AUTH: ${{ secrets.GCLOUDAUTH_PRODUCTION }}
+                  GCLOUD_PROJECT: climate-conversations-sg-2019
+
+            - name: Setup staging environment
+              if: github.ref != 'refs/heads/main'
+              run: |
+                  echo ${GCLOUD_AUTH} | base64 --decode > gcloud-service-account.json
+                  echo "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com" >> $GITHUB_ENV
+              env:
+                  GCLOUD_AUTH: ${{ secrets.GCLOUDAUTH_STAGING }}
+                  GCLOUD_PROJECT: cc-website-staging
+
+            - name: Configure gcloud
+              run: |
+                  gcloud --quiet config set project ${GCLOUD_PROJECT}
+                  gcloud auth activate-service-account --key-file=gcloud-service-account.json
+
+            - name: Deploy Cloud Functions
+              working-directory: ./cc-proxy
+              run: |
+                  npm run deploy:ci
