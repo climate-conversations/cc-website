@@ -5,30 +5,32 @@
 	const { api, Spinner } = RaiselyComponents;
 	const { getCurrentToken, getData } = api;
 
-	const websiteCampaignUuid = 'f2a3bc70-96d8-11e9-8a7b-47401a90ec39';
-	const websiteProfileUuid = 'f2b41020-96d8-11e9-8a7b-47401a90ec39';
-
 	const CustomForm = RaiselyComponents.import('custom-form');
-	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
-	const ConversationRef = RaiselyComponents.import('conversation', { asRaw: true });
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', {
+		asRaw: true,
+	});
+	const ConversationRef = RaiselyComponents.import('conversation', {
+		asRaw: true,
+	});
 	const ReturnButton = RaiselyComponents.import('return-button');
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	let UserSaveHelper;
 	let Conversation;
 
-	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
-	// const WEBHOOK_URL = `http://localhost:8010/conversation-sync/us-central1/raiselyPeople`;
-
 	let actionFields;
 
 	// Fields that can only be set, but not updated
-	const preSurveyReadOnly = ['user.dateOfBirth', 'user.ethnicity', 'user.gender', 'user.residency'];
-	const actionReadOnly = [
-		"user.fullName",
-		"user.preferredName",
-		"user.phoneNumber",
+	const preSurveyReadOnly = [
+		'user.dateOfBirth',
+		'user.ethnicity',
+		'user.gender',
+		'user.residency',
 	];
-
+	const actionReadOnly = [
+		'user.fullName',
+		'user.preferredName',
+		'user.phoneNumber',
+	];
 
 	/**
 	 * Returns true if the error from a request is status code over 500
@@ -36,18 +38,29 @@
 	 * @returns {boolean}
 	 */
 	function canRetryRequest(e) {
-		return (get(e, 'response.statusCode') || get(e, 'response.status', 0)) > 500;
+		return (
+			(get(e, 'response.statusCode') || get(e, 'response.status', 0)) >
+			500
+		);
 	}
 
-	const wait = (millis) => new Promise(resolve => setTimeout(resolve, millis));
+	const wait = (millis) =>
+		new Promise((resolve) => setTimeout(resolve, millis));
 
-	async function doRetry({ promise, resolve, reject, fn, maxAttempts, name }) {
+	async function doRetry({
+		promise,
+		resolve,
+		reject,
+		fn,
+		maxAttempts,
+		name,
+	}) {
 		let result;
 		do {
 			promise.attempts += 1;
 			try {
 				result = await fn();
-				promise.state = "ok";
+				promise.state = 'ok';
 				resolve(result);
 				return;
 			} catch (error) {
@@ -56,24 +69,19 @@
 					shouldRetry = canRetryRequest(error);
 				}
 				if (!shouldRetry) {
-					promise.state = "failed";
+					promise.state = 'failed';
 					promise.error = error;
 					reject(error);
 					return;
 				}
 				console.log(
-					`${
-						options.name
-					} encountered retriable error, retrying`,
+					`${options.name} encountered retriable error, retrying`,
 					error
 				);
 				// If we're retrying, don't slam the server, pause for up to 3 seconds
 				await wait(3000 * Math.random());
 			}
-		} while (
-			promise.state === "working" &&
-			promise.attempts < maxAttempts
-		);
+		} while (promise.state === 'working' && promise.attempts < maxAttempts);
 	}
 
 	/**
@@ -101,8 +109,8 @@
 			reject,
 			fn,
 			maxAttempts,
-			name
-		}).catch(e => {
+			name,
+		}).catch((e) => {
 			console.error('Unexpected retry failure', e);
 			reject(e);
 		});
@@ -114,7 +122,7 @@
 		let incomplete;
 		let error;
 		do {
-			incomplete = list.filter(p => p.state === 'working');
+			incomplete = list.filter((p) => p.state === 'working');
 			if (incomplete.length) {
 				try {
 					await Promise.race(incomplete);
@@ -133,8 +141,13 @@
 	 */
 	const actionFieldsToUser = ['host', 'facilitate', 'volunteer'];
 
-	const guestDonation = ['event_rsvp.donationIntention', 'event_rsvp.donationAmount'];
-	const conversationDate = [{ sourceFieldId: 'event.startAt', required: false }];
+	const guestDonation = [
+		'event_rsvp.donationIntention',
+		'event_rsvp.donationAmount',
+	];
+	const conversationDate = [
+		{ sourceFieldId: 'event.startAt', required: false },
+	];
 
 	return class GuestDataEntry extends React.Component {
 		state = { key: new Date().toISOString() };
@@ -155,30 +168,30 @@
 
 			// Show all questions in the pre survey
 			const preSurveyQuestions = [
-				"user.nycConsent",
+				'user.nycConsent',
 				{
 					interactionCategory: Conversation.surveyCategories()
-						.preSurvey
+						.preSurvey,
 				},
-				{ sourceFieldId: "user.dateOfBirth" },
+				{ sourceFieldId: 'user.dateOfBirth' },
 				{
-					sourceFieldId: "user.residency",
-					type: "select",
+					sourceFieldId: 'user.residency',
+					type: 'select',
 					options: [
-						{ label: "Singapore Citizen", value: "citizen" },
+						{ label: 'Singapore Citizen', value: 'citizen' },
 						{
-							label: "Permanent Resident",
-							value: "permanent resident"
+							label: 'Permanent Resident',
+							value: 'permanent resident',
 						},
 						{
-							label: "Employment Pass",
-							value: "employment pass"
+							label: 'Employment Pass',
+							value: 'employment pass',
 						},
-						{ label: "Other", value: "Other" }
-					]
+						{ label: 'Other', value: 'Other' },
+					],
 				},
-				{ sourceFieldId: "user.ethnicity" },
-				{ sourceFieldId: "user.gender" },
+				{ sourceFieldId: 'user.ethnicity' },
+				{ sourceFieldId: 'user.gender' },
 			];
 			// Show all questions in the post survey
 			const postSurveyQuestions = [
@@ -186,95 +199,101 @@
 					interactionCategory: Conversation.surveyCategories()
 						.postSurvey,
 					exclude: [
-						"research",
-						"fundraise",
-						"host",
-						"volunteer",
-						"hostCorporate",
-						"facilitate"
-					]
-				}
+						'research',
+						'fundraise',
+						'host',
+						'volunteer',
+						'hostCorporate',
+						'facilitate',
+					],
+				},
 			];
 
 			const guestAction = [
-				{ sourceFieldId: "user.fullName" },
-				{ sourceFieldId: "user.preferredName" },
-				{ sourceFieldId: "user.email", required: false },
-				{ sourceFieldId: "user.phoneNumber", required: false },
-				"user.postcode",
+				{ sourceFieldId: 'user.fullName' },
+				{ sourceFieldId: 'user.preferredName' },
+				{ sourceFieldId: 'user.email', required: false },
+				{ sourceFieldId: 'user.phoneNumber', required: false },
+				'user.postcode',
 				{
 					interactionCategory: Conversation.surveyCategories()
 						.postSurvey,
 					include: [
-						"host",
-						"facilitate",
-						"volunteer",
-						"hostCorporate",
-						"research",
-						"fundraise"
-					]
-				}
+						'host',
+						'facilitate',
+						'volunteer',
+						'hostCorporate',
+						'research',
+						'fundraise',
+					],
+				},
 			];
 
 			const allSteps = [
-				{ title: "Pre-Survey", fields: preSurveyQuestions },
-				{ title: "Post-Survey", fields: postSurveyQuestions },
-				{ title: "Guest Action", fields: guestAction },
+				{ title: 'Pre-Survey', fields: preSurveyQuestions },
+				{ title: 'Post-Survey', fields: postSurveyQuestions },
+				{ title: 'Guest Action', fields: guestAction },
 				{
-					title: "Warning: Uncontactable",
+					title: 'Warning: Uncontactable',
 					description: `This person has indicated interest in taking action with us
 						but they have no email address. Follow up will be very limited.`,
 					fields: [
 						{
-							id: "description-no-email",
-							type: "rich-description",
+							id: 'description-no-email',
+							type: 'rich-description',
 							default: `
 							<p>Do you want to go back and enter an email for them?</p>
 							<p>(Maybe you can message the host to ask
-								if they want to share their email with us?)</p>`
-						}
+								if they want to share their email with us?)</p>`,
+						},
 					],
-					condition: fields => {
+					condition: (fields) => {
 						const takeAction = actionFields.reduce(
 							(result, field) =>
 								result ||
 								get(fields, `2.private.${field}`, false),
 							false
 						);
-						return takeAction && !get(fields, "2.email");
-					}
+						return takeAction && !get(fields, '2.email');
+					},
 				},
-
 			];
 			// Only show this step during initial data entry
 			// let any updates be made on the conversation page
 			if (!this.getRsvpUuid()) {
 				allSteps.push(
-					{ title: "Donation", fields: guestDonation },
-				{
-					title: "Conversation Date",
-					description:
-						"Did you set a tentative date with them to host a conversation? (leave blank if you didn't)",
-					fields: conversationDate,
-					condition: fields => get(fields, "2.private.host")
-				});
+					{ title: 'Donation', fields: guestDonation },
+					{
+						title: 'Conversation Date',
+						description:
+							"Did you set a tentative date with them to host a conversation? (leave blank if you didn't)",
+						fields: conversationDate,
+						condition: (fields) => get(fields, '2.private.host'),
+					}
+				);
 			} else {
 				// This are read-only for updates, display them, but as disabled
 				const setReadOnlyFields = (list, ids) => {
-					list.forEach(q => {
+					list.forEach((q) => {
 						const isString = typeof q === 'string';
 						const name = isString ? q : q.sourceFieldId;
 						if (ids.includes(name)) {
 							if (isString) {
-								console.error('Error preparing read only field update');
-								console.error(`Please change field ${q} initial config to { sourceFieldId: '${q}' } so it can`)
-								console.error('be updated')
-								throw new Error(`Bad configuration for field ${q}`);
+								console.error(
+									'Error preparing read only field update'
+								);
+								console.error(
+									`Please change field ${q} initial config to { sourceFieldId: '${q}' } so it can`
+								);
+								console.error('be updated');
+								throw new Error(
+									`Bad configuration for field ${q}`
+								);
 							}
 							q.disabled = true;
 						}
 					});
-				}
+				};
 				setReadOnlyFields(preSurveyQuestions, preSurveyReadOnly);
 				setReadOnlyFields(guestAction, actionReadOnly);
 			}
@@ -284,7 +303,7 @@
 		load = async ({ dataToForm }) => {
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 
-			const eventUuid = get(this.props, "match.params.conversation");
+			const eventUuid = get(this.props, 'match.params.conversation');
 
 			// Support editing a user
 			const rsvpUuid = this.getRsvpUuid();
@@ -296,28 +315,31 @@
 
 				const eventRsvp = await UserSaveHelper.proxy(
 					`/event_rsvps/${rsvpUuid}?private=1`,
-					{ method: "GET" }
+					{ method: 'GET' }
 				);
 				const eventPromise = UserSaveHelper.proxy(
 					`/events/${eventRsvp.eventUuid}?private=1`,
-					{ method: "GET" }
+					{ method: 'GET' }
 				);
 
-				this.setState({ eventUuid: eventRsvp.eventUuid, userUuid: eventRsvp.userUuid });
+				this.setState({
+					eventUuid: eventRsvp.eventUuid,
+					userUuid: eventRsvp.userUuid,
+				});
 
 				const interactionPromises = [
 					surveyCategories.preSurvey,
 					surveyCategories.postSurvey,
-					"host-interest"
-				].map(category =>
-					UserSaveHelper.proxy("/interactions", {
-						method: "GET",
+					'host-interest',
+				].map((category) =>
+					UserSaveHelper.proxy('/interactions', {
+						method: 'GET',
 						query: {
 							category,
 							private: 1,
 							user: eventRsvp.userUuid,
-							["detail.private.conversationUuid"]: eventUuid
-						}
+							['detail.private.conversationUuid']: eventUuid,
+						},
 					})
 				);
 
@@ -326,14 +348,12 @@
 					getData(
 						api.users.get({
 							id: eventRsvp.userUuid,
-							query: { private: 1 }
+							query: { private: 1 },
 						})
 					),
-					...interactionPromises
+					...interactionPromises,
 				];
-				const [user] = await Promise.all(
-					promises
-				);
+				const [user] = await Promise.all(promises);
 				event = await eventPromise;
 				const interactions = (await Promise.all(
 					interactionPromises
@@ -348,16 +368,14 @@
 			}
 
 			if (!event) {
-				const event = await Conversation.loadConversation(
-					{
-						props: this.props,
-						required: true,
-						private: true
-					}
-				);
+				const event = await Conversation.loadConversation({
+					props: this.props,
+					required: true,
+					private: true,
+				});
 				this.setState({
 					event,
-					eventUuid
+					eventUuid,
 				});
 			}
 
@@ -374,7 +392,7 @@
 			const surveyCategories = Conversation.surveyCategories();
 			const surveys = [
 				surveyCategories.preSurvey,
-				surveyCategories.postSurvey
+				surveyCategories.postSurvey,
 			];
 
 			const saveProgress = [];
@@ -382,7 +400,7 @@
 
 			try {
 				// Copy interaction host, vol, facil over to user record
-				actionFieldsToUser.forEach(field => {
+				actionFieldsToUser.forEach((field) => {
 					const value = get(
 						data,
 						`interaction.${
@@ -394,24 +412,24 @@
 					}
 				});
 				// Mark them having attended a conversation
-				set(data, "user.private.attendedConversation", true);
+				set(data, 'user.private.attendedConversation', true);
 
-				console.log("Saving survey. Form data:", data);
+				console.log('Saving survey. Form data:', data);
 
 				// If they've filled out the CTA with their email, put them on the mailing list
 				if (data.user.email) {
-					set(data, "user.private.mailingList", true);
+					set(data, 'user.private.mailingList', true);
 				}
 
-				console.log("Upserting user", data.user);
+				console.log('Upserting user', data.user);
 				const userPromise = retry(
 					() =>
 						UserSaveHelper.upsertUser(data.user, {
 							assignSelf: true,
-							assignPointIfNew: true
+							assignPointIfNew: true,
 						}),
 					{
-						name: "Save guest person record"
+						name: 'Save guest person record',
 					}
 				);
 				saveProgress.push(userPromise);
@@ -421,23 +439,23 @@
 
 				const interactionBase = {
 					recordUuid: eventUuid,
-					recordType: "event",
-					userUuid: user.uuid
+					recordType: 'event',
+					userUuid: user.uuid,
 				};
 
 				// Associate surveys with conversation and user
 				const promises = surveys
-					.map(survey => {
+					.map((survey) => {
 						const record = get(data, `interaction.${survey}`);
 						if (!record) return null;
 						return Object.assign(record, {
 							...interactionBase,
 							// Set the interaction type
-							categoryUuid: survey
+							categoryUuid: survey,
 						});
 					})
-					.filter(s => s)
-					.map(record => {
+					.filter((s) => s)
+					.map((record) => {
 						record.detail.readOnly = false;
 						record.detail.occurredAt = event.startAt;
 						console.log(
@@ -458,18 +476,18 @@
 				) {
 					const hostData = {
 						...interactionBase,
-						categoryUuid: "host-interest",
+						categoryUuid: 'host-interest',
 						detail: {
 							occurredAt: event.startAt,
 							private: {
 								facilitatorUuid,
-								status: "lead",
-								source: "conversation",
-								conversationUuid: eventUuid
-							}
-						}
+								status: 'lead',
+								source: 'conversation',
+								conversationUuid: eventUuid,
+							},
+						},
 					};
-					console.log("Saving host", hostData);
+					console.log('Saving host', hostData);
 					saveProgress.push(this.upsertInteraction(hostData));
 				}
 
@@ -477,49 +495,46 @@
 				if (!data.event_rsvp) data.event_rsvp = {};
 				Object.assign(data.event_rsvp, {
 					userUuid: user.uuid,
-					type: "guest",
+					type: 'guest',
 					eventUuid,
 				});
 
-				console.log("Saving guest rsvp", data.event_rsvp);
+				console.log('Saving guest rsvp', data.event_rsvp);
 				const rsvpPromise = this.upsertRsvp(data.event_rsvp, {
-					existing: get(this, "state.records.rsvp")
+					existing: get(this, 'state.records.rsvp'),
 				});
 				saveProgress.push(rsvpPromise);
 
 				// Save donation / donation intention
 				const cashPaymentType = get(
 					data,
-					"event_rsvp.private.donationIntention"
+					'event_rsvp.private.donationIntention'
 				);
-				if (["transfer", "cash"].includes(cashPaymentType)) {
+				if (['transfer', 'cash'].includes(cashPaymentType)) {
 					const donation = {
-						campaignUuid: websiteCampaignUuid,
-						profileUuid: websiteProfileUuid,
+						campaignUuid: Conversation.getWebsiteUuid(),
+						profileUuid: Conversation.getWebsiteProfileUuid(),
 						userUuid: user.uuid,
 						anonymous: true,
-						mode: "LIVE",
-						type: "OFFLINE",
-						method: "OFFLINE",
-						amount: get(
-							data,
-							"event_rsvp.private.donationAmount"
-						),
+						mode: 'LIVE',
+						type: 'OFFLINE',
+						method: 'OFFLINE',
+						amount: get(data, 'event_rsvp.private.donationAmount'),
 						email: user.email,
 						private: {
 							conversationUuid: eventUuid,
-							cashPaymentType
+							cashPaymentType,
 						},
-						currency: "SGD"
+						currency: 'SGD',
 					};
-					console.log("Saving donation", donation);
+					console.log('Saving donation', donation);
 					saveProgress.push(this.upsertDonation(donation));
 				}
 
 				// Add the future conversation
 				// This step is only included for new records
 				// we won't update a conversation
-				if (get(data, "event.startAt")) {
+				if (get(data, 'event.startAt')) {
 					data.event.campaignUuid = campaignUuid;
 					this.createConversation(
 						data.event,
@@ -529,48 +544,43 @@
 					);
 				}
 
-				rsvpPromise.then(rsvp => this.setState({ rsvpUuid: rsvp.uuid }));
+				rsvpPromise.then((rsvp) =>
+					this.setState({ rsvpUuid: rsvp.uuid })
+				);
 
 				const savedRsvp = await rsvpPromise;
 				this.setState({ rsvpUuid: savedRsvp.uuid });
 
-				const rsvp = get(data, "event_rsvp");
+				const rsvp = get(data, 'event_rsvp');
 				const rsvpUuid = savedRsvp.uuid;
 				rsvp.uuid = rsvpUuid;
 
 				const webhookData = {
-					type: "guest.created",
-					data: {
-						user,
-						preSurvey: get(
-							data,
-							`interaction.${
-								surveyCategories.preSurvey
-							}.detail`, {}
-						),
-						postSurvey: get(
-							data,
-							`interaction.${
-								surveyCategories.postSurvey
-							}.detail`, {}
-						),
-						conversation: this.state.event,
-						rsvp
-					}
+					user,
+					preSurvey: get(
+						data,
+						`interaction.${surveyCategories.preSurvey}.detail`,
+						{}
+					),
+					postSurvey: get(
+						data,
+						`interaction.${surveyCategories.postSurvey}.detail`,
+						{}
+					),
+					conversation: this.state.event,
+					rsvp,
 				};
 				console.log(
-					"Sending to conversation-sync webhook",
+					'Sending to conversation-sync webhook',
 					webhookData
 				);
 				// Send the guest to be added to the backend spreadsheet
-				saveProgress.push(retry(() =>
-					UserSaveHelper.doFetch(WEBHOOK_URL, {
-						method: "post",
-						body: {
-							data: webhookData
-						}
-					}),
-					{ name: 'Sync with spreadsheet' }));
+				saveProgress.push(
+					retry(
+						() => UserSaveHelper.notifySync('guest.created', data),
+						{ name: 'Sync with spreadsheet' }
+					)
+				);
 
 				// Wait for promises to complete
 				// whenever one changes, update state so
@@ -581,7 +591,10 @@
 				this.setState({ finished: true, saving: false });
 			} catch (error) {
 				console.error(error);
-				this.setState({ saveError: error, saveProgress: [...saveProgress] });
+				this.setState({
+					saveError: error,
+					saveProgress: [...saveProgress],
+				});
 
 				// Continue to wait for retriables to complete
 				await awaitRetriables(saveProgress, () => {
@@ -595,81 +608,83 @@
 				if (existing)
 					return retry(
 						() =>
-							UserSaveHelper.proxy(`/event_rsvps/${existing.uuid}`, {
-								method: "PATCH",
-								body: { data: rsvp }
-							}),
-						{ name: "Updating guest RSVP" }
+							UserSaveHelper.proxy(
+								`/event_rsvps/${existing.uuid}`,
+								{
+									method: 'PATCH',
+									body: { data: rsvp },
+								}
+							),
+						{ name: 'Updating guest RSVP' }
 					);
 			}
 
 			return retry(
 				() =>
-					UserSaveHelper.proxy("/event_rsvps", {
-						method: "POST",
-						body: { data: rsvp }
+					UserSaveHelper.proxy('/event_rsvps', {
+						method: 'POST',
+						body: { data: rsvp },
 					}),
-				{ name: "Saving guest RSVP" }
+				{ name: 'Saving guest RSVP' }
 			);
 		}
 
-		createConversation(
-			eventDetails,
-			user,
-			facilitatorUuid,
-			saveProgress
-		) {
+		createConversation(eventDetails, user, facilitatorUuid, saveProgress) {
 			if (!Conversation) Conversation = ConversationRef().html;
 			const fullEventDetails = Object.assign(
 				{
-					name: Conversation.defaultName([user])
+					name: Conversation.defaultName([user]),
 				},
 				eventDetails
 			);
 
 			console.log(
-				"Creating tentative new conversation",
+				'Creating tentative new conversation',
 				fullEventDetails
 			);
 
-			const promise = retry(() =>
-				UserSaveHelper.proxy("/events", {
-					method: "POST",
-					body: { data: fullEventDetails }
-				}), {
+			const promise = retry(
+				() =>
+					UserSaveHelper.proxy('/events', {
+						method: 'POST',
+						body: { data: fullEventDetails },
+					}),
+				{
 					name: 'Book tentative conversation',
 				}
 			);
 			saveProgress.push(promise);
 			promise
 				// Add the facil and host to the conversation
-				.then(event => {
+				.then((event) => {
 					const hostRsvp = {
-						type: "host",
+						type: 'host',
 						userUuid: user.uuid,
-						eventUuid: event.uuid
+						eventUuid: event.uuid,
 					};
 					const facilitatorRsvp = {
-						type: "facilitator",
+						type: 'facilitator',
 						userUuid: facilitatorUuid,
-						eventUuid: event.uuid
+						eventUuid: event.uuid,
 					};
 
 					console.log(
-						"Assigning host and facilitator to conversation",
+						'Assigning host and facilitator to conversation',
 						hostRsvp,
 						facilitatorRsvp
 					);
 					saveProgress.push(
-						retry(() =>
-							this.upsertRsvp(hostRsvp, { create: 1 }),
-						{ name: "Add host to booking" }
-					));
+						retry(() => this.upsertRsvp(hostRsvp, { create: 1 }), {
+							name: 'Add host to booking',
+						})
+					);
 					saveProgress.push(
-						retry(() =>
-							this.upsertRsvp(facilitatorRsvp, { create: 1 }),
-						{ name: "Add facilitator to booking" }
-					));
+						retry(
+							() =>
+								this.upsertRsvp(facilitatorRsvp, { create: 1 }),
+							{ name: 'Add facilitator to booking' }
+						)
+					);
 				});
 		}
 		upsertDonation(donation) {
@@ -685,13 +700,13 @@
 							UserSaveHelper.proxy(
 								`/donations/${existingDonation.uuid}`,
 								{
-									method: "POST",
+									method: 'POST',
 									body: {
-										data: donation
-									}
+										data: donation,
+									},
 								}
 							),
-						{ name: "Update donation" }
+						{ name: 'Update donation' }
 					);
 				}
 				mustDelete = true;
@@ -702,7 +717,7 @@
 						UserSaveHelper.proxy(
 							`/donations/${existingDonation.uuid}`,
 							{
-								method: "DELETE"
+								method: 'DELETE',
 							}
 						)
 					)
@@ -711,26 +726,27 @@
 
 			promises.push(
 				retry(() =>
-					UserSaveHelper.proxy("/donations", {
-						method: "POST",
+					UserSaveHelper.proxy('/donations', {
+						method: 'POST',
 						body: {
-							data: donation
-						}
+							data: donation,
+						},
 					})
 				)
 			);
 			return retry(() => Promise.all(promises), {
-				name: "Save donation",
-				maxAttempts: 1
+				name: 'Save donation',
+				maxAttempts: 1,
 			});
 		}
 		upsertInteraction(record) {
 			const existingInteractions = get(
-				this.state, 'records.interactions'
+				this.state,
+				'records.interactions'
 			);
 			if (existingInteractions) {
 				const found = existingInteractions.find(
-					i => i.category.path === record.categoryUuid
+					(i) => i.category.path === record.categoryUuid
 				);
 				if (found) {
 					return retry(
@@ -738,10 +754,10 @@
 							UserSaveHelper.proxy(
 								`/interactions/${found.uuid}`,
 								{
-									method: "PUT",
+									method: 'PUT',
 									body: {
-										data: { detail: record.detail }
-									}
+										data: { detail: record.detail },
+									},
 								}
 							),
 						{ name: `Updating ${record.categoryUuid}` }
@@ -752,12 +768,12 @@
 			record.detail.readOnly = false;
 			return retry(
 				() =>
-					UserSaveHelper.proxy("/interactions", {
-						method: "POST",
-						body: { data: record }
+					UserSaveHelper.proxy('/interactions', {
+						method: 'POST',
+						body: { data: record },
 					}),
 				{
-					name: `Saving ${record.categoryUuid}`
+					name: `Saving ${record.categoryUuid}`,
 				}
 			);
 		}
@@ -776,23 +792,23 @@
 				// props have finished loading
 				// don't send a request without a token
 				if (!token) {
-					console.log("Aborting save check, no token");
+					console.log('Aborting save check, no token');
 					return;
 				}
 
-				if (!get(this.props, "global.user")) {
-					console.log("Aborting save check, no user", {
-						...this.props
+				if (!get(this.props, 'global.user')) {
+					console.log('Aborting save check, no user', {
+						...this.props,
 					});
 					return;
 				}
 
 				this.setState({ testingSave: true });
 
-				const tags = get(this.props, "global.user.tags", []);
+				const tags = get(this.props, 'global.user.tags', []);
 				if (
-					!tags.find(tag =>
-						["team-leader", "facilitator"].includes(tag.path)
+					!tags.find((tag) =>
+						['team-leader', 'facilitator'].includes(tag.path)
 					)
 				) {
 					throw new Error(
@@ -801,14 +817,14 @@
 				}
 
 				await UserSaveHelper.doFetch(WEBHOOK_URL, {
-					method: "post",
-					body: {}
+					method: 'post',
+					body: {},
 				});
 			} catch (e) {
 				console.error(e);
 				this.setState({
 					webhookError: e,
-					message: e.message || "(Unknown Error)"
+					message: e.message || '(Unknown Error)',
 				});
 			}
 			this.setState({ hookSuccessful: true });
@@ -816,21 +832,21 @@
 
 		saving() {
 			const descriptions = {
-				user: "guest details",
-				survey: "survey",
-				donation: "cash donation",
-				intention: "donation intention",
-				conversation: "new conversation",
-				demographics: "demographics"
+				user: 'guest details',
+				survey: 'survey',
+				donation: 'cash donation',
+				intention: 'donation intention',
+				conversation: 'new conversation',
+				demographics: 'demographics',
 			};
 
 			let hasError = false;
 			let details;
 
 			if (this.state.saving) {
-				details = this.state.saving.map(setting => {
+				details = this.state.saving.map((setting) => {
 					if (setting.message) hasError = true;
-					const status = setting.message || "OK";
+					const status = setting.message || 'OK';
 					return (
 						<p key={setting}>
 							Saving {descriptions[setting.id]} ... {status}
@@ -844,19 +860,22 @@
 
 		renderSaving = () => {
 			const { saveError, saveProgress } = this.state;
-			const completeSteps = saveProgress.filter(p => p.state === 'ok').length;
-			const inProgress = saveProgress.filter(p => (p.state === 'working') && (p.attempts > 1));
+			const completeSteps = saveProgress.filter((p) => p.state === 'ok')
+				.length;
+			const inProgress = saveProgress.filter(
+				(p) => p.state === 'working' && p.attempts > 1
+			);
 			let description = '';
-			const errors = saveProgress.filter(p => p.error);
+			const errors = saveProgress.filter((p) => p.error);
 
-			if (saveError && !errors.find(p => p.error === saveError)) {
+			if (saveError && !errors.find((p) => p.error === saveError)) {
 				errors.unshift({ name: 'General Error', error: saveError });
 			}
 
 			const stateIcons = {
-				failed: "❌",
-				ok: "✔️",
-				working: "•"
+				failed: '❌',
+				ok: '✔️',
+				working: '•',
 			};
 
 			if (inProgress.length) {
@@ -864,7 +883,7 @@
 				description = `${recent.name} (${recent.attempts})`;
 			}
 
-			console.log(saveProgress, errors.length, completeSteps)
+			console.log(saveProgress, errors.length, completeSteps);
 
 			return (
 				<div className="guest-data__save-progress">
@@ -883,7 +902,7 @@
 								</p>
 							</div>
 							<ul className="save-status">
-								{saveProgress.map(p => (
+								{saveProgress.map((p) => (
 									<li>
 										<span
 											className={`save-progress__icon--${
@@ -897,15 +916,14 @@
 								))}
 							</ul>
 							<div className="save-errors">
-								{errors
-									.map(p => (
-										<div className="error-item">
-											<p class="item-name">{p.name}</p>
-											<p className="item-stack">
-												{p.error.stack}
-											</p>
-										</div>
-									))}
+								{errors.map((p) => (
+									<div className="error-item">
+										<p class="item-name">{p.name}</p>
+										<p className="item-stack">
+											{p.error.stack}
+										</p>
+									</div>
+								))}
 							</div>
 						</div>
 					) : (
@@ -920,9 +938,7 @@
 								unit=" "
 								size="medium"
 							/>
-							<div className="description">
-								{description}
-							</div>
+							<div className="description">{description}</div>
 							<Spinner />
 						</div>
 					)}
@@ -942,11 +958,10 @@
 					<p>Guest saved!</p>
 					<div>
 						<p>
-							As this is the first conversation {"you've"}{" "}
-							processed a conversation in the new system,
-							could you do us a favour and review the saved
-							details and check that everything was saved
-							correctly?
+							As this is the first conversation {"you've"}{' '}
+							processed a conversation in the new system, could
+							you do us a favour and review the saved details and
+							check that everything was saved correctly?
 						</p>
 						<Button theme="cta" href={reviewLink}>
 							Review Guest Details
@@ -997,22 +1012,22 @@
 				return (
 					<div className="hint">
 						<p>
-							<strong>Hint:</strong> To get throught your
-							surveys faster, press <strong>Tab</strong>{" "}
-							between fields and type in the answers.
+							<strong>Hint:</strong> To get throught your surveys
+							faster, press <strong>Tab</strong> between fields
+							and type in the answers.
 						</p>
 						<p>
 							For scale fields, type in the number that was
 							ticked.
 						</p>
 						<p>
-							For multiple choice fields, press the down arrow
-							or type the first few characters of the answer
-							you want to choose
+							For multiple choice fields, press the down arrow or
+							type the first few characters of the answer you want
+							to choose
 						</p>
 						<p>
-							For checkboxes press spacebar to check/uncheck
-							the box
+							For checkboxes press spacebar to check/uncheck the
+							box
 						</p>
 						<p>
 							(You can do this on all forms in the volunteer
@@ -1022,34 +1037,31 @@
 				);
 			}
 			const { userUuid } = this.state;
-			const readOnlyFields = [
-				...preSurveyReadOnly,
-				...actionReadOnly
-			]
-				.map(f => startCase(f.split('.')[1]))
+			const readOnlyFields = [...preSurveyReadOnly, ...actionReadOnly]
+				.map((f) => startCase(f.split('.')[1]))
 				.join(', ');
 			return (
 				<div className="hint">
 					<p>
-						<strong>Note</strong> If you need to make changes to a {"person's "}
-						{readOnlyFields} you'll need to edit the person's record in the
-						Raisely Admin.
+						<strong>Note</strong> If you need to make changes to a{' '}
+						{"person's "}
+						{readOnlyFields} you'll need to edit the person's record
+						in the Raisely Admin.
 					</p>
 					{userUuid && (
-						<RaiselyButton label="Edit Person in Raisely" recordType="user" uuid={userUuid} style={{ marginTop: '10px' }} />
+						<RaiselyButton
+							label="Edit Person in Raisely"
+							recordType="user"
+							uuid={userUuid}
+							style={{ marginTop: '10px' }}
+						/>
 					)}
 				</div>
 			);
 		}
 
 		render() {
-			const {
-				error,
-				webhookError,
-				key,
-				saving,
-				finished
-			} = this.state;
+			const { error, webhookError, key, saving, finished } = this.state;
 
 			if (webhookError) {
 				return (
@@ -1060,14 +1072,17 @@
 							permission to save guest data.
 						</p>
 						<p>
-							(We thought we should stop you now before you do
-							all that typing)
+							(We thought we should stop you now before you do all
+							that typing)
 						</p>
 						<p>
 							Please contact your team leader or program
 							co-ordinator to resolve this
 						</p>
-						<p>The error is: {webhookError.stack || webhookError.message}</p>
+						<p>
+							The error is:{' '}
+							{webhookError.stack || webhookError.message}
+						</p>
 					</div>
 				);
 			}

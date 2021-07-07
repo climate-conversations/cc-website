@@ -19,9 +19,43 @@
 	const { getCurrentToken } = RaiselyComponents.api;
 	const { qs } = RaiselyComponents.Common;
 
-	const proxyHost = 'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net';
-	const WEBHOOK_URL = `https://asia-northeast1-climate-conversations-sync.cloudfunctions.net/raiselyPeople`;
+	const productionHosts = [
+		'portal.climateconversations.sg',
+		'p.climate.sg',
+		'climateconversations.sg',
+	];
 
+	// Use local cloud functions if LOCAL_TEST=1 is appended to the query
+	const localTest = (document.location.search || '').includes('LOCAL_TEST=1');
+
+	const mode = productionHosts.includes(document.location.host)
+		? 'production'
+		: localTest
+		? 'development'
+		: 'staging';
+
+	const proxyHost = {
+		production:
+			'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net',
+		staging:
+			'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
+		development: 'http://localhost:3501',
+	}[mode];
+
+	const syncHost = {
+		production:
+			'https://asia-northeast1-climate-conversations-sync.cloudfunctions.net',
+		staging:
+			'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
+		development: 'http://localhost:3500',
+	}[mode];
+
+	const portalHost =
+		mode === 'production'
+			? 'https://p.climate.sg'
+			: 'https://cc-portal-staging.raisely.com/';
+
+	const WEBHOOK_URL = `${syncHost}/raiselyPeople`;
 	const proxyUrl = `${proxyHost}/proxy`;
 	const upsertUrl = `${proxyHost}/upsertUser`;
 	const setupFacilUrl = `${proxyHost}/setupVolunteer`;
@@ -34,9 +68,18 @@
 	const MAX_REQUESTS = 8;
 
 	return class UserSaveHelper {
-		static actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'research', 'fundraise'];
+		static actionFields = [
+			'host',
+			'facilitate',
+			'volunteer',
+			'hostCorporate',
+			'research',
+			'fundraise',
+		];
 
-		static proxyHost() { return proxyHost; }
+		static proxyHost() {
+			return proxyHost;
+		}
 
 		static async doFetch(url, options) {
 			let json;
@@ -44,13 +87,16 @@
 			// thrown along the way
 			let message = 'Cannot reach server (are you offline?)';
 
-			const opts = Object.assign({
-				mode: 'cors',
-				headers: {
-					'Content-Type': 'application/json',
+			const opts = Object.assign(
+				{
+					mode: 'cors',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					method: 'get',
 				},
-				method: 'get',
-			}, options);
+				options
+			);
 
 			if (opts.query) {
 				const queryStr = qs.stringify(opts.query);
@@ -66,7 +112,9 @@
 			requestObj.expires = requestObj.created + 2 * 1000;
 
 			if (opts.method.toLowerCase() === 'get') {
-				const cached = cachedRequests.find(x => x.key === requestObj.key);
+				const cached = cachedRequests.find(
+					(x) => x.key === requestObj.key
+				);
 				if (cached) {
 					if (cached.expires > requestObj.created) {
 						requestObj = cached;
@@ -81,14 +129,18 @@
 					if (!requestObj.promise) {
 						// Send the users token for authorization
 						const token = getCurrentToken();
-						if (token) opts.headers.Authorization = `Bearer ${token.replace(/"/g, '')}`;
+						if (token)
+							opts.headers.Authorization = `Bearer ${token.replace(
+								/"/g,
+								''
+							)}`;
 
 						console.log('Doing fetch', url, opts);
 						if (opts.body && typeof opts.body !== 'string') {
 							opts.body = JSON.stringify(opts.body);
 						}
 						while (requestBucket.length >= MAX_REQUESTS) {
-							console.log('Bucket full, waiting')
+							console.log('Bucket full, waiting');
 							await Promise.race(requestBucket);
 						}
 						requestObj.promise = fetch(url, opts);
@@ -98,8 +150,11 @@
 
 					// If there are multiuple callers, one may already have removed the
 					// promise
-					const indexOfPromise = requestBucket.indexOf(requestObj.promise);
-					if (indexOfPromise > -1) requestBucket.splice(indexOfPromise, 1);
+					const indexOfPromise = requestBucket.indexOf(
+						requestObj.promise
+					);
+					if (indexOfPromise > -1)
+						requestBucket.splice(indexOfPromise, 1);
 
 					// If the request didn't succeed, log the error
 					// and try to create a helpful error for the user
@@ -121,7 +176,8 @@
 					// If the request succeeded with no JSON, that's weird
 					message = 'Sorry, something unusual went wrong';
 
-					if (!requestObj.jsonPromise) requestObj.jsonPromise = response.json();
+					if (!requestObj.jsonPromise)
+						requestObj.jsonPromise = response.json();
 					requestObj.json = await requestObj.jsonPromise;
 				}
 			} catch (error) {
@@ -134,6 +190,14 @@
 			}
 
 			return requestObj.json.data;
+		}
+
+		/**
+		 * Return the base url for the portal website
+		 * @returns {string}
+		 */
+		static getPortalHost() {
+			return portalHost;
 		}
 
 		/**
@@ -150,7 +214,7 @@
 				method: 'POST',
 				body: {
 					data: webhookData,
-				}
+				},
 			});
 		}
 
