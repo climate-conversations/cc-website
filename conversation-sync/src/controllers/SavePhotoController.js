@@ -5,16 +5,16 @@ const { AirblastController } = require('airblast');
 const request = require('request-promise-native');
 const { authorize, uploadFile } = require('../services/googleDrive');
 const { fetchTeam } = require('../helpers/raiselyConversationHelpers');
-const { isoToSgDateAndTime } = require("../helpers/dateHelpers");
+const { isoToSgDateAndTime } = require('../helpers/dateHelpers');
 
 const options = {
 	wrapInData: true,
 };
 
 const folders = {
-	withConsent: '1afJ14TG6f66tjMkCwssm_MnQoD3i2PLG',
-	withoutConsent: '1AutV3Usgk9mBxkm8N8GAWSGVFQ3srcQw',
-}
+	withConsent: process.env.PHOTOS_FOLDER_CONSENT,
+	withoutConsent: process.env.PHOTOS_FOLDER_NO_CONSENT,
+};
 
 function getName(user) {
 	return user.fullName || user.preferredName;
@@ -22,19 +22,20 @@ function getName(user) {
 
 function createFileName({ facilitator, host, conversation }) {
 	const startAt = isoToSgDateAndTime(conversation.startAt).date;
-	const name = `${startAt} - ${conversation.uuid} - host ${getName(host)} - facil ${getName(
-		facilitator
-	)}`;
+	const name = `${startAt} - ${conversation.uuid} - host ${getName(
+		host
+	)} - facil ${getName(facilitator)}`;
 	return name;
 }
 
 /**
-  * This controller will receive create, update, delete hooks from raisely
-  * to update other services
-  */
+ * This controller will receive create, update, delete hooks from raisely
+ * to update other services
+ */
 class SavePhoto extends AirblastController {
 	async process({ data }) {
-		if (data.type === 'conversation.photoUploaded') return this.saveToGoogleDrive(data.data);
+		if (data.type === 'conversation.photoUploaded')
+			return this.saveToGoogleDrive(data.data);
 		this.log(`Unknown event type ${data.type}, ignoring`);
 		return null;
 	}
@@ -49,7 +50,9 @@ class SavePhoto extends AirblastController {
 		const { facilitator, host } = team;
 
 		const name = createFileName({ conversation, facilitator, host });
-		const folder = photoConsent ? folders.withConsent : folders.withoutConsent;
+		const folder = photoConsent
+			? folders.withConsent
+			: folders.withoutConsent;
 
 		const metadata = {
 			name,
@@ -57,7 +60,7 @@ class SavePhoto extends AirblastController {
 		};
 
 		// Pipe the file directly through to google
-		const buffer = new PassThrough()
+		const buffer = new PassThrough();
 		request(url).pipe(buffer);
 
 		const media = {
@@ -67,7 +70,13 @@ class SavePhoto extends AirblastController {
 
 		const res = await uploadFile(jwt, metadata, media);
 
-		this.log(`Photo (${photoConsent ? 'with consent' : 'without consent'}) saved to drive: ${name}, (conversation uuid: ${conversation.uuid})`);
+		this.log(
+			`Photo (${
+				photoConsent ? 'with consent' : 'without consent'
+			}) saved to drive: ${name}, (conversation uuid: ${
+				conversation.uuid
+			})`
+		);
 		return res;
 	}
 }
