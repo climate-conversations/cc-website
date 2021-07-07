@@ -1,6 +1,7 @@
 {
 	"private": true,
 	"scripts": {
+		"deploy": "raisely deploy",
 		"test": "mocha components/*/*.test.js"
 	},
 	"devDependencies": {
