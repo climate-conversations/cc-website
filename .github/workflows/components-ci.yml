@@ -12,7 +12,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v2
-            - uses: actions/setup-node@v1
+            - uses: actions/setup-node@v2
               with:
                   node-version: 14
 
@@ -45,7 +45,7 @@ jobs:
               env:
                   GCLOUD_AUTH: ${{ secrets.RAISELY_PRODUCTION_TOKEN }}
 
-            - name: Set Production environment
+            - name: Set Staging environment
               if: github.ref != 'refs/heads/main'
               working-directory: ./api
               run: |
