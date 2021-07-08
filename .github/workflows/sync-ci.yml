@@ -37,7 +37,7 @@ jobs:
 
             - name: Install node packages
               working-directory: ./conversation-sync
-              run: npm ci
+              run: npm ci --unsafe-perm=true
 
             - name: npm install
               working-directory: ./conversation-sync
