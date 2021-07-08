@@ -49,6 +49,7 @@ jobs:
               if: github.ref != 'refs/heads/main'
               working-directory: ./api
               run: |
+                  echo $GITHUB_ENV
                   echo "RAISELY_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
               env:
                   GCLOUD_AUTH: ${{ secrets.RAISELY_STAGING_TOKEN }}
