@@ -39,9 +39,13 @@ jobs:
               working-directory: ./cc-proxy
               run: npm ci --unsafe-perm=true
 
-            - name: npm install
+            - name: Test packages
               working-directory: ./cc-proxy
-              run: npm test
+              run:
+                  # Copy dummy env file in place so datastore-env won't complain about missing environment
+                  # variables
+                  cp .env.TEST .env;
+                  npm test
 
             - name: Setup Production Environment
               if: github.ref == 'refs/heads/main'
