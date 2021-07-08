@@ -49,12 +49,13 @@ jobs:
               if: github.ref != 'refs/heads/main'
               working-directory: ./api
               run: |
-                  echo $GITHUB_ENV
-                  echo "RAISELY_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
-              env:
-                  GCLOUD_AUTH: ${{ secrets.RAISELY_STAGING_TOKEN }}
+                  echo "Hi!"
+            #       echo $GITHUB_ENV
+            #       echo "RAISELY_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
+            #   env:
+            #       GCLOUD_AUTH: ${{ secrets.RAISELY_STAGING_TOKEN }}
 
-            - name: Deploy components
-              working-directory: ./cc-raisely-components
-              run: |
-                  npm run deploy
+            # - name: Deploy components
+            #   working-directory: ./cc-raisely-components
+            #   run: |
+            #       npm run deploy
