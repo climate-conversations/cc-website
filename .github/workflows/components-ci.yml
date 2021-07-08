@@ -49,7 +49,7 @@ jobs:
               if: github.ref != 'refs/heads/main'
               working-directory: ./api
               run: |
-                  echo "Hi!"
+                  echo "Hi!";
             #       echo $GITHUB_ENV
             #       echo "RAISELY_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
             #   env:
