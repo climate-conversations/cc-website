@@ -18,6 +18,9 @@
 		"deploy:savePhoto": "gcloud functions deploy savePhotoProcess --trigger-resource SavePhoto --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-event google.pubsub.topic.publish && gcloud functions deploy savePhoto --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-http && gcloud functions deploy savePhotoRetry --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-http",
 		"deploy:all": "npm run deploy:backendReport && npm run deploy:donationSpreadsheet && npm run deploy:donorFacilMatch && npm run deploy:mailchimp && npm run deploy:raiselyPeople && npm run deploy:saveDonationPhotos && npm run deploy:savePhoto"
 	},
+	"engines": {
+		"node": ">=14.0.0"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/chrisjensen/conversation-sync.git"

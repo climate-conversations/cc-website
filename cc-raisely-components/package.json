@@ -4,6 +4,9 @@
 		"deploy": "raisely deploy",
 		"test": "mocha components/*/*.test.js"
 	},
+	"engines": {
+		"node": ">=14.0.0"
+	},
 	"devDependencies": {
 		"babel-cli": "^6.26.0",
 		"babel-jest": "^22.4.4",
