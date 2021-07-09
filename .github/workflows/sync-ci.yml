@@ -1,4 +1,4 @@
-name: Climate Conversations Data Sync
+name: CC Data Sync
 
 on:
     push:

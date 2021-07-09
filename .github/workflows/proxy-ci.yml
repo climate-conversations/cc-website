@@ -1,4 +1,4 @@
-name: Climate Conversations Proxy
+name: Authentication Proxy
 
 on:
     push:
