@@ -1,4 +1,4 @@
-name: Climate Conversations Proxy
+name: Climate Conversations Data Sync
 
 on:
     push:
@@ -39,9 +39,13 @@ jobs:
               working-directory: ./conversation-sync
               run: npm ci --unsafe-perm=true
 
-            - name: npm install
+            - name: Run tests
               working-directory: ./conversation-sync
-              run: npm test
+              run:
+                  # Copy dummy env file in place so datastore-env won't complain about missing environment
+                  # variables
+                  cp .env.TEST .env;
+                  npm test
 
             - name: Setup Production Environment
               if: github.ref == 'refs/heads/main'
