@@ -2,8 +2,8 @@ const { get } = require('lodash');
 const _ = require('lodash');
 
 const { upsertUser } = require('./upsert');
-const { setupVolunteer, resetEmail } = require("./setupVolunteer");
-const { hostReport, facilReport } = require("./reports");
+const { setupVolunteer, resetEmail } = require('./setupVolunteer');
+const { hostReport, facilReport } = require('./reports');
 const proxy = require('./proxy');
 const { assignRecordRequest: assignRecord } = require('./assignRecord');
 
@@ -42,7 +42,10 @@ function setCORS(req, res) {
 	if (req.method === 'OPTIONS') {
 		// Send response to OPTIONS requests
 		res.set('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH');
-		res.set('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization');
+		res.set(
+			'Access-Control-Allow-Headers',
+			'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization'
+		);
 		res.set('Access-Control-Max-Age', '3600');
 		res.status(204).send('');
 		return true;
@@ -52,10 +55,13 @@ function setCORS(req, res) {
 }
 
 function serializeError(error) {
-	const result = Object.assign({
-		message: error.message,
-		stack: error.stack,
-	}, _.pickBy(error, x => !_.isObject(x)));
+	const result = Object.assign(
+		{
+			message: error.message,
+			stack: error.stack,
+		},
+		_.pickBy(error, (x) => !_.isObject(x))
+	);
 	return result;
 }
 
@@ -86,9 +92,7 @@ function wrap(fn, name) {
 			if (setCORS(req, res)) return;
 
 			const result = await fn(req, res);
-			res
-				.status(200)
-				.send(result);
+			res.status(200).send(result);
 
 			log(name, req, res.statusCode);
 		} catch (error) {
@@ -106,20 +110,20 @@ function wrap(fn, name) {
 			}
 
 			const errorData = get(error, 'response.body', {
-				errors: [{
-					status,
-					message: error.message,
-					code: error.code || 'proxy-error',
-				}],
+				errors: [
+					{
+						status,
+						message: error.message,
+						code: error.code || 'proxy-error',
+					},
+				],
 			});
 
 			if (['test', 'development'].includes(process.env.NODE_ENV)) {
 				errorData.errors[0].stack = error.stack;
 			}
 
-			res
-				.status(status)
-				.send(errorData);
+			res.status(status).send(errorData);
 		}
 	};
 }
@@ -131,11 +135,13 @@ const functions = {
 	assignRecord,
 	hostReport,
 	facilReport,
-	resetEmail
+	resetEmail,
 };
 
 const proxiedFunctions = {};
 
-Object.keys(functions).forEach((fn) => { proxiedFunctions[fn] = wrap(functions[fn], fn); });
+Object.keys(functions).forEach((fn) => {
+	proxiedFunctions[fn] = wrap(functions[fn], fn);
+});
 
 module.exports = proxiedFunctions;
