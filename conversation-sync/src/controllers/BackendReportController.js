@@ -3,16 +3,30 @@ require('../../config');
 const { AirblastController } = require('airblast');
 const _ = require('lodash');
 
-const { getSpreadsheet, findOrCreateWorksheet, upsertRow } = require('../services/sheets');
+const {
+	getSpreadsheet,
+	findOrCreateWorksheet,
+	upsertRow,
+} = require('../services/sheets');
 const { isoToSgDateAndTime } = require('../helpers/dateHelpers');
-const { getField, raiselyRequest, raiselyToRow } = require('../helpers/raiselyHelpers');
+const {
+	getField,
+	raiselyRequest,
+	raiselyToRow,
+} = require('../helpers/raiselyHelpers');
 const { fetchTeam } = require('../helpers/raiselyConversationHelpers');
 
 const options = {
 	wrapInData: true,
 };
 
-const userFields = ['fullName', 'preferredName', 'phoneNumber', 'email', 'postcode'];
+const userFields = [
+	'fullName',
+	'preferredName',
+	'phoneNumber',
+	'email',
+	'postcode',
+];
 
 /**
  * Returns a map from qualified id to spreadsheet header label
@@ -26,10 +40,12 @@ const userFields = ['fullName', 'preferredName', 'phoneNumber', 'email', 'postco
  */
 function idToHeaders(headers) {
 	// List of field ids for pre and post
-	const [pre, post] = ['preSurvey', 'postSurvey'].map(prefix => headers
-		.filter(id => id.startsWith(`${prefix}.`))
-		.map(id => id.split('.')[1]));
-	const overlap = pre.filter(id => post.includes(id));
+	const [pre, post] = ['preSurvey', 'postSurvey'].map((prefix) =>
+		headers
+			.filter((id) => id.startsWith(`${prefix}.`))
+			.map((id) => id.split('.')[1])
+	);
+	const overlap = pre.filter((id) => post.includes(id));
 
 	const keepPrefix = ['conversation', 'host', 'facilitator'];
 	const tenseMap = {
@@ -38,11 +54,14 @@ function idToHeaders(headers) {
 	};
 
 	const idMap = {};
-	headers.forEach(id => {
+	headers.forEach((id) => {
 		const [prefix, key] = id.split('.');
 		if (keepPrefix.includes(prefix)) {
 			idMap[id] = _.startCase(id);
-		} else if (['preSurvey', 'postSurvey'].includes(prefix) && overlap.includes(key)) {
+		} else if (
+			['preSurvey', 'postSurvey'].includes(prefix) &&
+			overlap.includes(key)
+		) {
 			const tense = tenseMap[prefix];
 			idMap[id] = _.startCase(`${key} ${tense}`);
 		} else {
@@ -60,11 +79,16 @@ function selectFields(data, { facilitator, host }) {
 
 	const { date, time } = isoToSgDateAndTime(conversation.startAt);
 	let donationAmount = getField({ rsvp }, 'rsvp.donationAmount');
-	if (donationAmount) donationAmount = donationAmount / 100
+	if (donationAmount) donationAmount = donationAmount / 100;
 
 	return {
 		user: _.pick(user, userFields),
-		conversation: { uuid: conversation.uuid, name: conversation.name, date, time },
+		conversation: {
+			uuid: conversation.uuid,
+			name: conversation.name,
+			date,
+			time,
+		},
 		rsvp: {
 			donationIntention: getField({ rsvp }, 'rsvp.donationIntention'),
 			donationAmount,
@@ -80,7 +104,8 @@ function selectFields(data, { facilitator, host }) {
 
 class BackendReport extends AirblastController {
 	async process({ data }) {
-		if (data.type !== 'guest.created') throw new Error(`Unrecognised event ${data.type}`);
+		if (data.type !== 'guest.created')
+			throw new Error(`Unrecognised event ${data.type}`);
 
 		const surveyVersion = '2020';
 		let sheetTitle = `Surveys ${surveyVersion}`;
@@ -89,7 +114,10 @@ class BackendReport extends AirblastController {
 
 		const guestData = data.data;
 		const { rsvp, conversation } = guestData;
-		if (!rsvp || !rsvp.uuid) throw new Error(`Cannot add to sheet as guest info has no rsvp.uuid`);
+		if (!rsvp || !rsvp.uuid)
+			throw new Error(
+				`Cannot add to sheet as guest info has no rsvp.uuid`
+			);
 
 		// Prepare spreadsheet headers
 		const [headerInfo, team] = await Promise.all([
@@ -101,7 +129,11 @@ class BackendReport extends AirblastController {
 		const document = await getSpreadsheet(BACKEND_SPREADSHEET);
 
 		// Find tab in spreadsheet that matches 'Surveys 2020'
-		const { sheet } = await findOrCreateWorksheet(document, sheetTitle, headers);
+		const { sheet } = await findOrCreateWorksheet(
+			document,
+			sheetTitle,
+			headers
+		);
 
 		const preparedData = selectFields(guestData, team);
 		const row = raiselyToRow(preparedData, headerMap);
@@ -110,7 +142,14 @@ class BackendReport extends AirblastController {
 		// Because duplicate RSVPs are not unusual :-(
 		// de-dupe by userId & conversationId
 		// (but also match existing entries)
-		await upsertRow(sheet, (row) => (row['UserId'] === rsvp.userUuid && row['Conversation Uuid'] === rsvp.eventUuid) || row.GuestId === rsvp.uuid, row);
+		await upsertRow(
+			sheet,
+			(row) =>
+				(row['UserId'] === rsvp.userUuid &&
+					row['Conversation Uuid'] === rsvp.eventUuid) ||
+				row.GuestId === rsvp.uuid,
+			row
+		);
 	}
 
 	async getHeaders(surveyVersion) {
@@ -119,10 +158,14 @@ class BackendReport extends AirblastController {
 			if (!this.surveyPromise) {
 				this.surveyPromise = this.getSurveyFields(surveyVersion);
 			}
-			const { preSurveyFields, postSurveyFields } = await this.surveyPromise;
-			const fieldIds = this.getOrderedFields({ preSurveyFields, postSurveyFields });
+			const { preSurveyFields, postSurveyFields } = await this
+				.surveyPromise;
+			const fieldIds = this.getOrderedFields({
+				preSurveyFields,
+				postSurveyFields,
+			});
 			this.headerMap = idToHeaders(fieldIds);
-			this.headers = fieldIds.map(id => this.headerMap[id]);
+			this.headers = fieldIds.map((id) => this.headerMap[id]);
 		}
 		const { headers, headerMap } = this;
 		return { headers, headerMap };
@@ -130,18 +173,26 @@ class BackendReport extends AirblastController {
 
 	async getSurveyFields(surveyVersion) {
 		const config = await raiselyRequest({
-			path: '/campaigns/cc-volunteer-portal/config',
+			path: `/campaigns/${process.env.PORTAL_PATH}/config`,
 			token: process.env.RAISELY_TOKEN,
 		});
 
-		let preSurveyFields = config.interactionCategoryFields[`cc-pre-survey-${surveyVersion}`];
-		let postSurveyFields = config.interactionCategoryFields[`cc-post-survey-${surveyVersion}`];
-		if (!preSurveyFields) throw new Error(`Cannot find interaction fields for cc-pre-survey-${surveyVersion}`);
-		if (!postSurveyFields) throw new Error(`Cannot find interaction fields for cc-post-survey-${surveyVersion}`);
+		let preSurveyFields =
+			config.interactionCategoryFields[`cc-pre-survey-${surveyVersion}`];
+		let postSurveyFields =
+			config.interactionCategoryFields[`cc-post-survey-${surveyVersion}`];
+		if (!preSurveyFields)
+			throw new Error(
+				`Cannot find interaction fields for cc-pre-survey-${surveyVersion}`
+			);
+		if (!postSurveyFields)
+			throw new Error(
+				`Cannot find interaction fields for cc-post-survey-${surveyVersion}`
+			);
 
 		// Map so the field names have prefixes
-		preSurveyFields = preSurveyFields.map(f => `preSurvey.${f}`);
-		postSurveyFields = postSurveyFields.map(f => `postSurvey.${f}`);
+		preSurveyFields = preSurveyFields.map((f) => `preSurvey.${f}`);
+		postSurveyFields = postSurveyFields.map((f) => `postSurvey.${f}`);
 
 		return { preSurveyFields, postSurveyFields };
 	}
