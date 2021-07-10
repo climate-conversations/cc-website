@@ -56,3 +56,16 @@ then run with the `LIVE_TEST` flag.
 # Download credentials for the serv
 LIVE_TEST=1 npx mocha ./test/controllers/BackendReportController.test.js
 ```
+
+# Deploying
+
+When this is pushed to a branch it will automatically deploy to the staging environment (assuming tests pass)
+However waiting for all functions to deploy can take some time, if you wish to deploy and test just one
+function, it might be easier to deploy from local using one of the `deploy:` commands in `package.json`
+
+eg:
+
+```
+gcloud config set project cc-website-staging
+deploy:backendReport
+```
