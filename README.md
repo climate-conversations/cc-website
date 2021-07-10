@@ -19,9 +19,9 @@ For best experience, you should be using node 14 for local development and VSCod
 
 See the README's for the subfolders for getting started with each subsystem
 
-[Custom React Components](cc-raisely-components/README.md)
-[Authentication Proxy](cc-proxy/README.md)
-[Data Synchronisation](conversation-sync/README.md)
+-   [Custom React Components](cc-raisely-components/README.md)
+-   [Authentication Proxy](cc-proxy/README.md)
+-   [Data Synchronisation](conversation-sync/README.md)
 
 Custom React Components - React components that can be placed in the website.
 Proxy Cloud Functions - Proxy certain requests to the Raisely API to transform or enhance them
@@ -29,6 +29,6 @@ Data Synchronisation Functions - Cloud Functions to synchronise data to other sy
 
 System documentation that will help you understand how it all fits together:
 
-[Overview of Records and their relationship](https://docs.google.com/presentation/d/1ckIDj08RUndWtL7--Y3zOVklLankSawo1I7t2WHjrzo/edit#slide=id.g5ce15420a9_0_105)
-[Description of Custom Fields](https://docs.google.com/spreadsheets/d/10AyEaVRdsHoQYZCrC7GpFpLAQFLMpX0B955UMJx7rOo/edit#gid=63860934)
-[Summary of Custom Messages](https://docs.google.com/spreadsheets/d/137Kr6hrehSk6LgTC3Lf0U_DeKQHYS7rFvM5zxr7FkSQ/edit#gid=1219904281)
+-   [Overview of Records and their relationship](https://docs.google.com/presentation/d/1ckIDj08RUndWtL7--Y3zOVklLankSawo1I7t2WHjrzo/edit#slide=id.g5ce15420a9_0_105)
+-   [Description of Custom Fields](https://docs.google.com/spreadsheets/d/10AyEaVRdsHoQYZCrC7GpFpLAQFLMpX0B955UMJx7rOo/edit#gid=63860934)
+-   [Summary of Custom Messages](https://docs.google.com/spreadsheets/d/137Kr6hrehSk6LgTC3Lf0U_DeKQHYS7rFvM5zxr7FkSQ/edit#gid=1219904281)
