@@ -67,15 +67,16 @@ describe('proxy', () => {
 			expect(raiselyRequest.headers).to.containSubset({
 				'x-original-user': '(general public)',
 				'x-cc-proxy-url': '/interactions?campaign=campaignUuid',
-				origin: 'https://climateconversations.raisely.com',
+				'origin': 'https://climateconversations.raisely.com',
 				'user-agent': 'Climate Conversations Proxy',
-				authorization: 'Bearer MOCK_APP_TOKEN',
+				'authorization': 'Bearer MOCK_APP_TOKEN',
 			});
 		});
 		it('passes through correct headers', () => {
 			expect(results.res.headers).to.containSubset({
 				'Access-Control-Allow-Credentials': 'true',
-				'Access-Control-Allow-Origin': 'https://climateconversations.raisely.com',
+				'Access-Control-Allow-Origin':
+					'https://climateconversations.raisely.com',
 			});
 		});
 		it('forwards the body', () => {
@@ -120,15 +121,19 @@ describe('proxy', () => {
 		});
 		it('escalates auth token', () => {
 			expect(raiselyRequest).to.not.be.null;
-			expect(raiselyRequest.headers.authorization).to.eq('Bearer MOCK_APP_TOKEN');
+			expect(raiselyRequest.headers.authorization).to.eq(
+				'Bearer MOCK_APP_TOKEN'
+			);
 		});
 	});
 
 	describe('proxies failure', () => {
 		const errorBody = {
-			errors: [{
-				message: 'That was not good',
-			}],
+			errors: [
+				{
+					message: 'That was not good',
+				},
+			],
 		};
 		before(() => {
 			raiselyRequest = null;
@@ -189,16 +194,15 @@ describe('proxy', () => {
 					},
 				},
 			});
-			authNock = apiNock
-				.get('/v3/authenticate')
-				.reply(200, {
-					data: { roles: [] },
-				});
-			tagNock = apiNock
-				.get('/v3/users/me?private=1')
-				.reply(200, {
-					data: { tags: [{ path: 'facilitator' }] },
-				});
+			authNock = apiNock.get('/v3/authenticate').reply(200, {
+				data: { roles: [] },
+			});
+			tagNock = apiNock.get('/v3/users/me?private=1').reply(200, {
+				data: {
+					tags: [{ path: 'facilitator' }],
+					organisationUuid: process.env.ORGANISATION_UUID,
+				},
+			});
 			apiNock
 				.get('/v3/campaigns/uuid?private=1')
 				.reply(200, function userRequest(uri, body) {
@@ -221,7 +225,9 @@ describe('proxy', () => {
 		});
 		it('escalates auth token', () => {
 			expect(raiselyRequest).to.not.be.null;
-			expect(raiselyRequest.headers.authorization).to.eq('Bearer MOCK_APP_TOKEN');
+			expect(raiselyRequest.headers.authorization).to.eq(
+				`Bearer ${process.env.APP_TOKEN}`
+			);
 		});
 	});
 
@@ -232,8 +238,13 @@ describe('proxy', () => {
 			raiselyRequest = null;
 			const unauthorized = {
 				status: 403,
-				errors: [{ message: 'You are not authorized to do that', status:403, code: 'unauthorized',
-				}]
+				errors: [
+					{
+						message: 'You are not authorized to do that',
+						status: 403,
+						code: 'unauthorized',
+					},
+				],
 			};
 
 			results.res = new MockResponse();
@@ -294,7 +305,10 @@ describe('proxy', () => {
 				})
 				.get('/v3/users/me?private=1')
 				.reply(200, {
-					data: { tags: [] },
+					data: {
+						tags: [],
+						organisationUuid: process.env.ORGANISATION_UUID,
+					},
 				})
 				.post('/v3/campaigns')
 				.reply(200, function userRequest(uri, body) {
@@ -331,6 +345,6 @@ describe('proxy', () => {
 		});
 		it('status 204', () => {
 			expect(results.res.statusCode).to.eq(204);
-		})
-	})
+		});
+	});
 });

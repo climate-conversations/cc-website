@@ -33,7 +33,12 @@ const filteredCreateUser = {
 function itReturnsMinimalUser(results) {
 	it('returns minimal user', () => {
 		expect(results.res.body).to.eql({
-			data: pick(results.user, ['preferredName', 'fullName', 'email', 'uuid']),
+			data: pick(results.user, [
+				'preferredName',
+				'fullName',
+				'email',
+				'uuid',
+			]),
 		});
 	});
 }
@@ -76,13 +81,17 @@ describe('upsertUser', () => {
 		});
 		it('sends auth token', () => {
 			expect(raiselyRequest).to.not.be.null;
-			expect(raiselyRequest.headers.authorization).to.eq('Bearer MOCK_APP_TOKEN');
+			expect(raiselyRequest.headers.authorization).to.eq(
+				'Bearer MOCK_APP_TOKEN'
+			);
 		});
 	});
 
 	describe('malformed body', () => {
 		before(() => {
-			prepareRequest(results, { data: { data: { email: 'fake@cc.test' } } });
+			prepareRequest(results, {
+				data: { data: { email: 'fake@cc.test' } },
+			});
 			return upsertUser(results.req, results.res);
 		});
 		it('should return 400', () => {
@@ -126,12 +135,16 @@ describe('upsertUser', () => {
 		describe('new user', () => {
 			before(() => {
 				results.user = { ...completeUser, uuid: 'some_other_uuid' };
-				setup(results, {
-					assignSelf: 1,
-					data: { ...createUser },
-				}, {
-					Authorization: 'Bearer 1234',
-				});
+				setup(
+					results,
+					{
+						assignSelf: 1,
+						data: { ...createUser },
+					},
+					{
+						Authorization: 'Bearer 1234',
+					}
+				);
 				nock('https://api.raisely.com')
 					.post('/v3/users')
 					.reply(200, function userRequest(uri, body) {
@@ -160,23 +173,33 @@ describe('upsertUser', () => {
 			statusOk(results);
 			itReturnsMinimalUser(results);
 			it('posts user without falsey action', () => {
-				expect(raiselyRequest.body).to.eql({ data: filteredCreateUser });
+				expect(raiselyRequest.body).to.eql({
+					data: filteredCreateUser,
+				});
 			});
 			it('assigns the user', () => {
 				expect(assignmentRequest).to.not.be.null;
-				expect(assignmentRequest.body).to.deep.eq({ data: [{ recordUuid: 'some_other_uuid', recordType: 'user' }] });
+				expect(assignmentRequest.body).to.deep.eq({
+					data: [
+						{ recordUuid: 'some_other_uuid', recordType: 'user' },
+					],
+				});
 			});
 		});
 		describe('existing user', () => {
 			before(() => {
 				request.cache.clear();
 				assignmentRequest = null;
-				setup(results, {
-					assignSelf: 1,
-					data: { ...createUser, uuid: 'some_other_uuid' },
-				}, {
-					Authorization: 'Bearer 1234',
-				});
+				setup(
+					results,
+					{
+						assignSelf: 1,
+						data: { ...createUser, uuid: 'some_other_uuid' },
+					},
+					{
+						Authorization: 'Bearer 1234',
+					}
+				);
 				nock('https://api.raisely.com')
 					.patch('/v3/users/some_other_uuid')
 					.reply(200, function userRequest(uri, body) {
@@ -189,7 +212,9 @@ describe('upsertUser', () => {
 						};
 					})
 					.get('/v3/users?email=bob%40cc.test&private=1')
-					.reply(200, { data: [{ ...completeUser, uuid: 'some_other_uuid' }] })
+					.reply(200, {
+						data: [{ ...completeUser, uuid: 'some_other_uuid' }],
+					})
 					.post('/v3/users/facil_uuid/assignments')
 					.reply(200, function assignmentReq(uri, body) {
 						assignmentRequest = {
@@ -206,7 +231,11 @@ describe('upsertUser', () => {
 			itReturnsMinimalUser(results);
 			it('assigns the user', () => {
 				expect(assignmentRequest).to.not.be.null;
-				expect(assignmentRequest.body).to.deep.eq({ data: [{ recordUuid: 'some_other_uuid', recordType: 'user' }] });
+				expect(assignmentRequest.body).to.deep.eq({
+					data: [
+						{ recordUuid: 'some_other_uuid', recordType: 'user' },
+					],
+				});
 			});
 		});
 		describe('unauthorized', () => {
@@ -229,7 +258,9 @@ describe('upsertUser', () => {
 						};
 					})
 					.get('/v3/users?email=bob%40cc.test&private=1')
-					.reply(200, { data: [{ ...completeUser, uuid: 'some_other_uuid' }] });
+					.reply(200, {
+						data: [{ ...completeUser, uuid: 'some_other_uuid' }],
+					});
 				nockAuthentication();
 
 				return upsertUser(results.req, results.res);
@@ -272,6 +303,7 @@ function nockAuthentication(roles = []) {
 		.reply(200, {
 			data: {
 				uuid: 'facil_uuid',
+				organisationUuid: process.env.ORGANISATION_UUID,
 				tags: [{ path: 'facilitator' }],
 			},
 		});
