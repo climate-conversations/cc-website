@@ -20,6 +20,10 @@ cd cc-raisely-components
 npm install
 
 # Set up the raisely client
+# If your account has access to multiple organisations, make sure
+# you're switched into the Climate Conversations Staging organisation
+# before you start.
+#
 # You will be asked for login details for raisely, and
 # to select which campaign styles to work on
 npx raisely init
