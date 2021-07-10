@@ -7,6 +7,8 @@ const AUTHENTICATION_TTL = 10000;
 
 const escalations = require('./definitions');
 
+const logger = require('../config/logging');
+
 /**
  * Get a users roles and tags for use in authentication
  * @param {} req
@@ -16,7 +18,7 @@ async function getTagsAndRoles(req) {
 	if (!bearer) return { tags: [], roles: [] };
 
 	const [prefix, token] = bearer.split(' ');
-	if (((prefix || '').toLowerCase() !== 'bearer') || !token) {
+	if ((prefix || '').toLowerCase() !== 'bearer' || !token) {
 		throw new RestError({
 			status: 400,
 			message: 'Authentication header is malformed',
@@ -26,12 +28,28 @@ async function getTagsAndRoles(req) {
 
 	const opt = { cacheTTL: AUTHENTICATION_TTL };
 	const [authentication, user] = await Promise.all([
-		raiselyRequest({ ...opt, cacheKey: `/authenticate ${token}`, path: '/authenticate', token }, req),
-		raiselyRequest({ ...opt, cacheKey: `/users/me ${token}`, path: '/users/me?private=1', token }, req),
+		raiselyRequest(
+			{
+				...opt,
+				cacheKey: `/authenticate ${token}`,
+				path: '/authenticate',
+				token,
+			},
+			req
+		),
+		raiselyRequest(
+			{
+				...opt,
+				cacheKey: `/users/me ${token}`,
+				path: '/users/me?private=1',
+				token,
+			},
+			req
+		),
 	]);
 
 	return {
-		tags: _.get(user, 'data.tags', []).map(t => t.path),
+		tags: _.get(user, 'data.tags', []).map((t) => t.path),
 		roles: _.get(authentication, 'data.roles', []),
 		user: _.get(user, 'data'),
 	};
@@ -56,7 +74,11 @@ async function authorize(req, path) {
 	const { user, tags, roles } = await getTagsAndRoles(req);
 
 	// Don't let users of other organisations into our campaigns
-	if (user && (user.organisationUuid !== process.env.ORGANISATION_UUID)) {
+	if (user && user.organisationUuid !== process.env.ORGANISATION_UUID) {
+		logger.log('error', 'User is from a different organisation', {
+			user: _.pick(user, ['organisationUuid', 'uuid']),
+			configuredOrganisation: process.env.ORGANISATION_UUID,
+		});
 		return false;
 	}
 
@@ -67,13 +89,16 @@ async function authorize(req, path) {
 	};
 
 	// ORG_ADMINS can do anything, no need to check the rules
-	if (roles.includes('ORG_ADMIN')) return {
-		noEscalate: true,
-		originalUser,
-	};
+	if (roles.includes('ORG_ADMIN'))
+		return {
+			noEscalate: true,
+			originalUser,
+		};
 
 	const escalation = escalations.find((e) => {
-		let isMatch = e.method.toLowerCase() === req.method.toLowerCase() && matchPath(e, path);
+		let isMatch =
+			e.method.toLowerCase() === req.method.toLowerCase() &&
+			matchPath(e, path);
 		if (e.tags) isMatch = isMatch && _.intersection(e.tags, tags).length;
 		if (e.roles) isMatch = isMatch && _.intersection(e.roles, roles).length;
 		return isMatch;
@@ -81,7 +106,7 @@ async function authorize(req, path) {
 
 	let deny = false;
 	if (_.get(escalation, 'condition')) {
-		deny = !await escalation.condition(req);
+		deny = !(await escalation.condition(req));
 	}
 
 	// Return false and pass through request
