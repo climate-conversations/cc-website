@@ -7,12 +7,14 @@ The custom components contained here are used in the campaigns `climate-conversa
 
 ### Quick start
 
+These components are tested on node 14
+
 Components and styles are most easily edited using the text/code editor of your choice and
 using the [Raisely CLI](https://github.com/raisely/cli) to sync file changes.
 
 ```sh
-# Clone the repo
-git clone https://...
+# Change to this subdirectory
+cd cc-raisely-components
 
 # Install dependencies
 npm install
@@ -26,10 +28,24 @@ npx raisely init
 npx raisely start
 ```
 
+### Testing
+
+There are a handful of tests for utility components
+
+```
+# Run all tests
+npx test
+
+# Run a specific test
+npx mocha components/<folder>
+```
+
 ### Debugging
+
 To identify the component you need to debug, there are two ways you can identify it: from the admin or from the client (live site)
 
 ##### In the admin
+
 1. Open the page list for the campaign (eg https://admin.raisely.com/campaigns/cc-volunteer-portal/pages)
 2. Open the relevant page in the editor
 3. Hover over the component you want to debug, and click the cog
@@ -39,6 +55,7 @@ To identify the component you need to debug, there are two ways you can identify
 {name} should be the running the title from step 4 through `_.kebabCase()`
 
 ##### In the client
+
 1. Install the React extension for your browser
 2. Open the page
 3. Open the React Inspector, use the selection pointer to click on the component in the page
@@ -47,12 +64,4 @@ The name of the selected component will be the name as used in the source code, 
 
 ```sh
 grep -i NAME components/*/*.js
-```
-
-
-### Tests
-A handful of utility components have automated tests, you can run the tests with
-
-```
-npx mocha components/*/*.test.js
 ```
