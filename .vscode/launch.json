@@ -60,7 +60,8 @@
 			"skipFiles": ["<node_internals>/**"],
 			"outputCapture": "std",
 			"env": {},
-			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v10.17.0/bin/node"
+			"cwd": "${workspaceFolder}/cc-proxy",
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v14.17.2/bin/node"
 		},
 		{
 			"type": "node",
