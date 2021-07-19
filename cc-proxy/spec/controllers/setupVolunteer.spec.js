@@ -105,6 +105,73 @@ describe('Setup Volunteer', () => {
 			itDoesNotChangeUser();
 		});
 	});
+	describe.only('WHEN type is team-leader', () => {
+		describe('WHEN leader is new', () => {
+			before(() => {
+				clearNocks();
+				nockAuthentication(['ORG_ADMIN'], []);
+				nockSetupProfile('GROUP');
+				nockSetAdminFlag();
+				nockTagUser([], ['team-leader']);
+				nockCampaign();
+				nockSetRole(
+					[],
+					['DATA_ADMIN', 'PROFILE_EDITOR', 'CAMPAIGN_ADMIN']
+				);
+				nockAssignment();
+				const req = setupRequest({
+					type: 'team-leader',
+					userUuid,
+					teamUuid: newTeamUuid,
+				});
+				return sendRequest(req);
+			});
+			it('adds role', () => {
+				expectNockCalled('POST /users/roles', {
+					body: {
+						data: [
+							{ role: 'DATA_ADMIN' },
+							{ role: 'PROFILE_EDITOR' },
+							{ role: 'CAMPAIGN_ADMIN' },
+						],
+					},
+				});
+			});
+			it('adds tag', () => {
+				expectNockCalled('POST /tags/team-leader/records', {
+					body: { data: [{ uuid: userUuid }] },
+				});
+			});
+			itSetsAdminFlag();
+		});
+
+		describe('WHEN nothing needs to change', () => {
+			before(() => {
+				clearNocks();
+				nockAuthentication(['ORG_ADMIN'], []);
+				nockTagUser(['team-leader'], [], true);
+				nockSetRole(
+					['DATA_ADMIN', 'CAMPAIGN_ADMIN', 'PROFILE_EDITOR'],
+					[]
+				);
+				nockSetupProfile('GROUP', true);
+				nockSetAdminFlag();
+				nockAssignment();
+				nockCampaign();
+				const req = setupRequest({
+					type: 'team-leader',
+					userUuid,
+					teamUuid: newTeamUuid,
+				});
+				return sendRequest(req);
+			});
+			it('does not create or update profile', () => {
+				expectNockNotCalled('POST /profiles');
+				expectNockNotCalled('PUT /profiles');
+			});
+			itDoesNotChangeUser();
+		});
+	});
 });
 
 let requests = {};
@@ -204,6 +271,22 @@ function nockSetRole(existingRoles, newRoles = []) {
 	}
 }
 
+function nockCampaign() {
+	noteRequest(
+		`GET /campaigns/${process.env.PORTAL_PATH}`,
+		'GET',
+		`/campaigns/${process.env.PORTAL_PATH}`,
+		200,
+		{
+			data: {
+				profile: {
+					uuid: 'campaign_prof_uuid',
+				},
+			},
+		}
+	);
+}
+
 function nockTagUser(existingTags, newTags = [], isAdmin = false) {
 	noteRequest('GET /tags', 'GET', `/tags?private=1`, 200, {
 		data: newTags.map((path) => ({
@@ -236,7 +319,10 @@ function nockSetAdminFlag() {
 
 function nockAuthentication(roles, tags) {
 	noteRequest('GET /authenticate', 'GET', '/authenticate', 200, {
-		data: { roles: roles.map((role) => ({ role })) },
+		data: {
+			roles: roles.map((role) => ({ role })),
+			uuid: 'auth_user_uuid',
+		},
 	});
 	noteRequest('GET /auth/tags', 'GET', '/users/me?private=1', 200, {
 		data: {
