@@ -42,6 +42,10 @@ async function setupVolunteer(req) {
 				req,
 			})
 		);
+		// Cannot assign them to the user until they are an admin
+		// so need to wait for the first part to finish
+		await Promise.all(promises);
+
 		// Assign them to themself so they can see their own interactions
 		promises.push(assignRecord(req, userUuid, userUuid));
 	} else if (type === 'team-leader') {
@@ -60,6 +64,11 @@ async function setupVolunteer(req) {
 				req,
 			})
 		);
+
+		// Cannot assign them to the campaign until they are an admin
+		// so need to wait for the first part to finish
+		await Promise.all(promises);
+
 		promises.push(assignPortalCampaign(userUuid, req));
 	}
 
