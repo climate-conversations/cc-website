@@ -50,12 +50,11 @@
 			});
 		};
 		resetPassword = async () => {
-			this.setState({ passwordReset: true });
 			const { user } = this.props;
 			try {
-				if (!CCUserSave) CCUserSave = CCUserSaveRef().html;
+				if (!UserSaveHelper) UserSaveHelper = CCUserSaveRef().html;
 				this.setState({ sendingEmail: true });
-				await CCUserSave.sendPasswordReset(user.uuid);
+				await UserSaveHelper.sendPasswordReset(user.uuid);
 				this.setState({ passwordReset: true, sendingEmail: false });
 			} catch (error) {
 				console.error(error);
@@ -105,11 +104,16 @@
 				// Get full details of the team if we don't have them
 				if (team && (!team.name || !team.user)) {
 					promises.push(
-						getData(api.profiles.get({ id: team.uuid })).then(
-							(team) => {
-								newState.team = team;
-							}
-						)
+						getData(
+							api.profiles.get({
+								id: team.uuid,
+								query: {
+									private: true,
+								},
+							})
+						).then((team) => {
+							newState.team = team;
+						})
 					);
 				}
 
@@ -245,8 +249,7 @@
 				return (
 					<div className="facil-create__facil-exists">
 						<p>
-							{team.name} is currently lead by
-							{oldTeamLeaderName}
+							{team.name} is currently lead by {oldTeamLeaderName}
 						</p>
 						{existingTeams && existingTeams.length ? (
 							<p>
