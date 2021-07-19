@@ -48,6 +48,10 @@ async function getTagsAndRoles(req) {
 		),
 	]);
 
+	req.authentication = {
+		user: _.get(authentication, 'data.uuid'),
+	};
+
 	return {
 		tags: _.get(user, 'data.tags', []).map((t) => t.path),
 		roles: _.get(authentication, 'data.roles', []),
@@ -95,12 +99,16 @@ async function authorize(req, path) {
 			originalUser,
 		};
 
-	const escalation = escalations.find((e) => {
+	const justRoles = roles.map((r) => r.role);
+
+	const escalation = escalations.find((e, index) => {
 		let isMatch =
 			e.method.toLowerCase() === req.method.toLowerCase() &&
 			matchPath(e, path);
+
 		if (e.tags) isMatch = isMatch && _.intersection(e.tags, tags).length;
-		if (e.roles) isMatch = isMatch && _.intersection(e.roles, roles).length;
+		if (e.roles)
+			isMatch = isMatch && _.intersection(e.roles, justRoles).length;
 		return isMatch;
 	});
 
