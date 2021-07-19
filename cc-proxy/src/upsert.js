@@ -5,14 +5,44 @@ const RestError = require('./restError');
 const { assignRecord } = require('./assignRecord');
 const { authorize } = require('./proxy/permissions');
 
-const permittedUpdateFields = ['private.host', 'private.volunteer', 'private.hostCorporate',
-	'private.facilitate', 'private.newsletter', 'private.mailingList', 'private.organisationName',
-	'private.attendedConversation', 'private.nycConsent', 'postcode'];
-const permittedCreateFields = ['fullName', 'firstName', 'preferredName', 'lastName', 'email', 'phoneNumber',
-	'private.alternateEmail', 'private.alternatePhone', 'private.source', ...permittedUpdateFields,
-	'private.gender', 'private.ethnicity', 'private.dateOfBirth', 'residency'];
+const permittedUpdateFields = [
+	'private.host',
+	'private.volunteer',
+	'private.hostCorporate',
+	'private.facilitate',
+	'private.newsletter',
+	'private.mailingList',
+	'private.organisationName',
+	'private.attendedConversation',
+	'private.nycConsent',
+	'postcode',
+];
+const permittedCreateFields = [
+	'fullName',
+	'firstName',
+	'preferredName',
+	'lastName',
+	'email',
+	'phoneNumber',
+	'private.alternateEmail',
+	'private.alternatePhone',
+	'private.source',
+	...permittedUpdateFields,
+	'private.gender',
+	'private.ethnicity',
+	'private.dateOfBirth',
+	'residency',
+];
 
-const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newsletter', 'mailingList', 'attendedConversation'];
+const actionFields = [
+	'host',
+	'facilitate',
+	'volunteer',
+	'hostCorporate',
+	'newsletter',
+	'mailingList',
+	'attendedConversation',
+];
 
 /**
  * Return only uuid, fullName and preferredName from a request that returns a user
@@ -20,24 +50,24 @@ const actionFields = ['host', 'facilitate', 'volunteer', 'hostCorporate', 'newsl
  * @return {object} Transformed body
  */
 function redactUser(original) {
-	return function reductFn(body) {
+	return function redactFn(body) {
 		const { data } = body;
 
 		const permitted = ['uuid', 'preferredName', 'fullName', 'email'];
 		const optional = ['phoneNumber'];
 
-		const user = pick(data, permitted)
-		optional.forEach(key => {
+		const user = pick(data, permitted);
+		optional.forEach((key) => {
 			const value = get(data, key);
-			if ((typeof value !== 'undefined') && (get(original, key) === value)) {
+			if (typeof value !== 'undefined' && get(original, key) === value) {
 				set(user, key, value);
 			}
-		})
+		});
 
 		return {
 			data: user,
 		};
-	}
+	};
 }
 
 /**
@@ -46,47 +76,56 @@ function redactUser(original) {
  * @param {string} model The name of the model to save
  * @param {object} record The record to update/create
  */
-async function save(record, bodyParams, req) {
+async function save(record, bodyParams, req, opts) {
 	if (!record) throw new Error('Record to save is undefined or null!');
 
 	// Update will complain about updating uuid field
 	if (record.uuid) {
 		const data = pick(record, permittedUpdateFields);
-		return raisely({
-			method: 'PATCH',
-			path: `/users/${record.uuid}`,
+		return raisely(
+			{
+				method: 'PATCH',
+				path: `/users/${record.uuid}`,
+				body: {
+					...bodyParams,
+					data,
+				},
+				transform: redactUser(record),
+				transform2xxOnly: true,
+				escalate: true,
+			},
+			req
+		);
+	}
+
+	const data = opts.skipFilter ? record : pick(record, permittedCreateFields);
+
+	return raisely(
+		{
+			method: 'POST',
+			path: '/users',
 			body: {
-				...bodyParams,
 				data,
 			},
 			transform: redactUser(record),
 			transform2xxOnly: true,
 			escalate: true,
-		}, req);
-	}
-
-	const data = pick(record, permittedCreateFields);
-
-	return raisely({
-		method: 'POST',
-		path: '/users',
-		body: {
-			data,
 		},
-		transform: redactUser(record),
-		transform2xxOnly: true,
-		escalate: true,
-	}, req);
+		req
+	);
 }
 
 async function findUserBy(attribute, record, req) {
 	const query = { [attribute]: record[attribute] };
 	query.private = 1;
-	const body = await raisely({
-		query,
-		path: '/users',
-		escalate: true,
-	}, req);
+	const body = await raisely(
+		{
+			query,
+			path: '/users',
+			escalate: true,
+		},
+		req
+	);
 
 	return body.data;
 }
@@ -141,7 +180,8 @@ function prepareUserForSave(existing, user) {
 	// Delete any action keys that are false so we don't overwrite existing
 	actionFields.forEach((field) => {
 		// eslint-disable-next-line no-param-reassign
-		if (privateKeys.includes(field) && !user.private[field]) delete user.private[field];
+		if (privateKeys.includes(field) && !user.private[field])
+			delete user.private[field];
 	});
 }
 
@@ -184,11 +224,15 @@ async function upsertUser(req) {
 	if (!record.uuid) {
 		const promises = [];
 		if (record.email) promises.push(findUserBy('email', record, req));
-		if (record.phoneNumber) promises.push(findUserBy('phoneNumber', record, req));
+		if (record.phoneNumber)
+			promises.push(findUserBy('phoneNumber', record, req));
 
 		// Find the first result that matches (assume email is a better match than phone)
 		const existingCheck = await Promise.all(promises);
-		[existing] = existingCheck.reduce((all, result) => all.concat(result), []);
+		[existing] = existingCheck.reduce(
+			(all, result) => all.concat(result),
+			[]
+		);
 		if (existing) {
 			// eslint-disable-next-line no-param-reassign
 			record.uuid = existing.uuid;
@@ -197,11 +241,21 @@ async function upsertUser(req) {
 	prepareUserForSave(existing, record);
 	// Assign point person if it's a new record
 	if (assignPointIfNew && !existing) {
-		record.private.recruitedBy = originalUser.uuid;
+		set(record, 'private.recruitedBy', originalUser.uuid);
 		record.private.pointPerson = originalUser.uuid;
 	}
 
-	const savePromise = save(record, { partial: 1, allowExists: true }, req);
+	const opts = {};
+	if (assignPointIfNew || assignSelf) {
+		opts.skipFilter = true;
+	}
+
+	const savePromise = save(
+		record,
+		{ partial: 1, allowExists: true },
+		req,
+		opts
+	);
 
 	if (record.uuid && assignSelf) {
 		await Promise.all([

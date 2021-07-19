@@ -13,10 +13,14 @@ const { statusOk } = require('./shared');
 
 const { expect } = chai;
 
-const createUser = {
+const simpleUser = {
 	preferredName: 'Bob',
 	fullName: 'Robert Brown',
 	email: 'bob@cc.test',
+};
+
+const createUser = {
+	...simpleUser,
 	private: { host: true, volunteer: false },
 };
 
@@ -132,6 +136,71 @@ describe('upsertUser', () => {
 
 	describe('assignment', () => {
 		let assignmentRequest = null;
+		describe('new assigned user', () => {
+			before(() => {
+				results.user = {
+					...simpleUser,
+					uuid: 'some_other_uuid',
+				};
+				setup(
+					results,
+					{
+						assignSelf: 1,
+						assignPointIfNew: true,
+						data: { ...simpleUser },
+					},
+					{
+						Authorization: 'Bearer 1234',
+					}
+				);
+				nock('https://api.raisely.com')
+					.post('/v3/users')
+					.reply(200, function userRequest(uri, body) {
+						raiselyRequest = {
+							body,
+							headers: this.req.headers,
+						};
+						return {
+							data: results.user,
+						};
+					})
+					.get('/v3/users?email=bob%40cc.test&private=1')
+					.reply(200, { data: [] })
+					.post('/v3/users/facil_uuid/assignments')
+					.reply(200, function assignmentReq(uri, body) {
+						assignmentRequest = {
+							body,
+							headers: this.req.headers,
+						};
+						return body;
+					});
+				nockAuthentication(['facilitator']);
+
+				return upsertUser(results.req, results.res);
+			});
+			statusOk(results);
+			itReturnsMinimalUser(results);
+			it('assigns the user', () => {
+				expect(assignmentRequest).to.not.be.null;
+				expect(assignmentRequest.body).to.deep.eq({
+					data: [
+						{ recordUuid: 'some_other_uuid', recordType: 'user' },
+					],
+				});
+			});
+			it('assigns point', () => {
+				expect(raiselyRequest.body).to.deep.eq({
+					data: {
+						...simpleUser,
+						private: {
+							recruitedBy: 'facil_uuid',
+							pointPerson: 'facil_uuid',
+						},
+					},
+				});
+			});
+		});
+
 		describe('new user', () => {
 			before(() => {
 				results.user = { ...completeUser, uuid: 'some_other_uuid' };
