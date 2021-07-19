@@ -50,7 +50,7 @@
 			});
 		};
 		resetPassword = async () => {
-			const { user } = this.props;
+			const { user } = this.state;
 			try {
 				if (!UserSaveHelper) UserSaveHelper = CCUserSaveRef().html;
 				this.setState({ sendingEmail: true });
@@ -58,6 +58,7 @@
 				this.setState({ passwordReset: true, sendingEmail: false });
 			} catch (error) {
 				console.error(error);
+				this.setState({ sendingEmail: false });
 			}
 		};
 
