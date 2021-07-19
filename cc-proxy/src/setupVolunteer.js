@@ -51,6 +51,7 @@ async function setupVolunteer(req) {
 	} else if (type === 'team-leader') {
 		promises.push(
 			setupTagsAndRoles({
+				userUuid,
 				tags: ['team-leader'],
 				roles: ['DATA_ADMIN', 'PROFILE_EDITOR', 'CAMPAIGN_ADMIN'],
 				req,
@@ -157,40 +158,42 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
 	const [profiles, campaign] = await Promise.all(promises);
 	const [profile] = profiles.data;
 
-	if (campaign) parentUuid = campaign.profile.uuid;
+	if (campaign) parentUuid = campaign.data.profile.uuid;
 
 	// Create individual profile (if one doesn't exist)
-	if (!profiles.data.length) {
-		await raiselyRequest(
-			{
-				method: 'POST',
-				path: `/profiles/${parentUuid}/members`,
-				body: {
-					data: {
-						userUuid,
-						type,
-						goal: 25000,
-						currency: 'SGD',
-						name: profileName,
+	if (type === 'INDIVIDUAL') {
+		if (!profiles.data.length) {
+			await raiselyRequest(
+				{
+					method: 'POST',
+					path: `/profiles/${parentUuid}/members`,
+					body: {
+						data: {
+							userUuid,
+							type,
+							goal: 25000,
+							currency: 'SGD',
+							name: profileName,
+						},
 					},
+					escalate: false,
 				},
-				escalate: false,
-			},
-			req
-		);
-		// Otherwise move the profile if necessary
-	} else if (profile.parentUuid !== parentUuid) {
-		await raiselyRequest(
-			{
-				method: 'PUT',
-				path: `/profiles/${profile.uuid}/join`,
-				body: {
-					parentUuid,
+				req
+			);
+			// Otherwise move the profile if necessary
+		} else if (profile.parentUuid !== parentUuid) {
+			await raiselyRequest(
+				{
+					method: 'PUT',
+					path: `/profiles/${profile.uuid}/join`,
+					body: {
+						parentUuid,
+					},
+					escalate: false,
 				},
-				escalate: false,
-			},
-			req
-		);
+				req
+			);
+		}
 	}
 
 	await Promise.all(promises);
