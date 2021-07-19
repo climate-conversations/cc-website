@@ -254,7 +254,7 @@
 						</p>
 						{existingTeams && existingTeams.length ? (
 							<p>
-								{name} is the leader of{' '}
+								{name} is also the leader of{' '}
 								{existingTeams.map((t) => t.name).join(', ')}
 								(and this will not be changed if you click next)
 							</p>
