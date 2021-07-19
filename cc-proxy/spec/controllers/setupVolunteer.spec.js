@@ -143,6 +143,12 @@ describe('Setup Volunteer', () => {
 				});
 			});
 			itSetsAdminFlag();
+			it('made owner', () => {
+				expectNockCalled(`PUT /profiles/${newTeamUuid}`, {
+					body: { data: { userUuid } },
+				});
+			});
+			itSetsAdminFlag();
 		});
 
 		describe('WHEN nothing needs to change', () => {
@@ -246,6 +252,15 @@ function nockSetupProfile(type, existingProfile, shouldMove) {
 			'PUT /profiles',
 			'PUT',
 			`/profiles/${userProfileUuid}/join`,
+			200,
+			{}
+		);
+	}
+	if (type === 'GROUP') {
+		noteRequest(
+			`PUT /profiles/${newTeamUuid}`,
+			'PUT',
+			`/profiles/${newTeamUuid}`,
 			200,
 			{}
 		);

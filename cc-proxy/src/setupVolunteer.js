@@ -38,7 +38,7 @@ async function setupVolunteer(req) {
 			setupProfile({
 				type: 'INDIVIDUAL',
 				userUuid,
-				parentUuid: teamUuid,
+				teamUuid,
 				req,
 			})
 		);
@@ -61,6 +61,7 @@ async function setupVolunteer(req) {
 			setupProfile({
 				type: 'GROUP',
 				userUuid,
+				teamUuid,
 				name: teamName,
 				req,
 			})
@@ -114,7 +115,7 @@ async function assignPortalCampaign(userUuid, req) {
  * @param {string} opts.parentUuid
  * @param {object} opts.req
  */
-async function setupProfile({ type, name, userUuid, parentUuid, req }) {
+async function setupProfile({ type, name, userUuid, teamUuid, req }) {
 	let promises = [
 		raiselyRequest(
 			{
@@ -124,7 +125,7 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
 		),
 	];
 
-	if (!parentUuid) {
+	if (!teamUuid) {
 		promises.push(
 			raiselyRequest(
 				{
@@ -158,7 +159,7 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
 	const [profiles, campaign] = await Promise.all(promises);
 	const [profile] = profiles.data;
 
-	if (campaign) parentUuid = campaign.data.profile.uuid;
+	if (campaign) teamUuid = campaign.data.profile.uuid;
 
 	// Create individual profile (if one doesn't exist)
 	if (type === 'INDIVIDUAL') {
@@ -166,7 +167,7 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
 			await raiselyRequest(
 				{
 					method: 'POST',
-					path: `/profiles/${parentUuid}/members`,
+					path: `/profiles/${teamUuid}/members`,
 					body: {
 						data: {
 							userUuid,
@@ -181,19 +182,33 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
 				req
 			);
 			// Otherwise move the profile if necessary
-		} else if (profile.parentUuid !== parentUuid) {
+		} else if (profile.parentUuid !== teamUuid) {
 			await raiselyRequest(
 				{
 					method: 'PUT',
 					path: `/profiles/${profile.uuid}/join`,
 					body: {
-						parentUuid,
+						parentUuid: teamUuid,
 					},
 					escalate: false,
 				},
 				req
 			);
 		}
+	} else {
+		await raiselyRequest(
+			{
+				method: 'PUT',
+				path: `/profiles/${teamUuid}`,
+				body: {
+					data: {
+						userUuid,
+					},
+				},
+				escalate: false,
+			},
+			req
+		);
 	}
 
 	await Promise.all(promises);
