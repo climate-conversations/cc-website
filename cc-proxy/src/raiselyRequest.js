@@ -5,7 +5,14 @@ const logger = require('./config/logging');
 
 const raiselyUrl = 'https://api.raisely.com/v3';
 
-const internalOptions = ['path', 'query', 'originalUser', 'cache', 'token', 'escalate'];
+const internalOptions = [
+	'path',
+	'query',
+	'originalUser',
+	'cache',
+	'token',
+	'escalate',
+];
 
 function createOriginalHeaders(options, req) {
 	const headers = {
@@ -13,12 +20,13 @@ function createOriginalHeaders(options, req) {
 		'X-Original-User': options.originalUser || '(general public)',
 		'X-Original-User-Agent': req.get('User-Agent'),
 		'X-CC-Proxy-Url': req.originalUrl,
-		Origin: req.get('Origin'),
-		Referer: req.get('Referer'),
+		'Origin': req.get('Origin'),
+		'Referer': req.get('Referer'),
 	};
 
 	const originalAuthorization = req.get('Authorization');
-	if (originalAuthorization) headers['X-Original-Authorization'] = originalAuthorization;
+	if (originalAuthorization)
+		headers['X-Original-Authorization'] = originalAuthorization;
 
 	return headers;
 }
@@ -41,7 +49,9 @@ async function raisely(options, req) {
 	Object.assign(headers, {
 		'User-Agent': 'Climate Conversations Proxy',
 		// Pass through original authorization if the user is not escalated
-		Authorization: options.escalate ? `Bearer ${token}` : req.get('Authorization'),
+		'Authorization': options.escalate
+			? `Bearer ${token}`
+			: req.get('Authorization'),
 	});
 
 	const requestOptions = {
@@ -53,9 +63,20 @@ async function raisely(options, req) {
 	};
 
 	const method = requestOptions.method && requestOptions.method.toLowerCase();
-	if (!method || ['get', 'delete'].includes(method)) delete requestOptions.body;
+	if (!method || ['get', 'delete'].includes(method))
+		delete requestOptions.body;
 
-	logger.log('debug', `Raisely (escalated: ${options.escalate}): ${uri}`, requestOptions);
+	const debugRequest = omit(requestOptions, ['headers', 'body']);
+	debugRequest.headers = omit(requestOptions.headers, [
+		'Authorization',
+		'X-Original-Authorization',
+	]);
+
+	logger.log(
+		'debug',
+		`Raisely (escalated: ${options.escalate}): ${method} ${uri}`,
+		debugRequest
+	);
 
 	const request = options.cacheKey ? requestCache : requestNative;
 	const result = request(requestOptions);
