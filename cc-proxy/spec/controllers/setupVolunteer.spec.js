@@ -105,7 +105,7 @@ describe('Setup Volunteer', () => {
 			itDoesNotChangeUser();
 		});
 	});
-	describe.only('WHEN type is team-leader', () => {
+	describe('WHEN type is team-leader', () => {
 		describe('WHEN leader is new', () => {
 			before(() => {
 				clearNocks();
