@@ -281,5 +281,20 @@
 				},
 			});
 		}
+
+		/**
+		 * Helper to trigger a password reset email for
+		 * a given user
+		 * @param {string} userUuid
+		 */
+		static async sendPasswordReset(userUuid) {
+			console.log(`Sending reset for ${userUuid}`);
+			const data = { userUuid };
+			const url = `${proxyHost}/resetEmail`;
+			await this.doFetch(url, {
+				method: 'post',
+				body: { data },
+			});
+		}
 	};
 };
