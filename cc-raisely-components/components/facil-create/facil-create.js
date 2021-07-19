@@ -3,6 +3,7 @@
 	const { Button, Input } = RaiselyComponents.Atoms;
 	const { api, Spinner } = RaiselyComponents;
 	const { getData } = api;
+	const { get } = RaiselyComponents.Common;
 
 	const UserSelect = RaiselyComponents.import('user-select-wrapper');
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
@@ -41,26 +42,79 @@
 
 		reset = () => {
 			this.setState({
-				step: 0,
+				step: 1,
 				user: null,
+				existingTeams: null,
 				existingTeam: null,
+				passwordReset: false,
 			});
+		};
+		resetPassword = async () => {
+			this.setState({ passwordReset: true });
+			const { user } = this.props;
+			try {
+				if (!CCUserSave) CCUserSave = CCUserSaveRef().html;
+				this.setState({ sendingEmail: true });
+				await CCUserSave.sendPasswordReset(user.uuid);
+				this.setState({ passwordReset: true, sendingEmail: false });
+			} catch (error) {
+				console.error(error);
+			}
 		};
 
 		async loadExistingTeam() {
 			try {
 				const { user, team } = this.state;
+				let promises = [];
 				this.setState({ loadingExistingTeam: true });
-				if (!Facilitator) Facilitator = FacilitatorRef().html;
-				const promises = [Facilitator.getFacilitatorTeam(user.uuid)];
-				if (team && !team.name) {
-					promises.push(getData(api.profiles.get({ id: team.uuid })));
+
+				const newState = {
+					loadingExistingTeam: false,
+				};
+
+				// Check the existing team of the facilitator
+				if (this.state.type === 'facilitator') {
+					if (!Facilitator) Facilitator = FacilitatorRef().html;
+					promises.push(
+						Facilitator.getFacilitatorTeam(user.uuid).then(
+							(team) => {
+								newState.existingTeam = team;
+							}
+						)
+					);
+				} else {
+					promises.push(
+						getData(
+							api.profiles.getAll({
+								query: {
+									campaign: get(
+										this.props,
+										'global.campaign.uuid'
+									),
+									user: user.uuid,
+									private: 1,
+									type: 'GROUP',
+								},
+							})
+						).then((existingTeams) => {
+							newState.existingTeams = existingTeams;
+						})
+					);
 				}
-				const [existingTeam, selectedTeam] = await Promise.all(
-					promises
-				);
-				const newState = { existingTeam, loadingExistingTeam: false };
-				if (selectedTeam) newState.team = selectedTeam;
+
+				// Get full details of the team if we don't have them
+				if (team && (!team.name || !team.user)) {
+					promises.push(
+						getData(api.profiles.get({ id: team.uuid })).then(
+							(team) => {
+								newState.team = team;
+							}
+						)
+					);
+				}
+
+				await Promise.all(promises);
+
 				this.setState(newState);
 			} catch (e) {
 				console.log(e);
@@ -132,14 +186,15 @@
 						]}
 						required={false}
 						label="Make them a ..."
-						change={(value) => this.setState({ type: value })}
+						change={(x, value) => this.setState({ type: value })}
 					/>
 
 					<div className="facil-create__profile-wrapper">
 						<p>
 							If you {"can't"} find the facilitator, you may need
-							to add them. Click this button and then click on the
-							New button at the top.
+							to add them. Click <strong>Add Person</strong> below
+							and then click on the New button at the top of the
+							next page.
 						</p>
 						<RaiselyButton href="/people" label="Add Person" />
 					</div>
@@ -150,9 +205,11 @@
 		verifyTeamPage() {
 			const {
 				existingTeam,
+				existingTeams,
 				loadingExistingTeam,
 				user,
 				team,
+				type,
 			} = this.state;
 			const name = user.fullName || user.preferredName;
 
@@ -165,6 +222,49 @@
 				);
 			}
 
+			if (type === 'team-leader') {
+				const oldTeamLeaderName =
+					team.user.fullName || team.user.preferredName;
+
+				if (team.user.uuid === user.uuid) {
+					return (
+						<div className="facil-create__facil-exists">
+							<p>
+								{name} is already the leader of
+								{team.name}
+							</p>
+							<p>
+								You {"shouldn't"} need to do anything, but you
+								can click next to verify that all their
+								permissions are correct
+							</p>
+						</div>
+					);
+				}
+
+				return (
+					<div className="facil-create__facil-exists">
+						<p>
+							{team.name} is currently lead by
+							{oldTeamLeaderName}
+						</p>
+						{existingTeams && existingTeams.length ? (
+							<p>
+								{name} is the leader of{' '}
+								{existingTeams.map((t) => t.name).join(', ')}
+								(and this will not be changed if you click next)
+							</p>
+						) : null}
+						<p>
+							Click next{' '}
+							<strong>
+								to make {name} the leader of {team.name}
+							</strong>
+						</p>
+					</div>
+				);
+			}
+
 			if (existingTeam && existingTeam.uuid !== team.uuid) {
 				return (
 					<div className="facil-create__facil-exists">
@@ -172,7 +272,10 @@
 							{name} is already a facilitator and member of{' '}
 							{existingTeam.name}
 						</p>
-						<p>Click next to move them to {team.name}</p>
+						<p>
+							Click next to <strong>move them</strong> to{' '}
+							{team.name}
+						</p>
 					</div>
 				);
 			}
@@ -197,25 +300,63 @@
 				<div className="facil-create__facil-exists">
 					<p>{name} is currently not a facilitator</p>
 					<p>
-						Click next to make them a facilitator and add them to{' '}
-						{team.name}
+						Click next to{' '}
+						<strong>
+							make {name} a facilitator and add them to{' '}
+							{team.name}
+						</strong>
 					</p>
 				</div>
 			);
 		}
 
 		savePage() {
-			const { saving } = this.state;
+			const {
+				user,
+				type,
+				saving,
+				passwordReset,
+				sendingEmail,
+			} = this.state;
+			const name = user.fullName || user.preferredName;
+
+			const friendlyType =
+				type === 'facilitator' ? 'facilitator' : 'team leader';
+
 			if (saving) {
 				return (
 					<div className="facil-create__saving">
-						<p>Setting up the facilitator</p>
+						<p>Setting up {friendlyType}</p>
 						<Spinner />
 					</div>
 				);
 			}
 			return (
 				<div className="facil-create__saving">
+					<p>
+						{name} successfully configured as {friendlyType}
+					</p>
+
+					<p>
+						If they haven't logged in before, you might want to send
+						them an email to prompt them to set a password.
+					</p>
+
+					<div className="facil-create__reset-password">
+						{passwordReset ? (
+							<p>
+								{name} has been sent an email to help them setup
+								their password.
+							</p>
+						) : sendingEmail ? (
+							<Spinner />
+						) : (
+							<Button onClick={this.resetPassword}>
+								Reset {name}
+								{"'"}s password
+							</Button>
+						)}
+					</div>
 					<Button onClick={this.reset}>Add/update another</Button>
 					<ReturnButton backLabel="Back to Dashboard" />
 				</div>
@@ -233,7 +374,7 @@
 					<Button
 						disabled={loadingExistingTeam}
 						onClick={() => this.nextStep()}
-						theme="primary"
+						theme="cta"
 					>
 						Next
 					</Button>
@@ -245,8 +386,6 @@
 			const { step, error } = this.state;
 			const pages = ['selectPage', 'verifyTeamPage', 'savePage'];
 			const page = pages[step - 1];
-
-			console.log('next page', step, page, this[page]);
 
 			if (error) {
 				return (
