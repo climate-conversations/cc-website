@@ -18,12 +18,33 @@
 	const { getData, getQuery } = api;
 	const { get, qs, set } = RaiselyComponents.Common;
 
-	const websiteCampaignUuid = 'f2a3bc70-96d8-11e9-8a7b-47401a90ec39';
+	const productionHosts = [
+		'portal.climateconversations.sg',
+		'p.climate.sg',
+		'climateconversations.sg',
+	];
 
-	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const mode = productionHosts.includes(document.location.host)
+		? 'production'
+		: 'staging';
+
+	const websiteCampaignUuid =
+		mode === 'production'
+			? 'f2a3bc70-96d8-11e9-8a7b-47401a90ec39'
+			: '1312f570-dbe7-11eb-a40a-bd0e3ca9ce47';
+
+	const websiteProfileUuid =
+		mode === 'production'
+			? 'f2b41020-96d8-11e9-8a7b-47401a90ec39'
+			: '1316ed10-dbe7-11eb-a40a-bd0e3ca9ce4';
+
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', {
+		asRaw: true,
+	});
 	let UserSaveHelper;
 
-	const plural = word => ((word.slice(word.length - 1) === 's') ? word : `${word}s`);
+	const plural = (word) =>
+		word.slice(word.length - 1) === 's' ? word : `${word}s`;
 
 	const reflectionCategory = 'facilitator-reflection';
 	const surveyCategories = {
@@ -34,11 +55,9 @@
 	async function loadModel({ props, required, private: isPrivate, model }) {
 		try {
 			let uuid = get(props, `match.params.${model}`);
-			if ((model === 'event') && !uuid ) uuid = get(props, `match.params.conversation`);
-			const path =
-				model === "eventRsvp"
-					? "event_rsvps"
-					: plural(model);
+			if (model === 'event' && !uuid)
+				uuid = get(props, `match.params.conversation`);
+			const path = model === 'eventRsvp' ? 'event_rsvps' : plural(model);
 			let url = `/${path}/${uuid}`;
 			if (isPrivate) url += '?private=1';
 
@@ -57,10 +76,18 @@
 			return reflectionCategory;
 		}
 		static getUuid(props) {
-			return props.conversation ||
+			return (
+				props.conversation ||
 				get(props, 'match.params.event') ||
 				get(props, 'match.params.conversation') ||
-				getQuery(get(props, 'router.location.search', {})).event;
+				getQuery(get(props, 'router.location.search', {})).event
+			);
+		}
+		static getWebsiteUuid() {
+			return websiteCampaignUuid;
+		}
+		static getWebsiteProfileUuid() {
+			return websiteProfileUuid;
 		}
 
 		static async loadReflections({ eventUuid, userUuid }) {
@@ -72,9 +99,11 @@
 				private: 1,
 			};
 
-			const interactions = await getData(api.interactions.getAll({
-				query,
-			}));
+			const interactions = await getData(
+				api.interactions.getAll({
+					query,
+				})
+			);
 			return interactions;
 		}
 
@@ -86,16 +115,21 @@
 		 * @returns {object} { pre, post }
 		 */
 		static async loadSurveys(eventRsvp, include = ['pre', 'post']) {
-			const promises = ['pre', 'post'].map(key => {
+			const promises = ['pre', 'post'].map((key) => {
 				if (!include || include.includes(key)) {
-					return getData(api.interactions.getAll({
-						query: {
-							private: 1,
-							category: surveyCategories[`${key}Survey`],
-							user: eventRsvp.userUuid,
-						},
-					}))
-					.then(results => results.find(r => (r.recordUuid === eventRsvp.eventUuid)));
+					return getData(
+						api.interactions.getAll({
+							query: {
+								private: 1,
+								category: surveyCategories[`${key}Survey`],
+								user: eventRsvp.userUuid,
+							},
+						})
+					).then((results) =>
+						results.find(
+							(r) => r.recordUuid === eventRsvp.eventUuid
+						)
+					);
 				}
 				return null;
 			});
@@ -111,11 +145,11 @@
 		 * @return {object} The conversation that's loaded
 		 */
 		static async loadConversation(options) {
-			return loadModel({ ...options, model: 'event' })
+			return loadModel({ ...options, model: 'event' });
 		}
 
 		static async loadRsvp(options) {
-			return loadModel({ ...options, model: 'eventRsvp' })
+			return loadModel({ ...options, model: 'eventRsvp' });
 		}
 
 		/**
@@ -135,11 +169,14 @@
 		static async loadRsvps({ props, type, query }) {
 			const result = {};
 			try {
-				const types = Array.isArray(type) ? type.map(t => plural(t)) : type;
+				const types = Array.isArray(type)
+					? type.map((t) => plural(t))
+					: type;
 
 				const fullQuery = { private: 1, ...query };
 				if (props) {
-					fullQuery.event = props.eventUuid ||
+					fullQuery.event =
+						props.eventUuid ||
 						props.conversation ||
 						get(props, 'match.params.event') ||
 						get(props, 'match.params.conversation') ||
@@ -147,11 +184,17 @@
 				}
 
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-				result.rsvps = await UserSaveHelper.proxy('/event_rsvps', { query: fullQuery });
-				if (types) types.forEach((key) => { result[key] = []; });
+				result.rsvps = await UserSaveHelper.proxy('/event_rsvps', {
+					query: fullQuery,
+				});
+				if (types)
+					types.forEach((key) => {
+						result[key] = [];
+					});
 				result.rsvps.forEach((rsvp) => {
 					const key = plural(rsvp.type);
-					if (types && types.includes(key)) result[key].push(rsvp.user);
+					if (types && types.includes(key))
+						result[key].push(rsvp.user);
 				});
 			} catch (e) {
 				console.error(e);
@@ -175,9 +218,16 @@
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			const [event, results, donations, surveys] = await Promise.all([
 				this.loadConversation({ props, private: true }),
-				this.loadRsvps({ props: { eventUuid }, type: ['co-facilitator', 'facilitator', 'guest']}),
-				UserSaveHelper.proxy(`/donations?campaign=${websiteCampaignUuid}&private.conversationUuid=${eventUuid}&private=1`),
-				UserSaveHelper.proxy(`/interactions?${queryStr}`, { method: 'GET' }),
+				this.loadRsvps({
+					props: { eventUuid },
+					type: ['co-facilitator', 'facilitator', 'guest'],
+				}),
+				UserSaveHelper.proxy(
+					`/donations?campaign=${websiteCampaignUuid}&private.conversationUuid=${eventUuid}&private=1`
+				),
+				UserSaveHelper.proxy(`/interactions?${queryStr}`, {
+					method: 'GET',
+				}),
 			]);
 			const cache = {
 				guests: 0,
@@ -187,37 +237,52 @@
 				donations: {
 					online: 0,
 					total: 0,
-					cash: get(event, "private.cashReceivedAmount", 0),
-					donorCount: 0
-				}
+					cash: get(event, 'private.cashReceivedAmount', 0),
+					donorCount: 0,
+				},
 			};
 			cache.guests = results.guests.length;
-			surveys.forEach(survey => {
+			surveys.forEach((survey) => {
 				if (get(survey, 'detail.private.host')) cache.hosts += 1;
-				if (get(survey, "detail.private.hostCorporate")) cache.corporateHosts += 1;
-				if (get(survey, 'detail.private.facilitate')) cache.faciltiators += 1;
+				if (get(survey, 'detail.private.hostCorporate'))
+					cache.corporateHosts += 1;
+				if (get(survey, 'detail.private.facilitate'))
+					cache.faciltiators += 1;
 			});
-			donations.forEach(donation => {
+			donations.forEach((donation) => {
 				cache.donations.total += donation.campaignAmount;
 				cache.donations.donorCount += 1;
 				if (donation.type === 'ONLINE') {
 					cache.donations.online += donation.campaignAmount;
 				} else {
-					const paymentType = get(donation, 'private.cashPaymentType');
+					const paymentType = get(
+						donation,
+						'private.cashPaymentType'
+					);
 					const init = get(cache.donations, paymentType, 0);
-					set(cache.donations, paymentType, init + donation.campaignAmount);
+					set(
+						cache.donations,
+						paymentType,
+						init + donation.campaignAmount
+					);
 				}
 			});
 
 			const oldCache = get(event, 'private.statCache', {});
-			if (Object.keys(cache).find(key => (key !== 'donations') && (cache[key] !== oldCache[key])) ||
-				Object.keys(cache.donations).find(key => cache.donations[key] !== oldCache.donations[key])) {
+			if (
+				Object.keys(cache).find(
+					(key) => key !== 'donations' && cache[key] !== oldCache[key]
+				) ||
+				Object.keys(cache.donations).find(
+					(key) => cache.donations[key] !== oldCache.donations[key]
+				)
+			) {
 				await UserSaveHelper.proxy(`/events/${event.uuid}`, {
 					method: 'PATCH',
 					body: {
 						data: { private: { statCache: cache } },
 						partial: true,
-					}
+					},
 				});
 				set(event, 'private.statCache', cache);
 			}
@@ -233,12 +298,22 @@
 			return `${hostName}'s conversation`;
 		}
 
-		static surveyCategories() { return surveyCategories; }
-		static isProcessed(conversation) { return get(conversation, 'private.isProcessed'); }
-		static isReconciled(conversation) { return get(conversation, 'private.reconciledAt'); }
-		static isReviewed(conversation) { return get(conversation, '!!private.reviewedAt'); }
+		static surveyCategories() {
+			return surveyCategories;
+		}
+		static isProcessed(conversation) {
+			return get(conversation, 'private.isProcessed');
+		}
+		static isReconciled(conversation) {
+			return get(conversation, 'private.reconciledAt');
+		}
+		static isReviewed(conversation) {
+			return get(conversation, '!!private.reviewedAt');
+		}
 		static awaitingReview(conversation) {
-			return this.isProcessed(conversation) && !this.isReviewed(conversation);
+			return (
+				this.isProcessed(conversation) && !this.isReviewed(conversation)
+			);
 		}
 	};
 };

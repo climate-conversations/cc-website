@@ -8,10 +8,16 @@ const path = require('path');
 const upsertLocks = {};
 
 async function setAuth(document, credentialsPath) {
-	const fullPath = path.join(process.cwd(), credentialsPath);
-
-	// eslint-disable-next-line global-require, import/no-dynamic-require
-	const creds = require(fullPath);
+	let creds;
+	// Load from file (in test)
+	if (credentialsPath.endsWith('.json')) {
+		const fullPath = path.join(process.cwd(), credentialsPath);
+		creds = require(fullPath);
+	} else {
+		// Load from environment variable in production
+		const buff = Buffer.from(credentialsPath, 'base64');
+		creds = JSON.parse(buff.toString('ascii'));
+	}
 
 	return document.useServiceAccountAuth(creds);
 }
@@ -19,9 +25,13 @@ async function setAuth(document, credentialsPath) {
 async function findOrCreateWorksheet(document, worksheetTitle, headers) {
 	await document.loadInfo();
 	let isNew = false;
-	let sheet = document.sheetsByIndex.find(w => w.title === worksheetTitle);
+	let sheet = document.sheetsByIndex.find((w) => w.title === worksheetTitle);
 	if (!sheet) {
-		sheet = await document.addSheet({ title: worksheetTitle, headerValues: headers, gridProperties: { columnCount: headers.length } });
+		sheet = await document.addSheet({
+			title: worksheetTitle,
+			headerValues: headers,
+			gridProperties: { columnCount: headers.length },
+		});
 		isNew = true;
 	}
 	return { sheet, isNew };
@@ -38,16 +48,22 @@ async function doUpsertRow(sheet, match, newRow) {
 	let limit = 1000;
 	let rows;
 	let matchingRow;
-	const searchKeys = Object.keys(match)
-	const searchFn = _.isFunction(match) ? match : row => searchKeys.reduce((all, key) => all && (row[key] === match[key]), true);
+	const searchKeys = Object.keys(match);
+	const searchFn = _.isFunction(match)
+		? match
+		: (row) =>
+				searchKeys.reduce(
+					(all, key) => all && row[key] === match[key],
+					true
+				);
 
 	do {
 		rows = await sheet.getRows({ limit, offset });
 		matchingRow = rows.find(searchFn);
 		offset += limit;
-	} while (!matchingRow && rows.length === limit)
+	} while (!matchingRow && rows.length === limit);
 
-	await new Promise(r => setTimeout(r, 2000));
+	await new Promise((r) => setTimeout(r, 2000));
 
 	if (matchingRow) {
 		// Update
@@ -85,7 +101,8 @@ async function getSpreadsheet(key) {
 }
 
 async function fetchRows(count) {
-	const { SPREADSHEET_KEY, WORKSHEET_TITLE, GOOGLE_PROJECT_CREDENTIALS } = process.env;
+	const { SPREADSHEET_KEY, WORKSHEET_TITLE, GOOGLE_PROJECT_CREDENTIALS } =
+		process.env;
 
 	// spreadsheet key is the long id in the sheets URL
 	const document = GoogleSpreadsheet.load(SPREADSHEET_KEY);
@@ -94,8 +111,11 @@ async function fetchRows(count) {
 	await document.loadInfo();
 
 	// Find worksheet
-	const sheet = document.sheetsByIndex.find(w => w.title === WORKSHEET_TITLE);
-	if (!sheet) throw new Error(`Could not find worksheet '${WORKSHEET_TITLE}'`);
+	const sheet = document.sheetsByIndex.find(
+		(w) => w.title === WORKSHEET_TITLE
+	);
+	if (!sheet)
+		throw new Error(`Could not find worksheet '${WORKSHEET_TITLE}'`);
 
 	const offset = Math.max(1, sheet.rowCount - count);
 	console.log(`Fetching last ${count} rows (starting at row: ${offset})...`);

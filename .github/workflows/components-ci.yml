@@ -1,0 +1,60 @@
+name: Raisely Custom Components
+
+on:
+    push:
+        paths:
+            - 'cc-raisely-components/**'
+            - '.github/workflows/components-ci.yml'
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: 14
+
+            - name: Cache node modules
+              uses: actions/cache@v2
+              env:
+                  cache-name: cache-node-modules-components
+              with:
+                  # npm cache files are stored in `~/.npm` on Linux/macOS
+                  path: ~/.npm
+                  key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('cc-raisely-components/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-build-${{ env.cache-name }}-
+                      ${{ runner.os }}-build-
+                      ${{ runner.os }}-
+
+            - name: Install Dependencies
+              working-directory: ./cc-raisely-components
+              run: npm ci
+
+            - name: Test
+              working-directory: ./cc-raisely-components
+              run: npm test
+
+            - name: Set Production environment
+              if: github.ref == 'refs/heads/main'
+              working-directory: ./cc-raisely-components
+              run: |
+                  echo "APP_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
+              env:
+                  RAISELY_TOKEN: ${{ secrets.RAISELY_PRODUCTION_TOKEN }}
+
+            - name: Set Staging environment
+              if: github.ref == 'refs/heads/staging'
+              working-directory: ./cc-raisely-components
+              run: |
+                  echo "APP_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
+              env:
+                  RAISELY_TOKEN: ${{ secrets.RAISELY_STAGING_TOKEN }}
+
+            - name: Deploy components
+              if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+              working-directory: ./cc-raisely-components
+              run: |
+                  node sync-components.js

@@ -13,13 +13,15 @@ let facilitator;
 let host;
 let sandbox;
 
-const photoUrl = 'https://raisely-images.imgix.net/uploads/screenshot-2020-02-18-at-10-04-39-am-png-7a91fe.png';
+const photoUrl =
+	'https://raisely-images.imgix.net/uploads/screenshot-2020-02-18-at-10-04-39-am-png-7a91fe.png';
 
 describe('Save Photo Controller', () => {
 	let controller;
 	let expectedName;
 	before(() => {
-		process.env.GOOGLE_PROJECT_CREDENTIALS = './test/controllers/fixtures/mockDriveCreds.json';
+		process.env.GOOGLE_PROJECT_CREDENTIALS =
+			'./test/controllers/fixtures/mockDriveCreds.json';
 
 		requestPromiseCache.cache.clear();
 		controller = new SavePhotoControler({
@@ -45,8 +47,8 @@ describe('Save Photo Controller', () => {
 		});
 
 		it('sets photo name', () => {
-			expectedName = `2019-04-15 - host ${host.fullName} - facil ${facilitator.fullName}`;
-			console.log(res)
+			expectedName = `2019-04-15 - fake-uuid - host ${host.fullName} - facil ${facilitator.fullName}`;
+			console.log(res);
 			expect(res.data.name).to.eq(expectedName);
 		});
 		if (WITH_MOCK) {
@@ -54,7 +56,7 @@ describe('Save Photo Controller', () => {
 				expect(mockedDrive.calls['files.create']).to.containSubset([
 					{
 						name: expectedName,
-					}
+					},
 				]);
 			});
 		}
@@ -73,4 +75,3 @@ describe('Save Photo Controller', () => {
 		return WITH_MOCK ? mockDrive(sandbox) : null;
 	}
 });
-

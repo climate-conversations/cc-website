@@ -1,9 +1,10 @@
-
 require('dotenv').config();
 
 const _ = require('lodash');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
-const { raiselyRequest: callRaisely } = require('../src/helpers/raiselyHelpers');
+const {
+	raiselyRequest: callRaisely,
+} = require('../src/helpers/raiselyHelpers');
 const pMap = require('p-map');
 const { default: PQueue } = require('p-queue');
 const pThrottle = require('p-throttle');
@@ -36,11 +37,13 @@ async function forAllHosts(callback) {
 	const hosts = {};
 	const hostsToConversations = {};
 	const conversationsToHosts = {};
-	hostRsvps.forEach(rsvp => {
-		if (!hostsToConversations[rsvp.userUuid]) hostsToConversations[rsvp.userUuid] = [];
+	hostRsvps.forEach((rsvp) => {
+		if (!hostsToConversations[rsvp.userUuid])
+			hostsToConversations[rsvp.userUuid] = [];
 		hostsToConversations[rsvp.userUuid].push(rsvp.event);
 		if (!hosts[rsvp.userUuid]) hosts[rsvp.userUuid] = rsvp.user;
-		if (!conversationsToHosts[rsvp.eventUuid]) conversationsToHosts[rsvp.eventUuid] = [];
+		if (!conversationsToHosts[rsvp.eventUuid])
+			conversationsToHosts[rsvp.eventUuid] = [];
 		conversationsToHosts[rsvp.eventUuid].push(rsvp.user);
 	});
 	const orderedHosts = Object.values(hosts).sort((a, b) => {
@@ -48,9 +51,13 @@ async function forAllHosts(callback) {
 		const bConv = _.first(hostsToConversations[b.uuid]);
 		return aConv.startAt < bConv.startAt ? -1 : 1;
 	});
-	await pMap(orderedHosts, (host, index) => {
-		return callback(host, hostsToConversations[host.uuid], index);
-	}, { concurrency: 1 });
+	await pMap(
+		orderedHosts,
+		(host, index) => {
+			return callback(host, hostsToConversations[host.uuid], index);
+		},
+		{ concurrency: 1 }
+	);
 }
 
 function toRow(user = {}, facilitator = {}, count = 1) {
@@ -59,7 +66,8 @@ function toRow(user = {}, facilitator = {}, count = 1) {
 		'Preferred Name': user.preferredName,
 		'Full Name': user.fullName,
 		'Resident': _.get(user, 'private.residency'),
-		'Email': user.email && !user.email.endsWith('.invalid') ? user.email : null,
+		'Email':
+			user.email && !user.email.endsWith('.invalid') ? user.email : null,
 		'Phone Number': user.phoneNumber && `'${user.phoneNumber}`,
 		'Attendee Count': count,
 		'Facilitator Full Name': facilitator.fullName,
@@ -67,20 +75,24 @@ function toRow(user = {}, facilitator = {}, count = 1) {
 	};
 }
 
-const insertRow = pThrottle(async function(user, facilitator, count) {
-	await worksheet.addRow(toRow(user, facilitator, count));
-	// Google rate limits us to 100 requests every 100s
-	// So send 14 reqs every 15s to give us some breathing room
-	// and ensure we don't exhaust our limit in the first 10s
-}, 14, 15 * 1000);
+const insertRow = pThrottle(
+	async function (user, facilitator, count) {
+		await worksheet.addRow(toRow(user, facilitator, count));
+		// Google rate limits us to 100 requests every 100s
+		// So send 14 reqs every 15s to give us some breathing room
+		// and ensure we don't exhaust our limit in the first 10s
+	},
+	14,
+	15 * 1000
+);
 
 async function prepareSheet() {
-	console.log('Loading spreadsheet')
+	console.log('Loading spreadsheet');
 	const document = new GoogleSpreadsheet(SPREADSHEET_KEY);
 
 	let credentials;
-	if (process.env.GOOGLE_CREDENTIALS_JSON) {
-		const jsonCreds = require(process.env.GOOGLE_CREDENTIALS_JSON);
+	if (process.env.GOOGLE_PROJECT_CREDENTIALS) {
+		const jsonCreds = require(process.env.GOOGLE_PROJECT_CREDENTIALS);
 		credentials = _.pick(jsonCreds, ['client_email', 'private_key']);
 	} else {
 		credentials = {
@@ -94,7 +106,9 @@ async function prepareSheet() {
 	// loads document properties and worksheets
 	await document.loadInfo();
 
-	const worksheet = document.sheetsByIndex.find(sheet => sheet.title === SHEET_NAME);
+	const worksheet = document.sheetsByIndex.find(
+		(sheet) => sheet.title === SHEET_NAME
+	);
 	if (!worksheet) {
 		throw new Error(`Could not find spreadseheet ${SHEET_NAME}`);
 	}
@@ -109,42 +123,54 @@ async function prepareSheet() {
 async function syncActivationList() {
 	worksheet = await prepareSheet();
 	await forAllHosts(async (host, conversations, hostIndex) => {
-		console.log(`= (${hostIndex}) Host ${host.fullName}`)
+		console.log(`= (${hostIndex}) Host ${host.fullName}`);
 		let hostGuestCount = 0;
 		let facilitator;
 
-		await pMap(conversations, async (conversation, index) => {
-			console.log(`=== Conversation ${conversation.name}`)
-			const conversationType = _.get(conversation, 'private.conversationType', 'private').toLowerCase();
-			const [guests, facilitators] = await Promise.all([
-				raiselyRequest({
-					path: `/events/${conversation.uuid}/rsvps`,
-					query: {
-						private: 1,
-						type: 'guest',
-					},
-				}),
-				raiselyRequest({
-					path: `/events/${conversation.uuid}/rsvps`,
-					query: {
-						private: 1,
-						type: 'facilitator',
-					},
-				}),
-			]);
-			if (conversationType === 'private') {
-				hostGuestCount += guests.length;
-				// If there's more than one facilitator, round robin
-				facilitator = facilitators[index % facilitators.length];
-			} else {
-				guests.forEach(guest => {
-					console.log(`Inserting individual guest: ${guest.user.email}`);
+		await pMap(
+			conversations,
+			async (conversation, index) => {
+				console.log(`=== Conversation ${conversation.name}`);
+				const conversationType = _.get(
+					conversation,
+					'private.conversationType',
+					'private'
+				).toLowerCase();
+				const [guests, facilitators] = await Promise.all([
+					raiselyRequest({
+						path: `/events/${conversation.uuid}/rsvps`,
+						query: {
+							private: 1,
+							type: 'guest',
+						},
+					}),
+					raiselyRequest({
+						path: `/events/${conversation.uuid}/rsvps`,
+						query: {
+							private: 1,
+							type: 'facilitator',
+						},
+					}),
+				]);
+				if (conversationType === 'private') {
+					hostGuestCount += guests.length;
 					// If there's more than one facilitator, round robin
 					facilitator = facilitators[index % facilitators.length];
-					queue.add(() => insertRow(guest.user, facilitator.user, 1));
-				});
-			}
-		}, { concurrency: 1 });
+				} else {
+					guests.forEach((guest) => {
+						console.log(
+							`Inserting individual guest: ${guest.user.email}`
+						);
+						// If there's more than one facilitator, round robin
+						facilitator = facilitators[index % facilitators.length];
+						queue.add(() =>
+							insertRow(guest.user, facilitator.user, 1)
+						);
+					});
+				}
+			},
+			{ concurrency: 1 }
+		);
 
 		if (hostGuestCount) {
 			console.log(`Inserting host entry: ${host.email}`);

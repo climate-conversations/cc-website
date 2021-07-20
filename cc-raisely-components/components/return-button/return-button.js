@@ -91,7 +91,12 @@
 			const query = getQuery(get(props, 'router.location.search', {}));
 			const { onDone, returnTo } = query;
 			// eslint-disable-next-line object-curly-newline
-			return this.createReturningLink({ props, returnTo, done: onDone, url });
+			return this.createReturningLink({
+				props,
+				returnTo,
+				done: onDone,
+				url,
+			});
 		}
 
 		/**
@@ -111,7 +116,9 @@
 			let thisPage = returnTo;
 			if (!thisPage) {
 				const { pathname, search } = get(props, 'router.location', {});
-				thisPage = `${pathname}${search.startsWith('?') ? '' : '?'}${search}`;
+				thisPage = `${pathname}${
+					search.startsWith('?') ? '' : '?'
+				}${search}`;
 			}
 
 			return mergeQuery(url, {
@@ -121,18 +128,34 @@
 		}
 
 		render() {
-			const values = {...this.props, ...this.props.getValues() };
+			const values = { ...this.props };
+			if (this.props.getValues) {
+				Object.assign(values, this.props.getValues());
+			}
 			const { backLabel, saveLabel, saveTheme, backTheme } = values;
 			const defaultUrl = values.defaultUrl || '/dashboard';
-			const query = getQuery(get(this.props, 'router.location.search'));
+			const search = get(this.props, 'router.location.search');
+			const query = search ? getQuery(search) : {};
 
 			const backUrl = getReturnUrl(query, defaultUrl);
 			const saveUrl = getReturnUrl(query, defaultUrl, true);
 
 			return (
 				<div>
-					{ backLabel ? <Button theme={backTheme} href={backUrl}>{backLabel}</Button> : '' }
-					{ saveLabel ? <Button theme={saveTheme} href={saveUrl}>{saveLabel}</Button> : '' }
+					{backLabel ? (
+						<Button theme={backTheme} href={backUrl}>
+							{backLabel}
+						</Button>
+					) : (
+						''
+					)}
+					{saveLabel ? (
+						<Button theme={saveTheme} href={saveUrl}>
+							{saveLabel}
+						</Button>
+					) : (
+						''
+					)}
 				</div>
 			);
 		}

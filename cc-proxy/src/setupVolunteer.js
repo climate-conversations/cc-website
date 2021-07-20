@@ -2,7 +2,7 @@ const _ = require('lodash');
 const { authorize } = require('./proxy/permissions');
 const raiselyRequest = require('./raiselyRequest');
 const { assignRecord } = require('./assignRecord');
-const request = require("request-promise-native");
+const request = require('request-promise-native');
 const logger = require('./config/logging');
 
 /**
@@ -15,12 +15,7 @@ const logger = require('./config/logging');
  * @param {object} req.body.data.name Name of the profile to create
  */
 async function setupVolunteer(req) {
-	const {
-		userUuid,
-		type,
-		teamUuid,
-		teamName,
-	} = req.body.data;
+	const { userUuid, type, teamUuid, teamName } = req.body.data;
 
 	const isAuthorized = await authorize(req, `/setupVolunteer/${type}`);
 
@@ -28,26 +23,54 @@ async function setupVolunteer(req) {
 		throw new Error('You are not authorized to do that');
 	}
 
-	const promises =[];
+	const promises = [];
 
 	if (type === 'facilitator') {
-		promises.push(setupTagsAndRoles({ userUuid, tags: ['facilitator'], roles: ['DATA_LIMITED'], req }));
-		promises.push(setupProfile({
-			type: 'INDIVIDUAL',
-			userUuid,
-			parentUuid: teamUuid,
-			req,
-		}));
+		promises.push(
+			setupTagsAndRoles({
+				userUuid,
+				tags: ['facilitator'],
+				roles: ['DATA_LIMITED'],
+				req,
+			})
+		);
+		promises.push(
+			setupProfile({
+				type: 'INDIVIDUAL',
+				userUuid,
+				teamUuid,
+				req,
+			})
+		);
+		// Cannot assign them to the user until they are an admin
+		// so need to wait for the first part to finish
+		await Promise.all(promises);
+
 		// Assign them to themself so they can see their own interactions
 		promises.push(assignRecord(req, userUuid, userUuid));
 	} else if (type === 'team-leader') {
-		promises.push(setupTagsAndRoles({ tags: ['team-leader'], roles: ['DATA_ADMIN', 'PROFILE_EDITOR', 'CAMPAIGN_ADMIN'], req }));
-		promises.push(setupProfile({
-			type: 'GROUP',
-			userUuid,
-			name: teamName,
-			req,
-		}));
+		promises.push(
+			setupTagsAndRoles({
+				userUuid,
+				tags: ['team-leader'],
+				roles: ['DATA_ADMIN', 'PROFILE_EDITOR', 'CAMPAIGN_ADMIN'],
+				req,
+			})
+		);
+		promises.push(
+			setupProfile({
+				type: 'GROUP',
+				userUuid,
+				teamUuid,
+				name: teamName,
+				req,
+			})
+		);
+
+		// Cannot assign them to the campaign until they are an admin
+		// so need to wait for the first part to finish
+		await Promise.all(promises);
+
 		promises.push(assignPortalCampaign(userUuid, req));
 	}
 
@@ -55,7 +78,7 @@ async function setupVolunteer(req) {
 
 	return {
 		status: 'OK',
-	}
+	};
 }
 
 /**
@@ -65,18 +88,22 @@ async function setupVolunteer(req) {
  * @param {object} req
  */
 async function assignPortalCampaign(userUuid, req) {
-	return raiselyRequest({
-		method: 'POST',
-		path: `/users/${userUuid}/assignments`,
-		body: {
-			data: [{
-				recordUuid: process.env.PORTAL_CAMPAIGN_UUID,
-				recordType: 'campaign',
-			}],
+	return raiselyRequest(
+		{
+			method: 'POST',
+			path: `/users/${userUuid}/assignments`,
+			body: {
+				data: [
+					{
+						recordUuid: process.env.PORTAL_CAMPAIGN_UUID,
+						recordType: 'campaign',
+					},
+				],
+			},
+			escalate: true,
 		},
-		escalate: true,
-	}, req);
-
+		req
+	);
 }
 
 /**
@@ -88,66 +115,100 @@ async function assignPortalCampaign(userUuid, req) {
  * @param {string} opts.parentUuid
  * @param {object} opts.req
  */
-async function setupProfile({ type, name, userUuid, parentUuid, req }) {
+async function setupProfile({ type, name, userUuid, teamUuid, req }) {
 	let promises = [
-		raiselyRequest({
-			path: `/users/${userUuid}/profiles?type=${type}&campaign=cc-volunteer-portal`,
-		}, req),
+		raiselyRequest(
+			{
+				path: `/users/${userUuid}/profiles?type=${type}&campaign=${process.env.PORTAL_PATH}`,
+			},
+			req
+		),
 	];
 
-	if (!parentUuid) {
-		promises.push(raiselyRequest({
-			path: `/campaigns/cc-volunteer-portal`,
-		}, req));
+	if (!teamUuid) {
+		promises.push(
+			raiselyRequest(
+				{
+					path: `/campaigns/${process.env.PORTAL_PATH}`,
+				},
+				req
+			)
+		);
 	}
 
 	let profileName = name;
 
 	if (!name) {
-		const userData = await raiselyRequest({
-			path: `/users/${userUuid}?private=1`,
-			escalate: false,
-			cacheKey: `/users/${userUuid}?private=1`,
-			cacheTTL: 10000,
-		}, req);
+		const userData = await raiselyRequest(
+			{
+				path: `/users/${userUuid}?private=1`,
+				escalate: false,
+				cacheKey: `/users/${userUuid}?private=1`,
+				cacheTTL: 10000,
+			},
+			req
+		);
 		profileName = userData.data.fullName || userData.data.preferredName;
 		if (!profileName) {
-			throw new Error(`Cannot create profile for unnamed user ${userUuid}`);
+			throw new Error(
+				`Cannot create profile for unnamed user ${userUuid}`
+			);
 		}
 	}
 
 	const [profiles, campaign] = await Promise.all(promises);
 	const [profile] = profiles.data;
 
-
-	if (campaign) parentUuid = campaign.profile.uuid;
+	if (campaign) teamUuid = campaign.data.profile.uuid;
 
 	// Create individual profile (if one doesn't exist)
-	if (!profiles.data.length) {
-		await raiselyRequest({
-			method: 'POST',
-			path: `/profiles/${parentUuid}/members`,
-			body: {
-				data: {
-					userUuid,
-					type,
-					goal: 25000,
-					currency: 'SGD',
-					name: profileName,
+	if (type === 'INDIVIDUAL') {
+		if (!profiles.data.length) {
+			await raiselyRequest(
+				{
+					method: 'POST',
+					path: `/profiles/${teamUuid}/members`,
+					body: {
+						data: {
+							userUuid,
+							type,
+							goal: 25000,
+							currency: 'SGD',
+							name: profileName,
+						},
+					},
+					escalate: false,
 				},
+				req
+			);
+			// Otherwise move the profile if necessary
+		} else if (profile.parentUuid !== teamUuid) {
+			await raiselyRequest(
+				{
+					method: 'PUT',
+					path: `/profiles/${profile.uuid}/join`,
+					body: {
+						parentUuid: teamUuid,
+					},
+					escalate: false,
+				},
+				req
+			);
+		}
+	} else {
+		await raiselyRequest(
+			{
+				method: 'PUT',
+				path: `/profiles/${teamUuid}`,
+				body: {
+					data: {
+						userUuid,
+					},
+				},
+				escalate: false,
 			},
-			escalate: false
-		}, req);
-	// Otherwise move the profile if necessary
-	} else if (profile.parentUuid !== parentUuid) {
-		await raiselyRequest({
-			method: 'PUT',
-			path: `/profiles/${profile.uuid}/join`,
-			body: {
-				parentUuid,
-			},
-			escalate: false
-		}, req);
+			req
+		);
 	}
 
 	await Promise.all(promises);
@@ -161,26 +222,35 @@ async function setupProfile({ type, name, userUuid, parentUuid, req }) {
  * @param {object} opts.req
  */
 async function setupTagsAndRoles({ tags, roles, userUuid, req }) {
-	const tagDetails = await raiselyRequest({
-		path: `/tags?private=1`,
-		escalate: false,
-		cacheKey: `/tags?private=1`,
-		cacheTTL: 10 * 60 * 1000,
-	}, req);
+	const tagDetails = await raiselyRequest(
+		{
+			path: `/tags?private=1`,
+			escalate: false,
+			cacheKey: `/tags?private=1`,
+			cacheTTL: 10 * 60 * 1000,
+		},
+		req
+	);
 
 	// Get existing tags and permissions
 	const [userData, rolesData] = await Promise.all([
-		raiselyRequest({
-			path: `/users/${userUuid}?private=1`,
-			escalate: false,
-			cacheKey: `/users/${userUuid}?private=1`,
-			cacheTTL: 10000,
-		}, req),
-		raiselyRequest({ path: `/users/${userUuid}/roles?private=1`, escalate: true }, req),
+		raiselyRequest(
+			{
+				path: `/users/${userUuid}?private=1`,
+				escalate: false,
+				cacheKey: `/users/${userUuid}?private=1`,
+				cacheTTL: 10000,
+			},
+			req
+		),
+		raiselyRequest(
+			{ path: `/users/${userUuid}/roles?private=1`, escalate: true },
+			req
+		),
 	]);
 
-	const existingTags = _.get(userData, 'data.tags', []).map(t => t.path);
-	const existingRoles = _.get(rolesData, 'data', []).map(r => r.role);
+	const existingTags = _.get(userData, 'data.tags', []).map((t) => t.path);
+	const existingRoles = _.get(rolesData, 'data', []).map((r) => r.role);
 
 	const promises = [];
 
@@ -189,36 +259,51 @@ async function setupTagsAndRoles({ tags, roles, userUuid, req }) {
 
 	// Tag the person
 	missingTags.forEach((tag) => {
-		const tagUuid = tagDetails.data.find(t => t.path === tag).uuid;
-		promises.push(raiselyRequest({
-			path: `/tags/${tagUuid}/records`,
-			method: 'POST',
-			body: {
-				data: [{ uuid: userUuid }],
-			},
-			escalate: false
-		}, req));
+		const tagUuid = tagDetails.data.find((t) => t.path === tag).uuid;
+		promises.push(
+			raiselyRequest(
+				{
+					path: `/tags/${tagUuid}/records`,
+					method: 'POST',
+					body: {
+						data: [{ uuid: userUuid }],
+					},
+					escalate: false,
+				},
+				req
+			)
+		);
 	});
 	// Add roles
 	if (missingRoles.length) {
-		promises.push(raiselyRequest({
-			path: `/users/${userUuid}/roles`,
-			method: 'POST',
-			body: {
-				data: missingRoles.map(role => ({ role })),
-			},
-			escalate: false
-		}, req));
+		promises.push(
+			raiselyRequest(
+				{
+					path: `/users/${userUuid}/roles`,
+					method: 'POST',
+					body: {
+						data: missingRoles.map((role) => ({ role })),
+					},
+					escalate: false,
+				},
+				req
+			)
+		);
 	}
 	if (!userData.data.isAdmin) {
-		promises.push(raiselyRequest({
-			path: `/users/${userUuid}`,
-			method: 'PUT',
-			body: {
-				data: { isAdmin: true },
-			},
-			escalate: true
-		}, req));
+		promises.push(
+			raiselyRequest(
+				{
+					path: `/users/${userUuid}`,
+					method: 'PUT',
+					body: {
+						data: { isAdmin: true },
+					},
+					escalate: true,
+				},
+				req
+			)
+		);
 	}
 
 	await Promise.all(promises);
@@ -241,31 +326,31 @@ async function resetEmail(req) {
 			path: `/users/${userUuid}?private=1`,
 			escalate: true,
 			cacheKey: `/users/${userUuid}?private=1`,
-			cacheTTL: 10000
+			cacheTTL: 10000,
 		},
 		req
 	);
 
 	const data = {
-		action: "user.setup",
+		action: 'user.setup',
 		user: {
-			...userRecord.data
-		}
+			...userRecord.data,
+		},
 	};
 	const customEvent = request({
-		url: "https://communications.raisely.com/v1/events",
+		url: 'https://communications.raisely.com/v1/events',
 		auth: { bearer: `raisely:${token}` },
-		headers: { "User-Agent": "Climate Conversations Proxy" },
-		method: "POST",
+		headers: { 'User-Agent': 'Climate Conversations Proxy' },
+		method: 'POST',
 		json: {
 			data: {
-				type: "raisely.custom",
+				type: 'raisely.custom',
 				source: `campaign:${campaignUuid}`,
 				createdAt: new Date().toISOString(),
 				version: 1,
-				data
-			}
-		}
+				data,
+			},
+		},
 	});
 	logger.info(customEvent);
 	return customEvent;

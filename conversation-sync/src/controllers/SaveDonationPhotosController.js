@@ -1,20 +1,20 @@
 /* eslint-disable class-methods-use-this */
-const tzc = require("timezonecomplete");
-const _  =require('lodash');
-const { PassThrough } = require("stream");
-const { AirblastController } = require("airblast");
-const request = require("request-promise-native");
-const { authorize, uploadFile } = require("../services/googleDrive");
-const { fetchTeam } = require("../helpers/raiselyConversationHelpers");
-const { isoToSgDateAndTime } = require('../helpers/dateHelpers')
+const tzc = require('timezonecomplete');
+const _ = require('lodash');
+const { PassThrough } = require('stream');
+const { AirblastController } = require('airblast');
+const request = require('request-promise-native');
+const { authorize, uploadFile } = require('../services/googleDrive');
+const { fetchTeam } = require('../helpers/raiselyConversationHelpers');
+const { isoToSgDateAndTime } = require('../helpers/dateHelpers');
 
 const options = {
 	wrapInData: true,
 };
 
 const folders = {
-	transfer: "1zmzrrRv4zT6_JfZ5b6LoDKFbkhnE_GgV",
-	report: "1j1-SFY90IZK0Js2h-GCy4wPhG9xEmMsB",
+	transfer: process.env.PHOTOS_FOLDER_DONATION_TRANSFER,
+	report: process.env.PHOTOS_FOLDER_DONATION_REPORT,
 };
 
 function getName(user) {
@@ -35,7 +35,7 @@ function createFileName({ facilitator, host, conversation, type }) {
  */
 class SaveDonationPhotos extends AirblastController {
 	async process({ data }) {
-		if (data.type === "conversation.donationReportUploaded")
+		if (data.type === 'conversation.donationReportUploaded')
 			return this.saveToGoogleDrive(data.data);
 		this.log(`Unknown event type ${data.type}, ignoring`);
 		return null;
@@ -76,9 +76,7 @@ class SaveDonationPhotos extends AirblastController {
 		const res = await uploadFile(jwt, metadata, media);
 
 		this.log(
-			`Photo (${type}) saved to drive: ${name}, (conversation uuid: ${
-				conversation.uuid
-			})`
+			`Photo (${type}) saved to drive: ${name}, (conversation uuid: ${conversation.uuid})`
 		);
 		return res;
 	}
