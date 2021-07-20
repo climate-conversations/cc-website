@@ -56,10 +56,10 @@ jobs:
                   echo "GCLOUD_PROJECT=${GCLOUD_PROJECT}" >> $GITHUB_ENV
               env:
                   GCLOUD_AUTH: ${{ secrets.GCLOUDAUTH_SYNC_PROJECT }}
-                  GCLOUD_PROJECT: climate-conversations-sg-2019
+                  GCLOUD_PROJECT: climate-conversations-sync
 
             - name: Setup staging environment
-              if: github.ref != 'refs/heads/main'
+              if: github.ref == 'refs/heads/staging'
               run: |
                   echo ${GCLOUD_AUTH} | base64 --decode > gcloud-service-account.json
                   echo "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com" >> $GITHUB_ENV
