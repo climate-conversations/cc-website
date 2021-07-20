@@ -10,7 +10,12 @@ const AUTHENTICATION_TTL = 10 * 60 * 1000;
 // Airblast options
 const options = {
 	wrapInData: true,
-	corsHosts: ['portal.climate.sg', 'p.climate.sg', 'portal.climateconversations.sg'],
+	corsHosts: [
+		'portal.climate.sg',
+		'p.climate.sg',
+		'portal.climateconversations.sg',
+		'cc-portal-staging.raisely.com',
+	],
 	authenticate,
 	alwaysAuthenticate: true,
 };
@@ -29,7 +34,8 @@ async function authenticate(token, req) {
 	const { tags, roles } = await getTagsAndRoles(token);
 
 	if (roles.includes('ORG_ADMIN')) return true;
-	if (_.intersection(['facilitator', 'team-leader'], tags).length) return true;
+	if (_.intersection(['facilitator', 'team-leader'], tags).length)
+		return true;
 
 	return false;
 }
@@ -48,28 +54,44 @@ async function getTagsAndRoles(token) {
 
 	try {
 		[authentication, user] = await Promise.all([
-			raiselyRequest({ ...opt, cacheKey: `/authenticate ${token}`, path: '/authenticate', token }),
-			raiselyRequest({ ...opt, cacheKey: `/users/me ${token}`, path: '/users/me?private=1', token }),
+			raiselyRequest({
+				...opt,
+				cacheKey: `/authenticate ${token}`,
+				path: '/authenticate',
+				token,
+			}),
+			raiselyRequest({
+				...opt,
+				cacheKey: `/users/me ${token}`,
+				path: '/users/me?private=1',
+				token,
+			}),
 		]);
 	} catch (error) {
-		if (error.statusCode && (error.statusCode >= 400) && (error.statusCode <= 499)) {
+		if (
+			error.statusCode &&
+			error.statusCode >= 400 &&
+			error.statusCode <= 499
+		) {
 			const path = _.get(error, 'request.uri.path', '');
-			console.log(`Authentication request (${path}) failed (status: ${error.statusCode})`);
+			console.log(
+				`Authentication request (${path}) failed (status: ${error.statusCode})`
+			);
 			return noMatch;
 		}
 		throw error;
 	}
 
 	return {
-		tags: _.get(user, 'tags', []).map(t => t.path),
+		tags: _.get(user, 'tags', []).map((t) => t.path),
 		roles: _.get(authentication, 'roles', []),
 	};
 }
 
 /**
-  * This controller will receive create, update, delete hooks from raisely
-  * to update other services
-  */
+ * This controller will receive create, update, delete hooks from raisely
+ * to update other services
+ */
 class RaiselyPeople extends AirblastController {
 	validate({ data }) {
 		if (!data.type) {
@@ -79,11 +101,19 @@ class RaiselyPeople extends AirblastController {
 			throw new Error('Event contains no data');
 		}
 		if (data.type === 'guest.created') {
-			const keys = Object.keys (data.data);
-			const requiredKeys = ['user', 'preSurvey', 'postSurvey', 'conversation', 'rsvp'];
+			const keys = Object.keys(data.data);
+			const requiredKeys = [
+				'user',
+				'preSurvey',
+				'postSurvey',
+				'conversation',
+				'rsvp',
+			];
 			const missingKeys = _.difference(requiredKeys, keys);
 			if (missingKeys.length) {
-				throw new Error(`Guest event missing required data: ${missingKeys}`);
+				throw new Error(
+					`Guest event missing required data: ${missingKeys}`
+				);
 			}
 			if (!data.data.rsvp.uuid) {
 				throw new Error('RSVP uuid is necessary to save data');
@@ -100,7 +130,7 @@ class RaiselyPeople extends AirblastController {
 
 		// Defer to the orchestrator to decide which controllers should process
 		// the event
-		raiselyEvents[data.type].forEach(controller => {
+		raiselyEvents[data.type].forEach((controller) => {
 			this.controllers[controller].enqueue(data);
 		});
 	}

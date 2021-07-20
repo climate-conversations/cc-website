@@ -4,6 +4,7 @@
 		startCase,
 		displayCurrency,
 		get,
+		pick,
 		kebabCase,
 		set,
 	} = RaiselyComponents.Common;
@@ -221,7 +222,7 @@ ${close}`;
 			return getData(
 				api.events.update({
 					id: event.uuid,
-					data: { data: _.pick(event, ['private']) },
+					data: { data: pick(event, ['private']) },
 				})
 			);
 		};

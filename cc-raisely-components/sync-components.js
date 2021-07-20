@@ -180,7 +180,6 @@ async function syncComponents() {
 							data,
 						},
 					});
-					throw new Error('stop');
 				} else {
 					console.log(`Skipping ${name} (no change)`);
 				}
