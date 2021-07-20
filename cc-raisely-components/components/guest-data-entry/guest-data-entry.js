@@ -38,10 +38,9 @@
 	 * @returns {boolean}
 	 */
 	function canRetryRequest(e) {
-		return (
-			(get(e, 'response.statusCode') || get(e, 'response.status', 0)) >
-			500
-		);
+		const status =
+			get(e, 'response.statusCode') || get(e, 'response.status', 0);
+		return !status || status > 500;
 	}
 
 	const wait = (millis) =>
@@ -64,7 +63,7 @@
 				resolve(result);
 				return;
 			} catch (error) {
-				let shouldRetry = true;
+				let shouldRetry = false;
 				if (promise.attempts < maxAttempts) {
 					shouldRetry = canRetryRequest(error);
 				}
@@ -75,13 +74,17 @@
 					return;
 				}
 				console.log(
-					`${options.name} encountered retriable error, retrying`,
+					`${name} encountered retriable error, retrying`,
 					error
 				);
 				// If we're retrying, don't slam the server, pause for up to 3 seconds
 				await wait(3000 * Math.random());
 			}
 		} while (promise.state === 'working' && promise.attempts < maxAttempts);
+		// How the heck did we get here?
+		promise.state = 'failed';
+		promise.error = error;
+		reject(error);
 	}
 
 	/**
@@ -109,9 +112,11 @@
 			reject,
 			fn,
 			maxAttempts,
-			name,
+			name: options.name,
 		}).catch((e) => {
 			console.error('Unexpected retry failure', e);
+			promise.state = 'failed';
+			promise.error = e;
 			reject(e);
 		});
 
@@ -123,6 +128,10 @@
 		let error;
 		do {
 			incomplete = list.filter((p) => p.state === 'working');
+			console.log(
+				'Racing promises',
+				incomplete.map((p) => `${p.name} (${p.state})`)
+			);
 			if (incomplete.length) {
 				try {
 					await Promise.race(incomplete);
@@ -548,6 +557,10 @@
 					this.setState({ rsvpUuid: rsvp.uuid })
 				);
 
+				// Keep the user updated
+				await awaitRetriables(saveProgress, () => {
+					this.setState({ saveProgress: [...saveProgress] });
+				});
 				const savedRsvp = await rsvpPromise;
 				this.setState({ rsvpUuid: savedRsvp.uuid });
 
@@ -577,7 +590,11 @@
 				// Send the guest to be added to the backend spreadsheet
 				saveProgress.push(
 					retry(
-						() => UserSaveHelper.notifySync('guest.created', data),
+						() =>
+							UserSaveHelper.notifySync(
+								'guest.created',
+								webhookData
+							),
 						{ name: 'Sync with spreadsheet' }
 					)
 				);
@@ -951,7 +968,7 @@
 			// Changing the key will cause react to re-fresh the component
 			const reset = () =>
 				this.setState({ key: new Date().toISOString() });
-			const reviewLink = `/surveys/${rsvpUuid}`;
+			const reviewLink = `/surveys/${rsvpUuid}/view`;
 
 			return (
 				<div>
