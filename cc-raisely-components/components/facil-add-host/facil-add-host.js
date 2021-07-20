@@ -11,24 +11,36 @@
 	const RaiselyButton = RaiselyComponents.import('raisely-button');
 	const Messenger = RaiselyComponents.import('message-send-and-save');
 	const ReturnButtonComponent = RaiselyComponents.import('return-button');
-	const ReturnButtonRef = RaiselyComponents.import('return-button', { asRaw: true });
-	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', { asRaw: true });
+	const ReturnButtonRef = RaiselyComponents.import('return-button', {
+		asRaw: true,
+	});
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', {
+		asRaw: true,
+	});
 	let ReturnButton;
 	let UserSaveHelper;
 
 	const userFields = [
-		'user.preferredName', 'user.fullName', 'user.phoneNumber', 'user.email',
-		'user.address1', 'user.address2', 'user.suburb', 'user.country', 'user.postcode',
+		'user.preferredName',
+		'user.fullName',
+		'user.phoneNumber',
+		'user.email',
+		'user.address1',
+		'user.address2',
+		'user.suburb',
+		'user.country',
+		'user.postcode',
 	];
 	const intentionFields = [
-		'interaction.host-interest.status', 'interaction.host-interest.firstContactedAt', 'interaction.host-interest.source',
+		'interaction.host-interest.status',
+		'interaction.host-interest.firstContactedAt',
+		'interaction.host-interest.source',
 	];
 
-	const editForm = [
-		{ title: 'Edit Host Status', fields: intentionFields },
-	];
+	const editForm = [{ title: 'Edit Host Status', fields: intentionFields }];
 
-	const getFacilitatorName = (facilitator) => get(facilitator, 'fullName') ||
+	const getFacilitatorName = (facilitator) =>
+		get(facilitator, 'fullName') ||
 		get(facilitator, 'preferredName', 'The facilitator');
 
 	class FindHost extends React.Component {
@@ -42,18 +54,18 @@
 
 		createNew = () => {
 			this.setState({ host: null }, this.props.next);
-		}
+		};
 
 		next = async () => {
 			this.props.next();
-		}
+		};
 
 		updateHost = (user) => {
 			const { pageIndex } = this.props;
 			this.setState({ host: user }, () => {
 				this.props.updateValues({ [pageIndex]: this.state.host });
 			});
-		}
+		};
 
 		renderHost = () => {
 			const host = this.state.host || this.props.host;
@@ -68,9 +80,16 @@
 						</label>
 						<div className="user__card">
 							<div className="static-field__title">{name}</div>
-							<div className="static-field__subtitle">{host.email}</div>
+							<div className="static-field__subtitle">
+								{host.email}
+							</div>
 							<RaiselyButton uuid={host.uuid} recordType="user" />
-							<Button type="button" onClick={() => this.updateHost(null)}>Change</Button>
+							<Button
+								type="button"
+								onClick={() => this.updateHost(null)}
+							>
+								Change
+							</Button>
 						</div>
 					</div>
 				);
@@ -86,7 +105,7 @@
 					/>
 				</div>
 			);
-		}
+		};
 
 		render() {
 			const { props } = this;
@@ -99,13 +118,16 @@
 						<div className="conversation-team__title">
 							<h3>Find a Host</h3>
 							<p>
-								Type the name email or phone number of the host to find them, or
-								click <strong>Add new person</strong> if {"they're"} not in our database.
+								Type the name email or phone number of the host
+								to find them, or click{' '}
+								<strong>Add new person</strong> if {"they're"}{' '}
+								not in our database.
 							</p>
 							<p>
-								If the host is an organisation, enter the contact person as the host,
-								then edit that person in Raisely and make sure {"they're"} associated with
-								the organisation.
+								If the host is an organisation, enter the
+								contact person as the host, then edit that
+								person in Raisely and make sure {"they're"}{' '}
+								associated with the organisation.
 							</p>
 						</div>
 					</div>
@@ -139,7 +161,8 @@
 
 	function ViewInteraction({ interaction }) {
 		const date = dayjs(interaction.createdAt).format('DD/MM/YYYY');
-		const subject = get(interaction, 'detail.private.subject') ||
+		const subject =
+			get(interaction, 'detail.private.subject') ||
 			`[${startCase(get(interaction, 'detail.private.messageId', ''))}]`;
 		return (
 			<li className="interaction--tile">
@@ -159,19 +182,20 @@
 			const { interaction: oldInteraction, host: oldHost } = prevProps;
 			const { interaction, host } = this.props;
 
-			if ((oldInteraction !== interaction) || (oldHost !== host)) {
+			if (oldInteraction !== interaction || oldHost !== host) {
 				this.load();
 			}
 		}
 
 		load = async () => {
 			const { host } = this.props;
-			const messageCategories = 'meeting,personal.message,personal.email,phone';
+			const messageCategories =
+				'meeting,personal.message,personal.email,phone';
 			this.setState({ loading: true });
 
 			try {
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-				const query = qs.stringify( {
+				const query = qs.stringify({
 					user: host.uuid,
 					category: messageCategories,
 					limit: 10,
@@ -182,7 +206,6 @@
 				let messages = [];
 				const initStepsPromise = this.initSteps();
 				try {
-
 					[messages] = await Promise.all([
 						UserSaveHelper.proxy(`/interactions?${query}`, {
 							method: 'get',
@@ -191,15 +214,18 @@
 				} catch (error) {}
 				// In case the other failed
 				await initStepsPromise;
-				console.log("messages: ", messages)
+				console.log('messages: ', messages);
 				this.setState({ messages }, this.checkCompleteSteps);
 			} catch (error) {
 				console.error(error);
-				this.setState({ error: error.message || 'Loading failed', loading: false });
+				this.setState({
+					error: error.message || 'Loading failed',
+					loading: false,
+				});
 			} finally {
 				this.setState({ loading: false });
 			}
-		}
+		};
 
 		/**
 		 * Copy messaging steps from campaign
@@ -208,20 +234,24 @@
 		async initSteps() {
 			const campaignUuid = get(this.props, 'global.campaign.uuid');
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-			const privateCampaign = await UserSaveHelper.proxy(`/campaigns/${campaignUuid}?private=1`, {
-				method: 'get',
-			});
+			const privateCampaign = await UserSaveHelper.proxy(
+				`/campaigns/${campaignUuid}?private=1`,
+				{
+					method: 'get',
+				}
+			);
 
 			const grace = 48; // hours
 			const now = dayjs();
 
 			const { interaction } = this.props;
-			const completedSteps = this
-				.deserializeCompleteSteps(get(interaction, 'detail.private.followUpSteps', ''));
+			const completedSteps = this.deserializeCompleteSteps(
+				get(interaction, 'detail.private.followUpSteps', '')
+			);
 
 			// Clone steps and set calculated attributes
-			const steps = get(privateCampaign, 'private.hostMessages', [])
-				.map((s) => {
+			const steps = get(privateCampaign, 'private.hostMessages', []).map(
+				(s) => {
 					const step = { ...s };
 					const field = step.sendAfter.field || 'createdAt';
 					step.dueBy = dayjs(get(interaction, field))
@@ -232,25 +262,26 @@
 					step.overdue = !step.complete && step.dueBy.isBefore(now);
 					step.about = startCase(step.id);
 					return step;
-				});
+				}
+			);
 			this.setState({ steps, completedSteps });
 		}
 
 		deserializeCompleteSteps(steps) {
 			const completedSteps = {};
-			steps
-				.split('\n')
-				.forEach((step) => {
-					const [createdAt, onTime, id] = step.split('\t');
-					completedSteps[id] = { id, onTime, createdAt };
-				});
+			steps.split('\n').forEach((step) => {
+				const [createdAt, onTime, id] = step.split('\t');
+				completedSteps[id] = { id, onTime, createdAt };
+			});
 			return completedSteps;
 		}
 
 		serializeCompleteSteps() {
 			const { completedSteps } = this.state;
 			return Object.values(completedSteps)
-				.map(({ id, onTime, createdAt }) => `${createdAt}	${onTime}	${id}`)
+				.map(
+					({ id, onTime, createdAt }) => `${createdAt}	${onTime}	${id}`
+				)
 				.sort()
 				.join('\n');
 		}
@@ -260,20 +291,19 @@
 			const { host } = this.props;
 			const newInteraction = {
 				userUuid: host.uuid,
-				categoryUuid: sendBy === 'email' ? 'personal.email' : 'personal.message',
+				categoryUuid:
+					sendBy === 'email' ? 'personal.email' : 'personal.message',
 				detail: {
 					readOnly: false,
 					private: {
 						...this.getNextStepMeta(),
-						method: sendBy
+						method: sendBy,
 					},
 				},
 			};
-			await getData(
-				save("interaction", newInteraction)
-			);
+			await getData(save('interaction', newInteraction));
 			this.load();
-		}
+		};
 
 		checkCompleteSteps = async () => {
 			const { updateInteraction, interaction } = this.props;
@@ -284,9 +314,16 @@
 					let changed;
 
 					messages.forEach((message) => {
-						const type = get(message, 'detail.private.forInteraction');
+						const type = get(
+							message,
+							'detail.private.forInteraction'
+						);
 						const stepId = get(message, 'detail.private.messageId');
-						if ((type === 'host-interest') && stepId && !completedSteps[stepId]) {
+						if (
+							type === 'host-interest' &&
+							stepId &&
+							!completedSteps[stepId]
+						) {
 							changed = true;
 							const occurredAt = dayjs(message.createdAt);
 							const step = steps.find(({ id }) => id === stepId);
@@ -295,23 +332,37 @@
 							completedSteps[stepId] = {
 								id: stepId,
 								date: occurredAt.toISOString(),
-								onTime: occurredAt.isBefore(step.dueBy) ? 'onTime' : 'late',
-
+								onTime: occurredAt.isBefore(step.dueBy)
+									? 'onTime'
+									: 'late',
 							};
 						}
 					});
 
 					const numOnTime = Object.values(completedSteps)
-						.map(step => ((step.onTime === 'onTime') ? 1 : 0))
+						.map((step) => (step.onTime === 'onTime' ? 1 : 0))
 						.reduce((val, total) => total + val, 0);
 					const complete = (numOnTime * 100) / steps.length;
 
-					set(interaction, 'detail.private.followUpPercentComplete', complete);
-					set(interaction, 'detail.private.followUpSteps', this
-						.serializeCompleteSteps(Object.values(completedSteps)));
+					set(
+						interaction,
+						'detail.private.followUpPercentComplete',
+						complete
+					);
+					set(
+						interaction,
+						'detail.private.followUpSteps',
+						this.serializeCompleteSteps(
+							Object.values(completedSteps)
+						)
+					);
 					if (complete >= 100) {
 						changed = true;
-						set(interaction, 'detail.private.followUpCompletedAt', dayjs().toISOString());
+						set(
+							interaction,
+							'detail.private.followUpCompletedAt',
+							dayjs().toISOString()
+						);
 					}
 
 					if (changed) {
@@ -321,15 +372,18 @@
 					this.setState({ saving: false }, this.nextStep);
 				} catch (error) {
 					console.error(error);
-					this.setState({ error: `Could not update: ${error.message}`, saving: false });
+					this.setState({
+						error: `Could not update: ${error.message}`,
+						saving: false,
+					});
 				}
 			}
-		}
+		};
 
 		nextStep = () => {
 			const { steps } = this.state;
 			const remaining = steps
-				.filter(step => !step.complete)
+				.filter((step) => !step.complete)
 				.sort((a, b) => (a.dueBy.isBefore(b.dueBy) ? 1 : -1));
 
 			// Choose the next remaining step
@@ -341,7 +395,7 @@
 				return false;
 			});
 			this.setState({ nextStep });
-		}
+		};
 
 		getNextStepMeta() {
 			let nextStepMeta;
@@ -350,11 +404,10 @@
 				nextStepMeta = {
 					forInteraction: 'host-interest',
 					messageId: nextStep.id,
-				}
+				};
 				pick(nextStep, ['']);
 			}
 			return nextStepMeta;
-
 		}
 
 		render() {
@@ -365,8 +418,11 @@
 			if (loading) return <Spinner />;
 			const nextStepMeta = this.getNextStepMeta();
 
-			const noun = get(facilitator, 'uuid', 'n/a') === get(this.props, 'global.user.uuid') ?
-				'You' : getFacilitatorName(facilitator);
+			const noun =
+				get(facilitator, 'uuid', 'n/a') ===
+				get(this.props, 'global.user.uuid')
+					? 'You'
+					: getFacilitatorName(facilitator);
 
 			if (error) {
 				return (
@@ -386,8 +442,11 @@
 				<div className="host--interactions__wrapper">
 					{nextStep ? (
 						<div className="host--interactions__next-message">
-							{noun} should {nextStep.overdue ? 'have sent' : 'send'} {host.preferredName} a message
-							around {nextStep.dueBy.format('MMM D (dddd)')} about {nextStep.about}
+							{noun} should{' '}
+							{nextStep.overdue ? 'have sent' : 'send'}{' '}
+							{host.preferredName} a message around{' '}
+							{nextStep.dueBy.format('MMM D (dddd)')} about{' '}
+							{nextStep.about}
 							<Messenger
 								{...this.props}
 								to={[host]}
@@ -399,32 +458,51 @@
 								messageMeta={nextStepMeta}
 								messageData={messageData}
 							/>
-							<Button onClick={this.manualStep}>{"I've"} already done this</Button>
+							<Button onClick={this.manualStep}>
+								{"I've"} already done this
+							</Button>
 						</div>
-					) : <Messenger
-						{...this.props}
-						to={[host]}
-						subject='Hosting'
-						body={`Hi ${host.preferredName}`}
-						sendBy='whatsapp'
-						launchButtonLabel="Message Host"
-						onClose={this.load}
-						messageData={messageData}
-					/>}
+					) : (
+						<Messenger
+							{...this.props}
+							to={[host]}
+							subject="Hosting"
+							body={`Hi ${host.preferredName}`}
+							sendBy="whatsapp"
+							launchButtonLabel="Message Host"
+							onClose={this.load}
+							messageData={messageData}
+						/>
+					)}
 					<div className="host--interactions__list">
 						<h4>Recent Messages</h4>
 						{messages && messages.length ? (
 							<ol>
-								{messages.map(message => <ViewInteraction key={message.uuid} interaction={message} />)}
+								{messages.map((message) => (
+									<ViewInteraction
+										key={message.uuid}
+										interaction={message}
+									/>
+								))}
 							</ol>
 						) : (
-							<p>We {"haven't"} recorded any messages to this host yet</p>
+							<p>
+								We {"haven't"} recorded any messages to this
+								host yet
+							</p>
 						)}
-						View all interactions with the host in Raisely <RaiselyButton recordType="user" uuid={host.uuid} label="View Host" />
+						View all interactions with the host in Raisely{' '}
+						<RaiselyButton
+							recordType="user"
+							uuid={host.uuid}
+							label="View Host"
+						/>
 					</div>
 					<div>
 						<ReturnButtonComponent
-							{...this.props} saveTheme="secondary" saveLabel="Return to Dashboard"
+							{...this.props}
+							saveTheme="secondary"
+							saveLabel="Return to Dashboard"
 						/>
 					</div>
 				</div>
@@ -433,6 +511,8 @@
 	}
 
 	class ReassignHost extends React.Component {
+		state = {};
+
 		save = async () => {
 			const { reassign, closeModal } = this.props;
 			const { newFacilitator } = this.state;
@@ -446,56 +526,84 @@
 				this.setState({ saving: false });
 			}
 			closeModal();
-		}
+		};
 
-		selectAssignee = () => {
-			const { closeModal } = this.props;
-
+		showAssignment = () => {
 			const { newFacilitator, saving } = this.state;
 
 			if (newFacilitator && newFacilitator.uuid) {
-				const name = newFacilitator.fullName || newFacilitator.preferredName;
+				const name =
+					newFacilitator.fullName || newFacilitator.preferredName;
 
 				return (
 					<div className="conversation-team__selected_user field-wrapper">
 						<label htmlFor="facilitator">
-							<span className="form-field__label-text">Assign to</span>
+							<span className="form-field__label-text">
+								Assign to
+							</span>
 						</label>
 						<div className="user__card">
 							<div className="static-field__title">{name}</div>
-							<div className="static-field__subtitle">{newFacilitator.email}</div>
-							<RaiselyButton uuid={newFacilitator.uuid} recordType="people" />
-							<Button type="button" onClick={() => this.setState({ newFacilitator: null })}>Change</Button>
+							<div className="static-field__subtitle">
+								{newFacilitator.email}
+							</div>
+							<RaiselyButton
+								uuid={newFacilitator.uuid}
+								recordType="people"
+							/>
+							<Button
+								type="button"
+								onClick={() =>
+									this.setState({ newFacilitator: null })
+								}
+							>
+								Change
+							</Button>
 						</div>
 					</div>
 				);
 			}
 
 			return (
-				<div className="assignment-select">
-					<div className="conversation-team__user-select field-wrapper">
-						<UserSelect
-							api={api}
-							global={this.props.global}
-							update={({ user }) => this.setState({ newFacilitator: user })}
-							label="Assign to"
-						/>
-					</div>
-					<Button disabled={saving} onClick={closeModal()}>Cancel</Button>
-					<Button disabled={saving || !newFacilitator} onClick={this.save()}>Confirm</Button>
+				<div className="conversation-team__user-select field-wrapper">
+					<UserSelect
+						api={api}
+						global={this.props.global}
+						update={({ user }) =>
+							this.setState({ newFacilitator: user })
+						}
+						label="Assign to"
+					/>
 				</div>
 			);
-		}
+		};
+
+		selectAssignee = () => {
+			const { closeModal } = this.props;
+
+			const { newFacilitator, saving } = this.state;
+
+			return (
+				<div className="assignment-select">
+					{this.showAssignment()}
+					<Button disabled={saving} onClick={() => closeModal()}>
+						Cancel
+					</Button>
+					<Button
+						disabled={saving || !newFacilitator}
+						onClick={() => this.save()}
+					>
+						Confirm
+					</Button>
+				</div>
+			);
+		};
 
 		render() {
 			const { error } = this.state;
 			return (
 				<div className="assignment-select__wrapper">
-					{error ? (
-						<div className="error">
-							{error}
-						</div>
-					) : ''}
+					{error ? <div className="error">{error}</div> : ''}
 					Choose a facilitator or team leader to reassign the host to
 					{this.selectAssignee()}
 				</div>
@@ -522,7 +630,7 @@
 				}
 			}
 			this.props.next();
-		}
+		};
 
 		book = () => {
 			const { host } = this.props;
@@ -532,11 +640,11 @@
 				url: `/conversations/create?host=${host.uuid}`,
 			});
 			this.props.history.push(bookingUrl);
-		}
+		};
 
 		reassign = (closeModal) => {
 			return <ReassignHost {...this.props} closeModal={closeModal} />;
-		}
+		};
 
 		render() {
 			const { back } = this.props;
@@ -556,7 +664,9 @@
 						modalContent={this.reassign}
 					/>
 					<div className="custom-form__navigation">
-						{ this.props.step < 1 ? '' : (
+						{this.props.step < 1 ? (
+							''
+						) : (
 							<Button
 								type="button"
 								disabled={this.state.saving}
@@ -592,8 +702,13 @@
 			if (host) {
 				editForm[0].description = (
 					<React.Fragment>
-						<div className="host--form__name">{host.fullName || host.preferredName}</div>;
-						<div className="host--form__facilitator">Assigned to {facilName}</div>
+						<div className="host--form__name">
+							{host.fullName || host.preferredName}
+						</div>
+						;
+						<div className="host--form__facilitator">
+							Assigned to {facilName}
+						</div>
 					</React.Fragment>
 				);
 			}
@@ -601,8 +716,16 @@
 			if (mode === 'new') {
 				const newForm = [
 					{ title: 'Find Person', component: FindHost },
-					{ title: 'Add New Person (Host)', fields: userFields, condition: values => !get(values, '0.uuid') },
-					{ title: 'Edit Host Status', fields: intentionFields, buttons: EditButtons },
+					{
+						title: 'Add New Person (Host)',
+						fields: userFields,
+						condition: (values) => !get(values, '0.uuid'),
+					},
+					{
+						title: 'Edit Host Status',
+						fields: intentionFields,
+						buttons: EditButtons,
+					},
 				];
 
 				this.setState({ form: newForm });
@@ -610,11 +733,15 @@
 				editForm[0].buttons = EditButtons;
 				this.setState({ form: editForm, showInteractions: true });
 			}
-		}
+		};
 
 		load = async ({ dataToForm }) => {
 			// Load event and rsvps
-			const results = await api.quickLoad({ props: this.props, models: ['interaction.private'], required: false });
+			const results = await api.quickLoad({
+				props: this.props,
+				models: ['interaction.private'],
+				required: false,
+			});
 			const { interaction } = results;
 
 			// We must be creating a new host
@@ -626,17 +753,22 @@
 			const host = interaction.user;
 			this.setState({ mode: 'edit', interaction, host });
 
-			const facilitatorUuid = get(interaction, 'detail.private.facilitatorUuid');
+			const facilitatorUuid = get(
+				interaction,
+				'detail.private.facilitatorUuid'
+			);
 			if (facilitatorUuid) {
 				getData(api.users.get({ id: facilitatorUuid }))
-					.then(facilitator => this.setState({ facilitator }))
+					.then((facilitator) => this.setState({ facilitator }))
 					.catch(console.error);
 			}
 
-			return dataToForm({ interaction: {
-				[interaction.category.path]: interaction,
-			} });
-		}
+			return dataToForm({
+				interaction: {
+					[interaction.category.path]: interaction,
+				},
+			});
+		};
 
 		save = async (values, formToData) => {
 			const data = formToData(values);
@@ -644,14 +776,17 @@
 
 			let { host } = this.state;
 			if (data.user) {
-				host = await UserSaveHelper.upsertUser(data.user, { assignSelf: true, assignPointIfNew: true });
+				host = await UserSaveHelper.upsertUser(data.user, {
+					assignSelf: true,
+					assignPointIfNew: true,
+				});
 				this.setState({ host });
 			}
 
 			if (!host) host = values[0];
 			let { interaction: oldInteraction } = this.state;
 
-			let newInteraction = get(data, 'interaction.host-interest', { });
+			let newInteraction = get(data, 'interaction.host-interest', {});
 			if (!oldInteraction) {
 				const facilitatorUuid = get(this.props, 'global.user.uuid');
 				oldInteraction = {
@@ -660,7 +795,7 @@
 					detail: {
 						private: {
 							facilitatorUuid: facilitatorUuid,
-							status: 'Lead'
+							status: 'Lead',
 						},
 					},
 				};
@@ -672,14 +807,19 @@
 			newInteraction.detail.readOnly = false;
 			newInteraction.detail.private = {
 				...oldInteraction.detail.private,
-				...get(newInteraction, "detail.private", {})
+				...get(newInteraction, 'detail.private', {}),
 			};
 
-			const interaction = await getData(save('interaction', newInteraction, { partial: true }));
+			const interaction = await getData(
+				save('interaction', newInteraction, { partial: true })
+			);
 			if (!ReturnButton) ReturnButton = ReturnButtonRef().html;
-			const nextUrl = ReturnButton.forwardReturnTo({ props: this.props, url: `/hosts/${get(interaction, 'uuid')}` });
+			const nextUrl = ReturnButton.forwardReturnTo({
+				props: this.props,
+				url: `/hosts/${get(interaction, 'uuid')}`,
+			});
 			this.props.history.push(nextUrl);
-		}
+		};
 
 		reassign = async (newFacilitator) => {
 			const { host } = this.state;
@@ -691,19 +831,27 @@
 					method: 'PATCH',
 					body: {
 						data: {
-							detail: { private: { facilitatorUuid: newFacilitator.uuid } },
+							detail: {
+								private: {
+									facilitatorUuid: newFacilitator.uuid,
+								},
+							},
 						},
 						partial: true,
-					}
+					},
 				}),
 				UserSaveHelper.assignUser(newFacilitator.uuid, host.uuid),
 			]);
-			set(interaction, 'detail.private.facilitatorUuid', newFacilitator.uuid);
+			set(
+				interaction,
+				'detail.private.facilitatorUuid',
+				newFacilitator.uuid
+			);
 			this.setState({ facilitator: newFacilitator });
-		}
+		};
 
 		updateInteraction = async (interaction) => {
-			if (!UserSaveHelper) UserSaveHelper= UserSaveHelperRef().html
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			const data = { ...interaction };
 			delete data.uuid;
 			await UserSaveHelper.proxy(`/interactions/${interaction.uuid}`, {
@@ -713,20 +861,27 @@
 
 			await save('interaction', interaction, { partial: true });
 			this.setState({ interaction });
-		}
+		};
 
 		updateStep = (step, values) => {
 			const host = get(values, '0.host');
 			if (host) {
 				this.setState({ host }, this.setForm);
 			}
-		}
+		};
 
 		render() {
 			// eslint-disable-next-line object-curly-newline
-			const { form, host, interaction, facilitator, mode, showInteractions } = this.state;
+			const {
+				form,
+				host,
+				interaction,
+				facilitator,
+				mode,
+				showInteractions,
+			} = this.state;
 
-			if (!form) return <Spinner />
+			if (!form) return <Spinner />;
 
 			const formSettings = {
 				host,
@@ -740,12 +895,17 @@
 				formSettings.redirectToReturnTo = true;
 			}
 
-			const hostName = get(host, 'fullName') ||
+			const hostName =
+				get(host, 'fullName') ||
 				get(host, 'preferredName') ||
 				get(host, 'phoneNumber') ||
 				get(host, 'email');
-			let formClass = `host-edit__form ${showInteractions ? 'split__screen' : ''}`;
-			let interactionsClass = `host-edit__interactions ${showInteractions ? 'split__screen' : ''}`;
+			let formClass = `host-edit__form ${
+				showInteractions ? 'split__screen' : ''
+			}`;
+			let interactionsClass = `host-edit__interactions ${
+				showInteractions ? 'split__screen' : ''
+			}`;
 
 			return (
 				<div className="host-edit__wrapper">
@@ -756,7 +916,7 @@
 						<div className={formClass}>
 							<CustomForm {...formSettings} />
 						</div>
-						{(showInteractions && host) ? (
+						{showInteractions && host ? (
 							<div className={interactionsClass}>
 								<HostInteractions
 									{...this.props}
@@ -766,7 +926,9 @@
 									updateInteraction={this.updateInteraction}
 								/>
 							</div>
-						) : ''}
+						) : (
+							''
+						)}
 					</div>
 				</div>
 			);
