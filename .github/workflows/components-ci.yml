@@ -41,19 +41,20 @@ jobs:
               if: github.ref == 'refs/heads/main'
               working-directory: ./cc-raisely-components
               run: |
-                  echo "RAISELY_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
+                  echo "APP_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
               env:
                   GCLOUD_AUTH: ${{ secrets.RAISELY_PRODUCTION_TOKEN }}
 
             - name: Set Staging environment
-              if: github.ref != 'refs/heads/main'
+              if: github.ref == 'refs/heads/staging'
               working-directory: ./cc-raisely-components
               run: |
-                  echo "RAISELY_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
+                  echo "APP_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
               env:
                   GCLOUD_AUTH: ${{ secrets.RAISELY_STAGING_TOKEN }}
 
             - name: Deploy components
+              if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
               working-directory: ./cc-raisely-components
               run: |
-                  npm run deploy
+                  node sync-components.js
