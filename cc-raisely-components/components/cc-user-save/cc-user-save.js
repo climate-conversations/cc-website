@@ -218,6 +218,10 @@
 			});
 		}
 
+		static getWebhookUrl() {
+			return WEBHOOK_URL;
+		}
+
 		/**
 		 * Proxies a request through the permission escalation cloud function
 		 * This passes on the users login token, which the proxy will use to check
