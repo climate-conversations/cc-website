@@ -816,7 +816,7 @@
 					);
 				}
 
-				await UserSaveHelper.doFetch(WEBHOOK_URL, {
+				await UserSaveHelper.doFetch(UserSaveHelper.getWebhookUrl(), {
 					method: 'post',
 					body: {},
 				});
