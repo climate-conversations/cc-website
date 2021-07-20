@@ -55,7 +55,7 @@ jobs:
                   echo "SERVICE_ACCOUNT=cloud-functions@climate-conversations-sync.iam.gserviceaccount.com" >> $GITHUB_ENV
                   echo "GCLOUD_PROJECT=${GCLOUD_PROJECT}" >> $GITHUB_ENV
               env:
-                  GCLOUD_AUTH: ${{ secrets.GCLOUDAUTH_PRODUCTION }}
+                  GCLOUD_AUTH: ${{ secrets.GCLOUDAUTH_SYNC_PROJECT }}
                   GCLOUD_PROJECT: climate-conversations-sg-2019
 
             - name: Setup staging environment
