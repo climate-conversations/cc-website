@@ -43,7 +43,7 @@ jobs:
               run: |
                   echo "APP_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
               env:
-                  GCLOUD_AUTH: ${{ secrets.RAISELY_PRODUCTION_TOKEN }}
+                  RAISELY_TOKEN: ${{ secrets.RAISELY_PRODUCTION_TOKEN }}
 
             - name: Set Staging environment
               if: github.ref == 'refs/heads/staging'
@@ -51,7 +51,7 @@ jobs:
               run: |
                   echo "APP_TOKEN=${RAISELY_TOKEN}" >> $GITHUB_ENV
               env:
-                  GCLOUD_AUTH: ${{ secrets.RAISELY_STAGING_TOKEN }}
+                  RAISELY_TOKEN: ${{ secrets.RAISELY_STAGING_TOKEN }}
 
             - name: Deploy components
               if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
