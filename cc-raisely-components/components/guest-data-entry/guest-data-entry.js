@@ -557,6 +557,10 @@
 					this.setState({ rsvpUuid: rsvp.uuid })
 				);
 
+				// Keep the user updated
+				await awaitRetriables(saveProgress, () => {
+					this.setState({ saveProgress: [...saveProgress] });
+				});
 				const savedRsvp = await rsvpPromise;
 				this.setState({ rsvpUuid: savedRsvp.uuid });
 
@@ -586,7 +590,11 @@
 				// Send the guest to be added to the backend spreadsheet
 				saveProgress.push(
 					retry(
-						() => UserSaveHelper.notifySync('guest.created', data),
+						() =>
+							UserSaveHelper.notifySync(
+								'guest.created',
+								webhookData
+							),
 						{ name: 'Sync with spreadsheet' }
 					)
 				);
@@ -960,7 +968,7 @@
 			// Changing the key will cause react to re-fresh the component
 			const reset = () =>
 				this.setState({ key: new Date().toISOString() });
-			const reviewLink = `/surveys/${rsvpUuid}`;
+			const reviewLink = `/surveys/${rsvpUuid}/view`;
 
 			return (
 				<div>
