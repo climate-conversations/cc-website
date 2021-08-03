@@ -9,7 +9,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 2
+            "value": 9
         },
         "alwaysShow": {
             "id": "alwaysShow",

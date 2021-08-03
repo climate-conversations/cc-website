@@ -36,7 +36,7 @@
 	const websiteProfileUuid =
 		mode === 'production'
 			? 'f2b41020-96d8-11e9-8a7b-47401a90ec39'
-			: '1316ed10-dbe7-11eb-a40a-bd0e3ca9ce47';
+			: '1316ed10-dbe7-11eb-a40a-bd0e3ca9ce4';
 
 	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', {
 		asRaw: true,

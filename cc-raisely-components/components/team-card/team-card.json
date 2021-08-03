@@ -31,7 +31,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 3
+            "value": 10
         },
         "position": {
             "id": "position",
