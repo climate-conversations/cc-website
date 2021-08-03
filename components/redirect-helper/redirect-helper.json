@@ -1,0 +1,26 @@
+{
+    "fields": {
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 23
+        },
+        "redirectTo": {
+            "id": "redirectTo",
+            "type": "select",
+            "label": "Redirect to ...",
+            "value": "facilitator",
+            "options": [
+                {
+                    "label": "Facilitator Dashboard",
+                    "value": "facilitator"
+                },
+                {
+                    "label": "Teams Dashboard",
+                    "value": "team"
+                }
+            ]
+        }
+    },
+    "uuid": "402e8166-dbe7-11eb-9927-29b98241f4c3"
+}

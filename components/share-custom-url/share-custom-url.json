@@ -1,0 +1,60 @@
+{
+    "fields": {
+        "url": {
+            "id": "url",
+            "type": "text",
+            "label": "URL to share",
+            "value": ""
+        },
+        "body": {
+            "id": "body",
+            "type": "textarea",
+            "label": "Email body",
+            "value": ""
+        },
+        "size": {
+            "id": "size",
+            "help": "small, medium or large",
+            "type": "text",
+            "label": "size",
+            "value": "medium"
+        },
+        "text": {
+            "id": "text",
+            "type": "text",
+            "label": "Share text",
+            "value": ""
+        },
+        "theme": {
+            "id": "theme",
+            "help": "filled, outlined, outlined-inverted, filled-inverted",
+            "type": "text",
+            "label": "theme",
+            "value": "standard"
+        },
+        "subject": {
+            "id": "subject",
+            "type": "text",
+            "label": "Email subject",
+            "value": ""
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 22
+        },
+        "hashtags": {
+            "id": "hashtags",
+            "type": "text",
+            "label": "Twitter hashtags",
+            "value": ""
+        },
+        "networks": {
+            "id": "networks",
+            "type": "text",
+            "label": "Social Media Networks",
+            "value": "whatsapp"
+        }
+    },
+    "uuid": "402ea87c-dbe7-11eb-9927-29b98241f4c3"
+}

@@ -1,0 +1,31 @@
+{
+    "fields": {
+        "url": {
+            "id": "url",
+            "type": "text",
+            "label": "Link",
+            "value": "Send WhatsApp",
+            "singular": null
+        },
+        "label": {
+            "id": "label",
+            "type": "text",
+            "label": "Button Label",
+            "value": "",
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 44
+        },
+        "showIcon": {
+            "id": "title",
+            "type": "checkbox",
+            "label": "Show Icon",
+            "value": "false",
+            "singular": null
+        }
+    },
+    "uuid": "402e8175-dbe7-11eb-9927-29b98241f4c3"
+}

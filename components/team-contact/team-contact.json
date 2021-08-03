@@ -1,0 +1,27 @@
+{
+    "fields": {
+        "mode": {
+            "id": "mode",
+            "type": "select",
+            "label": "Show",
+            "value": "facilitator",
+            "options": [
+                {
+                    "label": "Team",
+                    "value": "team"
+                },
+                {
+                    "label": "Facilitator",
+                    "value": "facilitator"
+                }
+            ],
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 54
+        }
+    },
+    "uuid": "402e8170-dbe7-11eb-9927-29b98241f4c3"
+}

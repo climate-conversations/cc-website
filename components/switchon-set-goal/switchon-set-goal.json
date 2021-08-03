@@ -1,0 +1,35 @@
+{
+    "fields": {
+        "title": {
+            "type": "text",
+            "label": "Title",
+            "value": "Title Name Here"
+        },
+        "fields": {
+            "id": "fields",
+            "type": "text",
+            "label": "fields",
+            "value": "friendDwellingSize"
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 26
+        },
+        "redirect": {
+            "id": "redirect",
+            "type": "text",
+            "label": "Redirect",
+            "value": "/dashboard",
+            "defaultValue": ""
+        },
+        "buttonLabel": {
+            "id": "buttonLabel",
+            "type": "text",
+            "label": "Button Label",
+            "value": "Get Started!",
+            "defaultValue": ""
+        }
+    },
+    "uuid": "402e8160-dbe7-11eb-9927-29b98241f4c3"
+}

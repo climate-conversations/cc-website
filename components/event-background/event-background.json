@@ -1,0 +1,82 @@
+{
+    "fields": {
+        "order": {
+            "id": "order",
+            "type": "select",
+            "label": "Select photos from",
+            "value": "all",
+            "options": [
+                {
+                    "label": "Most recent conversations",
+                    "value": "asc"
+                },
+                {
+                    "label": "Oldest conversations",
+                    "value": "desc"
+                },
+                {
+                    "label": "Random",
+                    "value": "random"
+                }
+            ],
+            "singular": null
+        },
+        "period": {
+            "id": "period",
+            "type": "text",
+            "label": "Change photo every (seconds)",
+            "value": "10",
+            "singular": null
+        },
+        "repeat": {
+            "id": "repeat",
+            "type": "select",
+            "label": "Change photo more than once?",
+            "value": true,
+            "options": [
+                {
+                    "label": "Yes",
+                    "value": true
+                },
+                {
+                    "label": "No",
+                    "value": false
+                }
+            ]
+        },
+        "source": {
+            "id": "source",
+            "type": "select",
+            "label": "Get photos from",
+            "value": "all",
+            "options": [
+                {
+                    "label": "All conversations",
+                    "value": "all"
+                },
+                {
+                    "label": "Facilitators conversations",
+                    "value": "facilitator"
+                },
+                {
+                    "label": "Team conversations",
+                    "value": "team"
+                }
+            ],
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 57
+        },
+        "className": {
+            "id": "className",
+            "type": "text",
+            "label": "Class Name that contains background to change",
+            "value": "row--1",
+            "singular": null
+        }
+    },
+    "uuid": "402ea869-dbe7-11eb-9927-29b98241f4c3"
+}
