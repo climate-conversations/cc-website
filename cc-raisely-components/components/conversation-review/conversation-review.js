@@ -197,7 +197,7 @@
 											<p>You {"can't"} check this box until donation reconciliation is complete</p>
 										) : ''}
 										<Checkbox
-											label='I have reviewied this conversation and it is fully processed'
+											label='I have reviewed this conversation and it is fully processed'
 											disabled={!(isReconciled || !loading)}
 											onChange={this.markReviewComplete}
 										/>

@@ -45,9 +45,11 @@
 				const { mock } = this.props.global.campaign;
 				if (mock) {
 					stats = this.mockResponse(teamMode);
+					console.log(stats)
 				} else {
 					const userUuid = await this.getUserUuids();
 					stats = await (teamMode ? this.loadTeam(userUuid) : this.loadFacil(userUuid));
+					console.log(stats)
 				}
 
 				const labelledStats = labels

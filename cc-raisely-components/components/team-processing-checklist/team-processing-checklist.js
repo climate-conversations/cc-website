@@ -359,9 +359,11 @@
 					</div>
 					{error ? <div className="cc--error">{error}</div> : ''}
 					<ul className="conversation--checklist">
-						{checklist.map((item) => (
+						{checklist.map((item) => {
+							console.log(item);
+							return (
 							<CheckListItem key={item.id} item={item} />
-						))}
+						)})}
 					</ul>
 					{isReviewed ? (
 						<p>
