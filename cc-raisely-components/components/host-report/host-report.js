@@ -207,7 +207,7 @@
 			const path = get(this.props, 'location.pathname');
 			if (!CCUserSave) CCUserSave = CCUserSaveRef().html;
 
-			const url = `${CCUsersSave.getPortalHost()}/${path}`;
+			const url = `${CCUserSave.getPortalHost()}/${path}`;
 			let body = get(
 				this.props,
 				'global.campaign.public.conversationHostThankyou',
@@ -219,7 +219,7 @@ ${url}`;
 			const messageData = {
 				sender: get(this.props, 'global.user'),
 				report: {
-					url: `${CCUsersSave.getPortalHost()}/conversations/86da7d20-3c1f-11ea-827a-9de4da7b5886/host-report`,
+					url: `${CCUserSave.getPortalHost()}/conversations/86da7d20-3c1f-11ea-827a-9de4da7b5886/host-report`,
 				},
 			};
 
