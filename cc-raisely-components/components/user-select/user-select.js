@@ -68,7 +68,7 @@
 							item,
 						})}>
 
-						<span className="list__item--title">{item.value.fullName}</span>
+						<span className="list__item--title">{item.value.fullName ? item.value.fullName : item.value.preferredName}</span>
 						<span className="email list__item--subtitle">{item.value.email}</span>
 					</li>
 				));
