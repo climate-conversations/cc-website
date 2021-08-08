@@ -45,7 +45,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 60
+            "value": 61
         },
         "showGoal": {
             "id": "showGoal",
