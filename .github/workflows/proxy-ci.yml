@@ -5,6 +5,9 @@ on:
         paths:
             - 'cc-proxy/**'
             - '.github/workflows/proxy-ci.yml'
+        branches:
+            - main
+            - staging
 
 jobs:
     deploy:
