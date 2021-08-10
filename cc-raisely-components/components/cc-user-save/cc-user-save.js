@@ -281,6 +281,7 @@
 						userUuid,
 						recordUuid: targetUuid,
 						recordType,
+						isSelfAssign,
 					},
 				},
 			});

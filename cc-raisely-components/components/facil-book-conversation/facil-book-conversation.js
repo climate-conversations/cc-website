@@ -452,7 +452,9 @@
 						...toAssign.map(rsvp =>
 							UserSaveHelper.assignUser(
 								facilitatorUuid,
-								rsvp.userUuid
+								rsvp.userUuid,
+								'user',
+								true
 							)
 						)
 					);
