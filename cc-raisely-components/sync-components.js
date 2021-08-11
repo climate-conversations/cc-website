@@ -181,7 +181,7 @@ async function syncComponents() {
 						},
 					});
 				} else {
-					console.log(`Skipping ${name} (no change)`);
+					console.log(`--- Skipping ${name} (no change)`);
 				}
 			}
 		} catch (e) {

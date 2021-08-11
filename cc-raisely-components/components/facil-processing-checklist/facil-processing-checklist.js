@@ -280,12 +280,14 @@
 						<div className="cc--error">{error}</div>
 					) : ''}
 					<ul className="conversation--checklist">
-						{checklist.map(item => (
+						{checklist.map(item => {
+							console.log(item)
+							return (
 							<CheckListItem item={item} />
-						))}
+						)})}
 					</ul>
 					{ isProcessed ? (
-						<p>Greate work! {"You've"} finished processing this conversation.</p>
+						<p>Great work! {"You've"} finished processing this conversation.</p>
 					) : '' }
 					{ awaitingReview ? (
 						<p>Now your conversation will be reviewed by your team leader</p>

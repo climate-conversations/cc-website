@@ -5,6 +5,9 @@ on:
         paths:
             - 'conversation-sync/**'
             - '.github/workflows/sync-ci.yml'
+        branches:
+            - main
+            - staging
 
 jobs:
     deploy:

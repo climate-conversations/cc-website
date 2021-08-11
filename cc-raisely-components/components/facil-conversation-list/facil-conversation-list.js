@@ -117,8 +117,8 @@
 			if (this.state.filter) {
 				conversations = allConversations
 					.filter(c =>
-						!get(c, 'private.isReviewed'));
-			}
+						!get(c, 'private.reviewedAt'));
+					}
 
 			this.setState({ conversations, loaded: true });
 		}

@@ -30,7 +30,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 95
+            "value": 104
         },
         "associations": {
             "id": "associations",
