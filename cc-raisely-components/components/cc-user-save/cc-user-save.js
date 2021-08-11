@@ -272,7 +272,7 @@
 		 * @param {string} targetUuid
 		 * @param {string} recordType
 		 */
-		static async assignUser(userUuid, targetUuid, recordType = 'user') {
+		static async assignUser(userUuid, targetUuid, recordType = 'user', isSelfAssign = false) {
 			const url = `${assignUserUrl}`;
 			return this.doFetch(url, {
 				method: 'post',
@@ -281,6 +281,7 @@
 						userUuid,
 						recordUuid: targetUuid,
 						recordType,
+						isSelfAssign,
 					},
 				},
 			});

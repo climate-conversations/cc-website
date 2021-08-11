@@ -56,14 +56,14 @@ async function assignRecordRequest(req) {
 	const canAssign = ['DATA_ADMIN', 'ORG_ADMIN'];
 	const escalationNeeded = !canAssign.reduce((can, role) => can || roles.includes(role), false);
 
-	const { recordUuid, userUuid, recordType } = req.body.data;
+	const { recordUuid, userUuid, recordType, isSelfAssign } = req.body.data;
 
 	if (!originalUser) {
 		throw new RestError({ status: 403 });
 	}
 
 	// If they're not a data/org admin, only allow them to reassign records they own
-	if (escalationNeeded) {
+	if (escalationNeeded && !isSelfAssign) {
 		try {
 			const path = `/users/${originalUser.uuid}/assignments/${recordType}s/${recordUuid}`;
 			await raisely({
