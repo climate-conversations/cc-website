@@ -8,7 +8,7 @@
 		"url": "https://github.com/climate-conversations/cc-proxy.git"
 	},
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=12.0.0"
 	},
 	"scripts": {
 		"deploy:assignRecord": "gcloud functions deploy assignRecord --service-account=${SERVICE_ACCOUNT} --allow-unauthenticated  --region=${REGION} --project=${GCLOUD_PROJECT} --trigger-http --runtime=nodejs12 --update-env-vars=DATASTORE_PROJECT_ID=${GCLOUD_PROJECT}",
