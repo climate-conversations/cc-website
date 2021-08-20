@@ -1,6 +1,7 @@
+console.log('Loading environment');
+
 require('dotenv').config();
 
-const deasync = require('deasync');
 const DatastoreEnvironment = require('datastore-env');
 const envVars = require('./requiredEnv.js');
 
@@ -15,11 +16,20 @@ const options = {
 const env = new DatastoreEnvironment(options);
 
 // Wrap loadEnvironment in a node callback style
-function asyncLoad(cb) {
-	env.loadEnvironment()
-		.then(() => cb())
-		.catch(cb);
+async function asyncLoad(cb) {
+	console.log('running async load environment');
+
+	return env
+		.loadEnvironment()
+		.then(() => {
+			console.log('loading done');
+			cb();
+		})
+		.catch((err) => {
+			console.log('error!');
+			consoler.error(err);
+			cb(err);
+		});
 }
 
-// This will block until loadEnvironment has finished
-deasync(asyncLoad)();
+module.exports = asyncLoad;

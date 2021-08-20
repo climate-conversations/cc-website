@@ -9,7 +9,7 @@ const { assignRecordRequest: assignRecord } = require('./assignRecord');
 
 const logger = require('./config/logging');
 
-require('./config');
+const loadConfig = require('./config');
 
 /**
  * Middleware for setting CORS headers
@@ -87,6 +87,8 @@ function log(name, req, status, meta = {}, level = 'info') {
  */
 function wrap(fn, name) {
 	return async function requestPassThrough(req, res) {
+		// Ensure config is loaded
+		await loadConfig();
 		try {
 			// If it's an OPTIONS request, send CORS and return
 			if (setCORS(req, res)) return;
