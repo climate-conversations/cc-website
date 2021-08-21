@@ -27,7 +27,7 @@ async function asyncLoad(cb) {
 		})
 		.catch((err) => {
 			console.log('error!');
-			consoler.error(err);
+			console.error(err);
 			cb(err);
 		});
 }
