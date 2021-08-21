@@ -8,7 +8,7 @@
 		"url": "https://github.com/climate-conversations/cc-proxy.git"
 	},
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=12.0.0"
 	},
 	"scripts": {
 		"deploy:assignRecord": "gcloud functions deploy assignRecord --service-account=${SERVICE_ACCOUNT} --allow-unauthenticated  --region=${REGION} --project=${GCLOUD_PROJECT} --trigger-http --runtime=nodejs14 --update-env-vars=DATASTORE_PROJECT_ID=${GCLOUD_PROJECT}",
@@ -51,7 +51,6 @@
 		"@google-cloud/logging-winston": "^2.1.0",
 		"babel-eslint": "^10.0.2",
 		"datastore-env": "^1.2.5",
-		"deasync": "^0.1.15",
 		"dotenv": "^10.0.0",
 		"lodash": "^4.17.15",
 		"qs": "^6.8.0",
