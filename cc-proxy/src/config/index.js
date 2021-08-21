@@ -23,12 +23,12 @@ async function asyncLoad(cb) {
 		.loadEnvironment()
 		.then(() => {
 			console.log('loading done');
-			cb();
+			// cb();
 		})
 		.catch((err) => {
 			console.log('error!');
 			console.error(err);
-			cb(err);
+			// cb(err);
 		});
 }
 
