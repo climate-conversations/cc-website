@@ -15,8 +15,6 @@ const env = new DatastoreEnvironment(options);
 
 // Wrap loadEnvironment in a node callback style
 async function asyncLoad() {
-	console.log('running async load environment');
-
 	return env.loadEnvironment();
 }
 
