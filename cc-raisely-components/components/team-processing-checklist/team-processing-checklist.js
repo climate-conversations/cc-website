@@ -155,7 +155,7 @@
 			const { done } = getQuery(get(this.props, 'router.location.search'));
 
 			eventPromise
-				.then(({ event: conversation }) => {
+				.then(( conversation ) => {
 					const completedSteps = this.getCompletedSteps(conversation);
 					checklist.forEach((item) => {
 						// eslint-disable-next-line no-param-reassign
