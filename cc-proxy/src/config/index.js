@@ -13,7 +13,6 @@ const options = {
 
 const env = new DatastoreEnvironment(options);
 
-// Wrap loadEnvironment in a node callback style
 async function asyncLoad() {
 	return env.loadEnvironment();
 }
