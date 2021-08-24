@@ -24,8 +24,21 @@ gcloud config set project cc-website-staging
 deploy:proxy
 ```
 
-TODO
-It is possible to run the functions locally so you can iterate faster if you need to
-test against live React components.
+# Testing Locally
 
-How to ...
+It is possible to run the functions locally so you can iterate faster. To do so you'll need to
+
+1. Make sure you've got an API key in your `./cc-proxy/.env` file
+   Get it from [here](https://admin.raisely.com/campaigns/climate-conversations-staging/setup/api))
+   and save it as the APP_TOKEN environment variable
+
+2. Run the local server (you may need to do an `npm install` first)
+
+```
+npm run dev
+```
+
+(The dev server uses nodemon and will reload whenever you change a proxy file)
+
+You can then get the components to connect to your local function by appending ?LOCAL_TEST=1 to the url
+(The components try to preserve this setting when you navigate to new pages, but it doesn't always work)
