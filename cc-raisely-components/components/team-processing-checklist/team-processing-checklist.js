@@ -100,6 +100,7 @@
 
 			this.load();
 		}
+
 		componentDidUpdate() {
 			const eventUuid = get(this.props, 'match.params.conversation');
 
@@ -135,9 +136,11 @@
 			const { createReturningLink } = ReturnButtonClass.type;
 
 			checklist.forEach((item) => {
+
+				const eventId = item.href.split("/")[2];
 				const query = {
 					props: this.props,
-					url: item.href.replace(':event', uuid),
+					url: item.href.replace(eventId, uuid),
 				};
 				// Only set done if there isn't a more difinitive way to set it
 				if (!item.done) query.done = item.id;
