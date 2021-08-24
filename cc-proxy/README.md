@@ -35,6 +35,7 @@ It is possible to run the functions locally so you can iterate faster. To do so 
 2. Run the local server (you may need to do an `npm install` first)
 
 ```
+cd cc-proxy
 npm run dev
 ```
 
