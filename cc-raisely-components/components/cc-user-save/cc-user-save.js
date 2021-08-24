@@ -28,9 +28,12 @@
 	// Use local cloud functions if LOCAL_TEST=1 is appended to the query
 	const localTest = (document.location.search || '').includes('LOCAL_TEST=1');
 
+	if (localTest) window.__localTest = true;
+	console.log('Using local cloud functions? ', window.__localTest);
+
 	const mode = productionHosts.includes(document.location.host)
 		? 'production'
-		: localTest
+		: window.__localTest
 		? 'development'
 		: 'staging';
 
@@ -272,7 +275,12 @@
 		 * @param {string} targetUuid
 		 * @param {string} recordType
 		 */
-		static async assignUser(userUuid, targetUuid, recordType = 'user', isSelfAssign = false) {
+		static async assignUser(
+			userUuid,
+			targetUuid,
+			recordType = 'user',
+			isSelfAssign = false
+		) {
 			const url = `${assignUserUrl}`;
 			return this.doFetch(url, {
 				method: 'post',
