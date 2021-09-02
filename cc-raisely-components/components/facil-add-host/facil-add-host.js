@@ -771,9 +771,9 @@
 		};
 
 		save = async (values, formToData) => {
+
 			const data = formToData(values);
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
-
 			let { host } = this.state;
 			if (data.user) {
 				host = await UserSaveHelper.upsertUser(data.user, {
@@ -784,6 +784,10 @@
 			}
 
 			if (!host) host = values[0];
+
+			// reassign user
+			const facilitatorUuid = get(this.props, 'global.user.uuid');
+			const result = await UserSaveHelper.assignUser(facilitatorUuid , host.uuid); // await
 			let { interaction: oldInteraction } = this.state;
 
 			let newInteraction = get(data, 'interaction.host-interest', {});

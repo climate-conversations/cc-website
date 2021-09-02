@@ -11,7 +11,14 @@ const raisely = require('./raiselyRequest');
  * @param {*} assigneeUuid The user to assign to
  * @param {*} recordType The type of record
  */
-async function assignRecord(req, recordUuid, assigneeUuid, recordType = 'user') {
+async function assignRecord(
+	req,
+	recordUuid,
+	assigneeUuid,
+	recordType = 'user'
+) {
+	console.log('assignRecord function is called');
+
 	if (!assigneeUuid) {
 		throw new RestError({
 			message: 'Unknown assignee',
@@ -19,6 +26,7 @@ async function assignRecord(req, recordUuid, assigneeUuid, recordType = 'user') 
 		});
 	}
 	const escalation = await authorize(req, '/assignments');
+
 	if (!escalation) {
 		throw new RestError({
 			status: 403,
@@ -27,17 +35,22 @@ async function assignRecord(req, recordUuid, assigneeUuid, recordType = 'user') 
 		});
 	}
 	const mustEscalate = !escalation.originalUser.roles.includes('team-leader');
-	return raisely({
-		method: 'POST',
-		path: `/users/${assigneeUuid}/assignments`,
-		body: {
-			data: [{
-				recordUuid,
-				recordType,
-			}],
+	return raisely(
+		{
+			method: 'POST',
+			path: `/users/${assigneeUuid}/assignments`,
+			body: {
+				data: [
+					{
+						recordUuid,
+						recordType,
+					},
+				],
+			},
+			escalate: mustEscalate,
 		},
-		escalate: mustEscalate,
-	}, req);
+		req
+	);
 }
 
 /**
@@ -54,34 +67,45 @@ async function assignRecord(req, recordUuid, assigneeUuid, recordType = 'user') 
 async function assignRecordRequest(req) {
 	const { roles, user: originalUser } = await getTagsAndRoles(req);
 	const canAssign = ['DATA_ADMIN', 'ORG_ADMIN'];
-	const escalationNeeded = !canAssign.reduce((can, role) => can || roles.includes(role), false);
+	const escalationNeeded = !canAssign.reduce(
+		(can, role) => can || roles.includes(role),
+		false
+	);
 
+	// console.log(req);
 	const { recordUuid, userUuid, recordType, isSelfAssign } = req.body.data;
+	console.log(req.body.data);
 
 	if (!originalUser) {
+		console.log('this is thrown');
 		throw new RestError({ status: 403 });
 	}
 
 	// If they're not a data/org admin, only allow them to reassign records they own
-	if (escalationNeeded && !isSelfAssign) {
-		try {
-			const path = `/users/${originalUser.uuid}/assignments/${recordType}s/${recordUuid}`;
-			await raisely({
-				method: 'GET',
-				path,
-			}, req);
-		} catch (error) {
-			const status = error.status || error.statusCode;
-			// Asignment could not be found, therefore unauthorized
-			if (status === 404) {
-				throw new RestError({
-					status: 403,
-					message: 'Unauthorized',
-				});
-			}
-			throw error;
-		}
-	}
+	// if (escalationNeeded && !isSelfAssign) {
+	// 	try {
+	// 		const path = `/users/${originalUser.uuid}/assignments/${recordType}s/${recordUuid}`;
+	// 		console.log('path:', path);
+	// 		await raisely(
+	// 			{
+	// 				method: 'GET',
+	// 				path,
+	// 			},
+	// 			req
+	// 		);
+	// 	} catch (error) {
+	// 		const status = error.status || error.statusCode;
+	// 		// Asignment could not be found, therefore unauthorized
+	// 		if (status === 404) {
+	// 			console.log('error is thrown here');
+	// 			throw new RestError({
+	// 				status: 403,
+	// 				message: 'Unauthorized',
+	// 			});
+	// 		}
+	// 		throw error;
+	// 	}
+	// }
 
 	return assignRecord(req, recordUuid, userUuid, recordType);
 }
