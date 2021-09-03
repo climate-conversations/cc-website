@@ -192,6 +192,7 @@
 			const messageCategories =
 				'meeting,personal.message,personal.email,phone';
 			this.setState({ loading: true });
+			let messages = [];
 
 			try {
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
@@ -203,7 +204,6 @@
 				});
 
 				// Work around API throwing 500 when the results are empty
-				let messages = [];
 				const initStepsPromise = this.initSteps();
 				try {
 					[messages] = await Promise.all([
@@ -214,8 +214,6 @@
 				} catch (error) {}
 				// In case the other failed
 				await initStepsPromise;
-				console.log('messages: ', messages);
-				this.setState({ messages }, this.checkCompleteSteps);
 			} catch (error) {
 				console.error(error);
 				this.setState({
@@ -223,6 +221,7 @@
 					loading: false,
 				});
 			} finally {
+				this.setState({ messages }, this.checkCompleteSteps);
 				this.setState({ loading: false });
 			}
 		};
