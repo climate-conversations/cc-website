@@ -95,6 +95,7 @@
 					mode: 'cors',
 					headers: {
 						'Content-Type': 'application/json',
+						'Accept': 'application/json',
 					},
 					method: 'get',
 				},
@@ -146,6 +147,7 @@
 							console.log('Bucket full, waiting');
 							await Promise.race(requestBucket);
 						}
+
 						requestObj.promise = fetch(url, opts);
 						requestBucket.push(requestObj.promise);
 					}
@@ -283,7 +285,7 @@
 		) {
 			const url = `${assignUserUrl}`;
 			return this.doFetch(url, {
-				method: 'post',
+				method: 'POST',
 				body: {
 					data: {
 						userUuid,
