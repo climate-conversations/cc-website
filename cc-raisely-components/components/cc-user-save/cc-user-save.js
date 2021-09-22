@@ -53,6 +53,9 @@
 		development: 'http://localhost:3500',
 	}[mode];
 
+	// const proxyHost = 'http://localhost:3501';
+	// const syncHost = 'http://localhost:5555';
+
 	const portalHost =
 		mode === 'production'
 			? 'https://p.climate.sg'
@@ -95,7 +98,7 @@
 					mode: 'cors',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json',
+						Accept: 'application/json',
 					},
 					method: 'get',
 				},
