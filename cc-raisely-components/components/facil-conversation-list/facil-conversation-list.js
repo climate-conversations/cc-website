@@ -267,6 +267,26 @@
 				this.setState({ selectedConversations: convo });
 			}
 		};
+
+		mergeConversations = () => {
+			const { selectedConversations } = this.state;
+			console.log(selectedConversations);
+
+			if (selectedConversations.length !== 2) return;
+
+			console.log('merge conversations');
+
+			// insert cloud function here
+
+			// check RSVPS
+			// select conversation the most RSVPs
+
+			// go through all the keys in the list and merge them into the selected conversation
+			// (at key, if original has values, keep the field. if not, check the difference, which field to keep )
+
+			// create new function in proxy cloud function
+		};
+
 		render() {
 			const now = dayjs();
 			const {
@@ -308,7 +328,12 @@
 									: 'Select duplications'}
 							</Button>
 							{selectedConversations.length === 2 && (
-								<Button className="list__toggle">Merge</Button>
+								<Button
+									className="list__toggle"
+									onClick={this.mergeConversations}
+								>
+									Merge
+								</Button>
 							)}
 						</>
 					) : (
