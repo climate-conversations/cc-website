@@ -191,8 +191,8 @@
 			const { host } = this.props;
 			const messageCategories =
 				'meeting,personal.message,personal.email,phone';
+
 			this.setState({ loading: true });
-			let messages = [];
 
 			try {
 				if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
@@ -204,6 +204,7 @@
 				});
 
 				// Work around API throwing 500 when the results are empty
+				let messages = [];
 				const initStepsPromise = this.initSteps();
 				try {
 					[messages] = await Promise.all([
@@ -214,6 +215,7 @@
 				} catch (error) {}
 				// In case the other failed
 				await initStepsPromise;
+				this.setState({ messages }, this.checkCompleteSteps);
 			} catch (error) {
 				console.error(error);
 				this.setState({
@@ -221,7 +223,6 @@
 					loading: false,
 				});
 			} finally {
-				this.setState({ messages }, this.checkCompleteSteps);
 				this.setState({ loading: false });
 			}
 		};
@@ -770,7 +771,6 @@
 		};
 
 		save = async (values, formToData) => {
-
 			const data = formToData(values);
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			let { host } = this.state;
@@ -786,7 +786,10 @@
 
 			// reassign user
 			const facilitatorUuid = get(this.props, 'global.user.uuid');
-			const result = await UserSaveHelper.assignUser(facilitatorUuid , host.uuid); // await
+			const result = await UserSaveHelper.assignUser(
+				facilitatorUuid,
+				host.uuid
+			); // await
 			let { interaction: oldInteraction } = this.state;
 
 			let newInteraction = get(data, 'interaction.host-interest', {});
