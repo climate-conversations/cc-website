@@ -4,12 +4,17 @@
 	const { Spinner, Link } = RaiselyComponents;
 	const Checkbox = RaiselyComponents.import('checkbox');
 
+	const UserSaveHelperRef = RaiselyComponents.import('cc-user-save', {
+		asRaw: true,
+	});
+
 	const FacilitatorRef = RaiselyComponents.import('facilitator', {
 		asRaw: true,
 	});
 	let Facilitator;
 	const EventRef = RaiselyComponents.import('event', { asRaw: true });
 	let Event;
+	let UserSaveHelper;
 
 	const icons = {
 		public: 'public',
@@ -268,15 +273,30 @@
 			}
 		};
 
-		mergeConversations = () => {
+		mergeConversations = async () => {
 			const { selectedConversations } = this.state;
-			console.log(selectedConversations);
+			console.log('selectedConversations: ', selectedConversations);
 
 			if (selectedConversations.length !== 2) return;
 
 			console.log('merge conversations');
 
 			// insert cloud function here
+			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
+
+			let conversation1 = selectedConversations[0];
+			let conversation2 = selectedConversations[1];
+			console.log(conversation1);
+			try {
+				let data = await UserSaveHelper.mergeConversations(
+					conversation1.uuid,
+					conversation2.uuid
+				);
+				console.log('reached here');
+				console.log('response data:', data);
+			} catch (err) {
+				console.log(err);
+			}
 
 			// check RSVPS
 			// select conversation the most RSVPs
