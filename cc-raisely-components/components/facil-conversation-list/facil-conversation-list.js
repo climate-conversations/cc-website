@@ -335,6 +335,12 @@
 									Merge
 								</Button>
 							)}
+
+							{this.state.showCheckbox && (
+								<p>
+									Please select only 2 conversations to merge.
+								</p>
+							)}
 						</>
 					) : (
 						''
