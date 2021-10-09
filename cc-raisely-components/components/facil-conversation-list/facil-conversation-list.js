@@ -182,6 +182,7 @@
 				this.setState({ loading: true });
 				this.load();
 			}
+			console.log(this.state.selectedConversations);
 		}
 
 		setConversations = () => {
@@ -241,70 +242,59 @@
 		};
 
 		toggleSelectConversations = () => {
-			//If we want to select duplicates to merge
+			//If we want to select duplicates to mergE
 			this.setState({
 				showCheckbox: !this.state.showCheckbox,
 			});
 		};
 
-		checkConversationExists = (conversation) => {
+		checkConversationAlreadyExists = (conversation) => {
 			const { selectedConversations } = this.state;
 
-			return selectedConversations.some((listItem) => {
-				return listItem.uuid === conversation.uuid;
-			});
+			return selectedConversations.some(
+				(convo) => convo.uuid === conversation.uuid
+			);
 		};
 
 		setSelectedConversations = (conversation) => {
 			const { selectedConversations } = this.state;
 
-			if (!this.checkConversationExists(conversation)) {
+			if (this.checkConversationAlreadyExists(conversation)) {
+				const convo = selectedConversations.filter(
+					(convo) => convo.uuid !== conversation.uuid
+				);
+
+				this.setState({ selectedConversations: convo });
+			} else {
 				this.setState({
 					selectedConversations: [
 						...selectedConversations,
 						conversation,
 					],
 				});
-			} else {
-				const convo = selectedConversations.filter(
-					(convo) => convo.uuid !== conversation.uuid
-				);
-				this.setState({ selectedConversations: convo });
 			}
 		};
 
 		mergeConversations = async () => {
 			const { selectedConversations } = this.state;
-			console.log('selectedConversations: ', selectedConversations);
 
 			if (selectedConversations.length !== 2) return;
-
-			console.log('merge conversations');
 
 			// insert cloud function here
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 
 			let conversation1 = selectedConversations[0];
 			let conversation2 = selectedConversations[1];
-			console.log(conversation1);
+
 			try {
 				let data = await UserSaveHelper.mergeConversations(
 					conversation1.uuid,
 					conversation2.uuid
 				);
-				console.log('reached here');
 				console.log('response data:', data);
 			} catch (err) {
 				console.log(err);
 			}
-
-			// check RSVPS
-			// select conversation the most RSVPs
-
-			// go through all the keys in the list and merge them into the selected conversation
-			// (at key, if original has values, keep the field. if not, check the difference, which field to keep )
-
-			// create new function in proxy cloud function
 		};
 
 		render() {
