@@ -27,10 +27,6 @@
 	};
 
 	class Conversation extends React.Component {
-		state = {
-			checked: false,
-		};
-
 		setTimes() {
 			const { conversation } = this.props;
 
@@ -56,10 +52,10 @@
 					cashTransferAmount === cashCtaAmount);
 		}
 
-		markCheckbox = (value) => {
+		markCheckbox = () => {
+			console.log('checkbox clicked');
+			console.log('props: ', this.props);
 			const { conversation, setSelectedConversations } = this.props;
-
-			this.setState({ checked: value });
 			setSelectedConversations(conversation);
 		};
 
@@ -153,7 +149,7 @@
 					{showCheckbox && (
 						<Checkbox
 							onChange={this.markCheckbox}
-							value={this.state.checked}
+							value={this.props.isSelected}
 						/>
 					)}
 				</li>
@@ -356,6 +352,9 @@
 									now={now}
 									showFacil={isTeam}
 									conversation={conversation}
+									isSelected={selectedConversations.includes(
+										conversation.uuid
+									)}
 									showCheckbox={showCheckbox}
 									setSelectedConversations={
 										this.setSelectedConversations
