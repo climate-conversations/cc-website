@@ -786,10 +786,7 @@
 
 			// reassign user
 			const facilitatorUuid = get(this.props, 'global.user.uuid');
-			const result = await UserSaveHelper.assignUser(
-				facilitatorUuid,
-				host.uuid
-			); // await
+			const result = await UserSaveHelper.assignUser(facilitatorUuid,host.uuid);
 			let { interaction: oldInteraction } = this.state;
 
 			let newInteraction = get(data, 'interaction.host-interest', {});
