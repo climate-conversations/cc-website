@@ -182,7 +182,10 @@
 				this.setState({ loading: true });
 				this.load();
 			}
-			console.log(this.state.selectedConversations);
+			console.log(
+				'selectedConversations: ',
+				this.state.selectedConversations
+			);
 		}
 
 		setConversations = () => {
@@ -248,31 +251,20 @@
 			});
 		};
 
-		checkConversationAlreadyExists = (conversation) => {
-			const { selectedConversations } = this.state;
-
-			return selectedConversations.some(
-				(convo) => convo.uuid === conversation.uuid
-			);
-		};
-
 		setSelectedConversations = (conversation) => {
 			const { selectedConversations } = this.state;
 
-			if (this.checkConversationAlreadyExists(conversation)) {
-				const convo = selectedConversations.filter(
-					(convo) => convo.uuid !== conversation.uuid
-				);
+			let newSelected;
 
-				this.setState({ selectedConversations: convo });
+			if (selectedConversations.includes(conversation.uuid)) {
+				newSelected = selectedConversations.filter(
+					(uuid) => uuid !== conversation.uuid
+				);
 			} else {
-				this.setState({
-					selectedConversations: [
-						...selectedConversations,
-						conversation,
-					],
-				});
+				newSelected = [...selectedConversations, conversation.uuid];
 			}
+
+			this.setState({ selectedConversations: newSelected });
 		};
 
 		mergeConversations = async () => {
