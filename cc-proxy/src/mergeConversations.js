@@ -1,9 +1,7 @@
 const _ = require('lodash');
 const RestError = require('./restError');
-const { authorize, getTagsAndRoles } = require('./proxy/permissions');
+const { authorize } = require('./proxy/permissions');
 const raisely = require('./raiselyRequest');
-
-// taken from reports.js
 
 /**
  * Count the number of attendees, defined as hosts, co-hosts and guests
@@ -51,6 +49,12 @@ async function mostRSVPs(conversationUuid1, conversationUuid2) {
 
 async function mergeConversations(req) {
 	let { conversationUuid1, conversationUuid2 } = req.body.data;
+
+	const isAuthorized = await authorize(req, `/mergeConversations`);
+
+	if (!isAuthorized) {
+		throw new Error('You are not authorized to do that');
+	}
 
 	let conversation1Data = await raisely(
 		{
