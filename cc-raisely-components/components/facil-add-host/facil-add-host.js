@@ -191,6 +191,7 @@
 			const { host } = this.props;
 			const messageCategories =
 				'meeting,personal.message,personal.email,phone';
+
 			this.setState({ loading: true });
 
 			try {
@@ -214,7 +215,6 @@
 				} catch (error) {}
 				// In case the other failed
 				await initStepsPromise;
-				console.log('messages: ', messages);
 				this.setState({ messages }, this.checkCompleteSteps);
 			} catch (error) {
 				console.error(error);
