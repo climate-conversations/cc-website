@@ -336,7 +336,7 @@
 
 							{this.state.showCheckbox && (
 								<p>
-									Please select only 2 conversations to merge.
+									Please select <em>exactly 2</em> conversations to merge.
 								</p>
 							)}
 						</>
