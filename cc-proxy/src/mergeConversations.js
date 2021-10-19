@@ -21,7 +21,7 @@ function countAttendees(rsvps) {
 
 // compares both conversations
 // returns Uuid with more RSVPs
-async function mostRSVPs(conversationUuid1, conversationUuid2) {
+async function mostRSVPs(conversationUuid1, conversationUuid2, req) {
 	let conversation1RSVP = await raisely(
 		{
 			method: 'GET',
@@ -49,13 +49,13 @@ async function mostRSVPs(conversationUuid1, conversationUuid2) {
 
 async function mergeConversations(req) {
 	let { conversationUuid1, conversationUuid2 } = req.body.data;
-
 	const isAuthorized = await authorize(req, `/mergeConversations`);
 
 	if (!isAuthorized) {
 		throw new Error('You are not authorized to do that');
 	}
 
+	console.log('getting conversation data');
 	let conversation1Data = await raisely(
 		{
 			method: 'GET',
@@ -73,36 +73,52 @@ async function mergeConversations(req) {
 		},
 		req
 	);
+	// console.log('conversation 1 data: ', conversation1Data);
 
 	// Sanity check: should reject merge if conversation1Data.name !== conversation2Data.name
-	if (conversation1Data.data.name !== conversation2Data.data.name) {
-		console.error('Both conversations have the same name!');
-	}
+	// if (conversation1Data.data.name !== conversation2Data.data.name) {
+	// 	console.error('Both conversations have the same name!');
+	// }
 
+	console.log('checking which uuid has the most rvsps');
 	// select which uuid to keep. Keep the uuid with the most RSVPs
-	const uuidToKeep = await mostRSVPs(conversationUuid1, conversationUuid2);
+	const uuidToKeep = await mostRSVPs(
+		conversationUuid1,
+		conversationUuid2,
+		req
+	);
 
+	console.log('most rsvps: ', uuidToKeep);
 	let conversationToKeep =
 		conversation1Data.data.uuid == uuidToKeep
 			? conversation1Data
 			: conversation2Data;
 	let conversationToDelete =
 		conversation1Data.data.uuid !== uuidToKeep
-			? conversation2Data
-			: conversation1Data;
+			? conversation1Data
+			: conversation2Data;
 
 	// go through all the keys in the conversation to keep the
 	// and merge them into the selected conversation
-	// note that some fields only appear after they are completed (eg cash donations)
-	// (at key, if it has values, keep the field.
-	// if not, check the difference, which field to keep
+	for (let [key, value] of Object.entries(conversationToDelete.data)) {
+		if (key === 'private') {
+			conversationToKeep.data.private = {
+				...(conversationToKeep.data.private || {}),
+				...(conversationToDelete.data.private || {}),
+			};
+		}
 
-	for (let [key, value] of Object.entries(conversationToKeep)) {
+		if (key === 'public') {
+			conversationToKeep.data.public = {
+				...(conversationToKeep.data.public || {}),
+				...(conversationToDelete.data.public || {}),
+			};
+		}
+
 		if (value) {
-			return;
+			continue;
 		} else {
-			// not too sure about this step
-			conversationToKeep.value = conversationToDelete.value;
+			conversationToKeep.data[key] = value;
 		}
 	}
 
