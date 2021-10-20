@@ -124,15 +124,19 @@ async function mergeConversations(req) {
 
 	// point interactions to the right uuid
 	// here returns a 500 error
-	// let interactions = await raisely({
-	// 	method: 'GET',
-	// 	path: `/interactions`,
-	// 	query: {
-	// 		private: 1,
-	// 		user: conversation1Data.userUuid,
-	// 		['detail.private.conversationUuid']: conversationUuid1,
-	// 	},
-	// });
+	console.log('getting interactions');
+	let interactions = await raisely({
+		method: 'GET',
+		path: `/interactions`,
+		query: {
+			private: 1,
+			user: conversation1Data.userUuid,
+			['detail.private.conversationUuid']: conversationUuid1,
+		},
+	});
+
+	console.log(interactions);
+	// move RSVPs
 
 	// update the conversation to keep
 	// await raisely(
