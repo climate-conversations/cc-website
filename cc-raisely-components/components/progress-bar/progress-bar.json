@@ -21,7 +21,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 28
+            "value": 44
         },
         "goalText": {
             "id": "goalText",

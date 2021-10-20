@@ -34,7 +34,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 41
+            "value": 58
         },
         "recordType": {
             "id": "recordType",

@@ -37,13 +37,13 @@
 		? 'development'
 		: 'staging';
 
-	const proxyHost = {
-		production:
-			'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net',
-		staging:
-			'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
-		development: 'http://localhost:3501',
-	}[mode];
+	// const proxyHost = {
+	// 	production:
+	// 		'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net',
+	// 	staging:
+	// 		'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
+	// 	development: 'http://localhost:3501',
+	// }[mode];
 
 	const syncHost = {
 		production:
@@ -52,6 +52,9 @@
 			'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
 		development: 'http://localhost:3500',
 	}[mode];
+
+	const proxyHost = 'http://localhost:3501';
+	// const syncHost = 'http://localhost:5555';
 
 	const portalHost =
 		mode === 'production'
@@ -64,6 +67,7 @@
 	const setupFacilUrl = `${proxyHost}/setupVolunteer`;
 	const makeAdminUrl = `${proxyHost}/makeAdmin`;
 	const assignUserUrl = `${proxyHost}/assignRecord`;
+	const mergeConversationsUrl = `${proxyHost}/mergeConversations`;
 
 	const cachedRequests = [];
 	const requestBucket = [];
@@ -95,7 +99,7 @@
 					mode: 'cors',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json',
+						Accept: 'application/json',
 					},
 					method: 'get',
 				},
@@ -308,6 +312,24 @@
 			const url = `${proxyHost}/resetEmail`;
 			await this.doFetch(url, {
 				method: 'post',
+				body: { data },
+			});
+		}
+
+		static async mergeConversations(conversationUuid1, conversationUuid2) {
+			// const conversationUuids = { conversationUuid1, conversationUuid2 };
+			const data = {
+				conversationUuid1,
+				conversationUuid2,
+			};
+
+			// let test = await this.doFetch(mergeConversationsUrl, {
+			// 	method: 'POST',
+			// 	body: { data: conversationUuids },
+			// });
+			// console.log(test);
+			return this.doFetch(mergeConversationsUrl, {
+				method: 'POST',
 				body: { data },
 			});
 		}

@@ -78,7 +78,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 107
+            "value": 128
         },
         "formName": {
             "id": "formName",
