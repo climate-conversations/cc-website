@@ -110,7 +110,7 @@
 					<h3>
 						{(example || !event) ? '' : `Register for ${event.name}`}
 					</h3>
-					<h4>{eventDate}</h4>
+					<h4>{eventDate} (GMT+8)</h4>
 					{user ? (
 						<div className="event-rsvp-user">
 							Registering as {user.fullName || user.preferredName} ({user.email})
