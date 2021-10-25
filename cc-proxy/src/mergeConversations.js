@@ -103,15 +103,15 @@ async function mergeConversations(req) {
 	for (let [key, value] of Object.entries(conversationToDelete.data)) {
 		if (key === 'private') {
 			conversationToKeep.data.private = {
-				...(conversationToKeep.data.private || {}),
 				...(conversationToDelete.data.private || {}),
+				...(conversationToKeep.data.private || {}),
 			};
 		}
 
 		if (key === 'public') {
 			conversationToKeep.data.public = {
+				...(conversationToDelete.data.private || {}),
 				...(conversationToKeep.data.public || {}),
-				...(conversationToDelete.data.public || {}),
 			};
 		}
 
