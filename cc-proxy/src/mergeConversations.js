@@ -104,21 +104,22 @@ async function mergeConversations(req) {
 		if (key === 'private') {
 			conversationToKeep.data.private = {
 				...(conversationToDelete.data.private || {}),
-				...(conversationToKeep.data.private || {}),
+				...(conversationToKeep.data.private || {}), // keep conversationToKeep to keep if key exists for both conversations
 			};
-		}
-
-		if (key === 'public') {
+		} else if (key === 'public') {
 			conversationToKeep.data.public = {
 				...(conversationToDelete.data.private || {}),
 				...(conversationToKeep.data.public || {}),
 			};
-		}
-
-		if (value) {
-			continue;
 		} else {
-			conversationToKeep.data[key] = value;
+			// i want to merge only if conversationToDelete contains values
+			// and conversationToKeep doesnt contain values
+			if (
+				conversationToDelete.data[key] &&
+				!conversationToKeep.data[key]
+			) {
+				conversationToKeep.data[key] = value;
+			}
 		}
 	}
 
