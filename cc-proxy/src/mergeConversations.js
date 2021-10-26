@@ -47,6 +47,16 @@ async function mostRSVPs(conversationUuid1, conversationUuid2, req) {
 		: conversationUuid2;
 }
 
+// find uique object in array based on multiple properties
+function unique(arr, keyProps) {
+	const kvArray = arr.map((entry) => {
+		const key = keyProps.map((k) => entry[k]).join('|');
+		return [key, entry];
+	});
+	const map = new Map(kvArray);
+	return Array.from(map.values());
+}
+
 async function mergeConversations(req) {
 	let { conversationUuid1, conversationUuid2 } = req.body.data;
 	const isAuthorized = await authorize(req, `/mergeConversations`);
@@ -126,21 +136,95 @@ async function mergeConversations(req) {
 	// point interactions to the right uuid
 	// here returns a 500 error
 	console.log('getting interactions');
-	let interactions = await raisely(
+	console.log('delete :', conversationToDelete.data.userUuid);
+	console.log('delete :', conversationToDelete.data.uuid);
+
+	console.log('keep: ', conversationToKeep.data.userUuid);
+	console.log('keep: ', conversationToKeep.data.uuid);
+
+	let interactionsToKeep = await raisely(
 		{
 			method: 'GET',
 			path: `/interactions`,
-			query: {
+			data: {
 				private: 1,
-				user: conversation1Data.userUuid,
-				['detail.private.conversationUuid']: conversationUuid1,
+				user: conversationToKeep.data.userUuid,
+				['detail.private.conversationUuid']:
+					conversationToKeep.data.uuid,
 			},
 		},
 		req
 	);
 
-	console.log(interactions);
-	// move RSVPs
+	let interactionsToDelete = await raisely(
+		{
+			method: 'GET',
+			path: `/interactions`,
+			data: {
+				private: 1,
+				user: conversationToDelete.data.userUuid,
+				['detail.private.conversationUuid']:
+					conversationToDelete.data.uuid,
+			},
+		},
+		req
+	);
+
+	// merge interactions if an interaction with the same category and user exists
+	// will paginations auto update?
+
+	// get pairs of user and categories
+	let pairsToKeep = interactionsToKeep.data.map((interaction) => {
+		const userUuid = interaction.user.uuid;
+		const categoryUuid = interaction.category.uuid;
+		return { userUuid, categoryUuid };
+	});
+	let pairsToKeepUnique = unique(pairsToKeep, ['userUuid', 'categoryUuid']);
+
+	console.log('pairsToKeep: ', pairsToKeep.length);
+	console.log('pairsToKeepUnique: ', pairsToKeepUnique.length);
+
+	let pairsToDelete = interactionsToDelete.data.map((interaction) => {
+		const userUuid = interaction.user.uuid;
+		const categoryUuid = interaction.category.uuid;
+		return { userUuid, categoryUuid };
+	});
+
+	let pairsToDeleteUnique = unique(pairsToDelete, [
+		'userUuid',
+		'categoryUuid',
+	]);
+
+	console.log('pairsToDelete: ', pairsToDelete.length);
+	console.log('pairsToDeleteUnique: ', pairsToDeleteUnique.length);
+
+	// let rsvps = await raisely(
+	// 	{
+	// 		method: 'GET',
+	// 		path: `/event_rsvps`,
+	// 		data: {
+	// 			private: 1,
+	// 			event: conversationToKeep.data.userUuid,
+	// 		},
+	// 	},
+	// 	req
+	// );
+
+	// console.log(Object.keys(rsvps));
+	// console.log(rsvps.data.length);
+	// console.log('event_rvsps api: ', rsvps);
+
+	// move RSVPs to conversationToKeep
+	// const moveRsvps = await raisely(
+	// 	{
+	// 		method: 'PUT',
+	// 		path: `/event_rsvps/${conversationToDelete.data.uuid}/move`,
+	// 		data: {
+	// 			eventUuid: conversationToKeep.data.uuid,
+	// 		},
+	// 	},
+	// 	req
+	// );
 
 	// update the conversation to keep
 	// await raisely(
