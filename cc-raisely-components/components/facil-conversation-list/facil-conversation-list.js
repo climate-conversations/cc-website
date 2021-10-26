@@ -53,8 +53,6 @@
 		}
 
 		markCheckbox = () => {
-			console.log('checkbox clicked');
-			console.log('props: ', this.props);
 			const { conversation, setSelectedConversations } = this.props;
 			setSelectedConversations(conversation);
 		};
@@ -271,13 +269,13 @@
 			// insert cloud function here
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 
-			let conversation1 = selectedConversations[0];
-			let conversation2 = selectedConversations[1];
-
+			let conversation1uuid = selectedConversations[0];
+			let conversation2uuid = selectedConversations[1];
+			console.log(conversation1uuid);
 			try {
 				let data = await UserSaveHelper.mergeConversations(
-					conversation1.uuid,
-					conversation2.uuid
+					conversation1uuid,
+					conversation2uuid
 				);
 				console.log('response data:', data);
 			} catch (err) {
@@ -336,7 +334,8 @@
 
 							{this.state.showCheckbox && (
 								<p>
-									Please select <em>exactly 2</em> conversations to merge.
+									Please select <em>exactly 2</em>{' '}
+									conversations to merge.
 								</p>
 							)}
 						</>
