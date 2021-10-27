@@ -83,7 +83,6 @@ async function mergeConversations(req) {
 		},
 		req
 	);
-	// console.log('conversation 1 data: ', conversation1Data);
 
 	// Sanity check: should reject merge if conversation1Data.name !== conversation2Data.name
 	// if (conversation1Data.data.name !== conversation2Data.data.name) {
@@ -197,22 +196,6 @@ async function mergeConversations(req) {
 
 	console.log('pairsToDelete: ', pairsToDelete.length);
 	console.log('pairsToDeleteUnique: ', pairsToDeleteUnique.length);
-
-	// let rsvps = await raisely(
-	// 	{
-	// 		method: 'GET',
-	// 		path: `/event_rsvps`,
-	// 		data: {
-	// 			private: 1,
-	// 			event: conversationToKeep.data.userUuid,
-	// 		},
-	// 	},
-	// 	req
-	// );
-
-	// console.log(Object.keys(rsvps));
-	// console.log(rsvps.data.length);
-	// console.log('event_rvsps api: ', rsvps);
 
 	// move RSVPs to conversationToKeep
 	// const moveRsvps = await raisely(
