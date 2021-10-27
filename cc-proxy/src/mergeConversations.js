@@ -218,9 +218,9 @@ async function mergeConversations(req) {
 	// const moveRsvps = await raisely(
 	// 	{
 	// 		method: 'PUT',
-	// 		path: `/event_rsvps/${conversationToDelete.data.uuid}/move`,
+	// 		path: `/event_rsvps/${conversationToKeep.data.uuid}/move`,
 	// 		data: {
-	// 			eventUuid: conversationToKeep.data.uuid,
+	// 			eventUuid: conversationToDelete.data.uuid,
 	// 		},
 	// 	},
 	// 	req
