@@ -163,6 +163,8 @@ async function mergeConversations(req) {
 		req
 	);
 
+	console.log('user: ', conversationToKeep.data.userUuid);
+	console.log('interactions: ', interactionsToKeep.data.slice(0, 3));
 	// merge interactions if an interaction with the same category and user exists
 	// will paginations auto update?
 
@@ -190,6 +192,41 @@ async function mergeConversations(req) {
 
 	console.log('pairsToDelete: ', pairsToDelete.length);
 	console.log('pairsToDeleteUnique: ', pairsToDeleteUnique.length);
+
+	// check for overlapping pairs
+	let overlappingPairs = pairsToDelete.filter((pairToDelete) =>
+		pairsToKeep.every(
+			(pairToKeep) =>
+				pairToKeep.userUuid === pairsToDelete.userUuid &&
+				pairToKeep.categoryUuid === pairToDelete.categoryUuid
+		)
+	);
+
+	if (overlappingPairs) {
+		// get objects from interaction to delete that contain the overlapping pairs
+		let intersactionsToMerge = overlappingPairs.map((overlappingPair) => {
+			return interactionToDelete.filter((interaction) => {
+				return (
+					interaction.user.uuid === overlappingPair.userUuid &&
+					interaction.category.uuid === overlappingPair.categoryUuid
+				);
+			});
+		});
+
+		// move objects to interactionsToKeep
+		// i think this is wrong, instead i should send a patch request for each interaction
+		// to point the interaction to conversationToKeep right?
+		// let mergeInteractions = await raisely(
+		// 	{
+		// 		method: 'POST',
+		// 		path: `/interactions`,
+		// 		data: {
+		// 			body: intersactionsToMerge
+		// 		},
+		// 	},
+		// 	req
+		// );
+	}
 
 	// move RSVPs to conversationToKeep
 	// const moveRsvps = await raisely(
