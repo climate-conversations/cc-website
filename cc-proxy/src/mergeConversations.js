@@ -133,13 +133,7 @@ async function mergeConversations(req) {
 	}
 
 	// point interactions to the right uuid
-	// here returns a 500 error
 	console.log('getting interactions');
-	console.log('delete :', conversationToDelete.data.userUuid);
-	console.log('delete :', conversationToDelete.data.uuid);
-
-	console.log('keep: ', conversationToKeep.data.userUuid);
-	console.log('keep: ', conversationToKeep.data.uuid);
 
 	let interactionsToKeep = await raisely(
 		{
