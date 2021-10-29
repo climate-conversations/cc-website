@@ -139,11 +139,9 @@ async function mergeConversations(req) {
 		{
 			method: 'GET',
 			path: `/interactions`,
-			data: {
+			query: {
 				private: 1,
-				user: conversationToKeep.data.userUuid,
-				['detail.private.conversationUuid']:
-					conversationToKeep.data.uuid,
+				['detail.private.conversationUuid']: conversationToKeep.data.uuid,
 			},
 		},
 		req
@@ -153,29 +151,27 @@ async function mergeConversations(req) {
 		{
 			method: 'GET',
 			path: `/interactions`,
-			data: {
+			query: {
 				private: 1,
-				user: conversationToDelete.data.userUuid,
-				['detail.private.conversationUuid']:
-					conversationToDelete.data.uuid,
+				['private.conversationUuid']: conversationToDelete.data.uuid, // this filter not working
 			},
 		},
 		req
 	);
 
-	console.log('user: ', conversationToKeep.data.userUuid);
-	console.log('interactions: ', interactionsToKeep.data.slice(0, 3));
-	// merge interactions if an interaction with the same category and user exists
-	// will paginations auto update?
+	console.log(interactionsToDelete.data)
 
+
+    // rename to source pair and origin pairs
+	// filter out built in interactions
 	// get pairs of user and categories
 	let pairsToKeep = interactionsToKeep.data.map((interaction) => {
 		const userUuid = interaction.user.uuid;
 		const categoryUuid = interaction.category.uuid;
 		return { userUuid, categoryUuid };
 	});
-	let pairsToKeepUnique = unique(pairsToKeep, ['userUuid', 'categoryUuid']);
 
+	let pairsToKeepUnique = unique(pairsToKeep, ['userUuid', 'categoryUuid']);
 	console.log('pairsToKeep: ', pairsToKeep.length);
 	console.log('pairsToKeepUnique: ', pairsToKeepUnique.length);
 
@@ -189,7 +185,6 @@ async function mergeConversations(req) {
 		'userUuid',
 		'categoryUuid',
 	]);
-
 	console.log('pairsToDelete: ', pairsToDelete.length);
 	console.log('pairsToDeleteUnique: ', pairsToDeleteUnique.length);
 
@@ -203,38 +198,56 @@ async function mergeConversations(req) {
 	);
 
 	if (overlappingPairs) {
-		// get objects from interaction to delete that contain the overlapping pairs
-		let intersactionsToMerge = overlappingPairs.map((overlappingPair) => {
-			return interactionToDelete.filter((interaction) => {
-				return (
-					interaction.user.uuid === overlappingPair.userUuid &&
-					interaction.category.uuid === overlappingPair.categoryUuid
-				);
-			});
+	// get objects from interaction to delete that contain the overlapping pairs
+	let intersactionsToMerge = overlappingPairs.map((overlappingPair) => {
+		return interactionToDelete.filter((interaction) => {
+			return (
+				interaction.user.uuid === overlappingPair.userUuid &&
+				interaction.category.uuid === overlappingPair.categoryUuid
+			);
 		});
+	});
 
-		// move objects to interactionsToKeep
-		// i think this is wrong, instead i should send a patch request for each interaction
-		// to point the interaction to conversationToKeep right?
+	// *** there 2 types of interactions
+	// if exist in both places, we need to merge them (interactions to merge)
+	// if they exist in the source but not the target, then we need to create the interactions at the target
+	// delete the rest the interactions at the source
+
+	// move objects to interactionsToKeep
+	// use interactionId
 		// let mergeInteractions = await raisely(
 		// 	{
-		// 		method: 'POST',
-		// 		path: `/interactions`,
+		// 		method: 'PATCH',
+		// 		path: `/interactions/{interactionid}`,
 		// 		data: {
-		// 			body: intersactionsToMerge
+		// 			body:
 		// 		},
 		// 	},
 		// 	req
 		// );
 	}
 
+
+	// POST request for interactions
+
+	// 	// let deleteInteractions = await raisely(
+	// 	// 	{
+	// 	// 		method: 'DELETE',
+	// 	// 		path: `/interactions/${uuid}`,
+	// 	//
+	// 	// 	},
+	// 	// 	req
+	// 	// );
+
+	// check which rsvps to move?
+	// only if the rsvps doesnt exist in the conversationToKeep
 	// move RSVPs to conversationToKeep
 	// const moveRsvps = await raisely(
 	// 	{
 	// 		method: 'PUT',
-	// 		path: `/event_rsvps/${conversationToKeep.data.uuid}/move`,
+	// 		path: `/event_rsvps/rsvp.uuid/move`, // should be rsvp uuid
 	// 		data: {
-	// 			eventUuid: conversationToDelete.data.uuid,
+	// 			eventUuid: conversationToDelete.data.uuid, //
 	// 		},
 	// 	},
 	// 	req
