@@ -135,6 +135,8 @@ async function mergeConversations(req) {
 	// point interactions to the right uuid
 	console.log('getting interactions');
 
+	// interaction to delete is the source
+	// interactions to merge is the target
 	let interactionsToKeep = await raisely(
 		{
 			method: 'GET',
@@ -159,54 +161,52 @@ async function mergeConversations(req) {
 		req
 	);
 
-	console.log(interactionsToDelete.data)
+	// console.log(interactionsToDelete.data)
 
-
-    // rename to source pair and origin pairs
+    // rename to source pair and target  pairs
 	// filter out built in interactions
 	// get pairs of user and categories
-	let pairsToKeep = interactionsToKeep.data.map((interaction) => {
-		const userUuid = interaction.user.uuid;
-		const categoryUuid = interaction.category.uuid;
+	let targetPairs = interactionsToKeep.data.map(({ userUuid, categoryUuid }) => {
 		return { userUuid, categoryUuid };
 	});
 
-	let pairsToKeepUnique = unique(pairsToKeep, ['userUuid', 'categoryUuid']);
-	console.log('pairsToKeep: ', pairsToKeep.length);
-	console.log('pairsToKeepUnique: ', pairsToKeepUnique.length);
+	console.log("target pairs:", targetPairs.slice(0,2))
 
-	let pairsToDelete = interactionsToDelete.data.map((interaction) => {
-		const userUuid = interaction.user.uuid;
-		const categoryUuid = interaction.category.uuid;
+	let sourcePairs = interactionsToDelete.data.map(({ userUuid, categoryUuid }) => {
 		return { userUuid, categoryUuid };
 	});
 
-	let pairsToDeleteUnique = unique(pairsToDelete, [
-		'userUuid',
-		'categoryUuid',
-	]);
-	console.log('pairsToDelete: ', pairsToDelete.length);
-	console.log('pairsToDeleteUnique: ', pairsToDeleteUnique.length);
+	console.log("source pairs: ", sourcePairs.slice(0,2))
+	// let pairsToKeepUnique = unique(pairsToKeep, ['userUuid', 'categoryUuid']);
+	// console.log('pairsToKeep: ', pairsToKeep.length);
+	// console.log('pairsToKeepUnique: ', pairsToKeepUnique.length);
 
-	// check for overlapping pairs
-	let overlappingPairs = pairsToDelete.filter((pairToDelete) =>
-		pairsToKeep.every(
-			(pairToKeep) =>
-				pairToKeep.userUuid === pairsToDelete.userUuid &&
-				pairToKeep.categoryUuid === pairToDelete.categoryUuid
-		)
-	);
+	// let pairsToDeleteUnique = unique(pairsToDelete, [
+	// 	'userUuid',
+	// 	'categoryUuid',
+	// ]);
+	// console.log('pairsToDelete: ', pairsToDelete.length);
+	// console.log('pairsToDeleteUnique: ', pairsToDeleteUnique.length);
 
-	if (overlappingPairs) {
-	// get objects from interaction to delete that contain the overlapping pairs
-	let intersactionsToMerge = overlappingPairs.map((overlappingPair) => {
-		return interactionToDelete.filter((interaction) => {
-			return (
-				interaction.user.uuid === overlappingPair.userUuid &&
-				interaction.category.uuid === overlappingPair.categoryUuid
-			);
-		});
-	});
+	// // check for overlapping pairs
+	// let overlappingPairs = pairsToDelete.filter((pairToDelete) =>
+	// 	pairsToKeep.every(
+	// 		(pairToKeep) =>
+	// 			pairToKeep.userUuid === pairsToDelete.userUuid &&
+	// 			pairToKeep.categoryUuid === pairToDelete.categoryUuid
+	// 	)
+	// );
+
+	// if (overlappingPairs) {
+	// // get objects from interaction to delete that contain the overlapping pairs
+	// let intersactionsToMerge = overlappingPairs.map((overlappingPair) => {
+	// 	return interactionToDelete.filter((interaction) => {
+	// 		return (
+	// 			interaction.user.uuid === overlappingPair.userUuid &&
+	// 			interaction.category.uuid === overlappingPair.categoryUuid
+	// 		);
+	// 	});
+	// });
 
 	// *** there 2 types of interactions
 	// if exist in both places, we need to merge them (interactions to merge)
@@ -225,7 +225,7 @@ async function mergeConversations(req) {
 		// 	},
 		// 	req
 		// );
-	}
+	// }
 
 
 	// POST request for interactions
