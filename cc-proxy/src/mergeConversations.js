@@ -137,19 +137,20 @@ async function mergeConversations(req) {
 
 	// interaction to delete is the source
 	// interactions to merge is the target
-	let interactionsToKeep = await raisely(
+	let targetInteractions = await raisely(
 		{
 			method: 'GET',
 			path: `/interactions`,
 			query: {
 				private: 1,
-				['detail.private.conversationUuid']: conversationToKeep.data.uuid,
+				['detail.private.conversationUuid']:
+					conversationToKeep.data.uuid,
 			},
 		},
 		req
 	);
 
-	let interactionsToDelete = await raisely(
+	let sourceInteractions = await raisely(
 		{
 			method: 'GET',
 			path: `/interactions`,
@@ -161,72 +162,88 @@ async function mergeConversations(req) {
 		req
 	);
 
-	// console.log(interactionsToDelete.data)
-
-    // rename to source pair and target  pairs
-	// filter out built in interactions
+	// filter out built in interactions (how?)
 	// get pairs of user and categories
-	let targetPairs = interactionsToKeep.data.map(({ userUuid, categoryUuid }) => {
-		return { userUuid, categoryUuid };
-	});
+	let targetPairs = targetInteractions.data.map(
+		({ userUuid, categoryUuid }) => {
+			return { userUuid, categoryUuid };
+		}
+	);
 
-	console.log("target pairs:", targetPairs.slice(0,2))
+	let sourcePairs = sourceInteractions.data.map(
+		({ userUuid, categoryUuid }) => {
+			return { userUuid, categoryUuid };
+		}
+	);
 
-	let sourcePairs = interactionsToDelete.data.map(({ userUuid, categoryUuid }) => {
-		return { userUuid, categoryUuid };
-	});
-
-	console.log("source pairs: ", sourcePairs.slice(0,2))
-	// let pairsToKeepUnique = unique(pairsToKeep, ['userUuid', 'categoryUuid']);
-	// console.log('pairsToKeep: ', pairsToKeep.length);
-	// console.log('pairsToKeepUnique: ', pairsToKeepUnique.length);
-
-	// let pairsToDeleteUnique = unique(pairsToDelete, [
-	// 	'userUuid',
-	// 	'categoryUuid',
-	// ]);
-	// console.log('pairsToDelete: ', pairsToDelete.length);
-	// console.log('pairsToDeleteUnique: ', pairsToDeleteUnique.length);
-
-	// // check for overlapping pairs
-	// let overlappingPairs = pairsToDelete.filter((pairToDelete) =>
-	// 	pairsToKeep.every(
-	// 		(pairToKeep) =>
-	// 			pairToKeep.userUuid === pairsToDelete.userUuid &&
-	// 			pairToKeep.categoryUuid === pairToDelete.categoryUuid
-	// 	)
-	// );
-
-	// if (overlappingPairs) {
-	// // get objects from interaction to delete that contain the overlapping pairs
-	// let intersactionsToMerge = overlappingPairs.map((overlappingPair) => {
-	// 	return interactionToDelete.filter((interaction) => {
-	// 		return (
-	// 			interaction.user.uuid === overlappingPair.userUuid &&
-	// 			interaction.category.uuid === overlappingPair.categoryUuid
-	// 		);
-	// 	});
-	// });
-
+	let targetPairsUnique = unique(targetPairs, ['userUuid', 'categoryUuid']);
+	let sourcePairsUnique = unique(sourcePairs, ['userUuid', 'categoryUuid']);
+	console.log(targetPairsUnique.slice(0, 3));
 	// *** there 2 types of interactions
-	// if exist in both places, we need to merge them (interactions to merge)
-	// if they exist in the source but not the target, then we need to create the interactions at the target
 	// delete the rest the interactions at the source
 
-	// move objects to interactionsToKeep
-	// use interactionId
-		// let mergeInteractions = await raisely(
-		// 	{
-		// 		method: 'PATCH',
-		// 		path: `/interactions/{interactionid}`,
-		// 		data: {
-		// 			body:
-		// 		},
-		// 	},
-		// 	req
-		// );
-	// }
+	// 1. if exist on both source and target ->  need to merge (patch request)
+	// get overlapping pairs
+	let overlappingPairs = sourcePairsUnique.filter((sourcePair) =>
+		targetPairsUnique.some(
+			(targetPair) =>
+				targetPair.userUuid === sourcePair.userUuid &&
+				targetPair.categoryUuid === sourcePair.categoryUuid
+		)
+	);
 
+	// get interactions from source Interactions that contain the overlapping pairs
+	let interactionsToMerge;
+	if (overlappingPairs) {
+		interactionsToMerge = overlappingPairs.map((overlappingPair) => {
+			return sourceInteractions.data.filter((interaction) => {
+				return (
+					interaction.userUuid === overlappingPair.userUuid &&
+					interaction.categoryUuid === overlappingPair.categoryUuid
+				);
+			});
+		});
+	}
+
+	// 2. if they exist in the source but not the target, then we need to create the interactions at the target
+
+	// get pairs that do not exist at the target
+	var missingPairs = testSourcePairs.filter((sourcePair) => {
+		return !testTargetPairs.some((targetPair) => {
+			return (
+				sourcePair.userUuid === targetPair.userUuid &&
+				sourcePair.categoryUuid === targetPair.categoryUuid
+			);
+		});
+	});
+
+	// get interactions to create at the target from the source
+	let interactionsToCreate;
+	if (missingPairs) {
+		interactionsToCreate = missingPairs.map((missingPair) => {
+			return sourceInteractions.data.filter((interaction) => {
+				return (
+					interaction.userUuid === missingPair.userUuid &&
+					interaction.categoryUuid === missingPair.categoryUuid
+				);
+			});
+		});
+	}
+
+	// move objects to targetInteractions
+	// use interactionId
+
+	// let mergeInteractions = await raisely(
+	// 	{
+	// 		method: 'PATCH',
+	// 		path: `/interactions/{interactionid}`,
+	// 		data: {
+	// 			body:
+	// 		},
+	// 	},
+	// 	req
+	// );
+	// }
 
 	// POST request for interactions
 
