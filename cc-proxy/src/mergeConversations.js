@@ -207,9 +207,8 @@ async function mergeConversations(req) {
 
 	// 2. if they exist in the source but not the target, then we need to create the interactions at the target
 
-	// get pairs that do not exist at the target
-	var missingPairs = testSourcePairs.filter((sourcePair) => {
-		return !testTargetPairs.some((targetPair) => {
+	var missingPairs = sourcePairs.filter((sourcePair) => {
+		return !targetPairs.some((targetPair) => {
 			return (
 				sourcePair.userUuid === targetPair.userUuid &&
 				sourcePair.categoryUuid === targetPair.categoryUuid
@@ -217,8 +216,11 @@ async function mergeConversations(req) {
 		});
 	});
 
+	// console.log(missingPairs);
+
+	// sourceInteractions.data.slice(0, 1);
 	// get interactions to create at the target from the source
-	let interactionsToCreate;
+	let interactionsToCreate = [];
 	if (missingPairs) {
 		interactionsToCreate = missingPairs.map((missingPair) => {
 			return sourceInteractions.data.filter((interaction) => {
@@ -230,31 +232,48 @@ async function mergeConversations(req) {
 		});
 	}
 
-	// move objects to targetInteractions
+	// merge interactionsToMerge to targetInteractions uuid
 	// use interactionId
 
-	// let mergeInteractions = await raisely(
-	// 	{
-	// 		method: 'PATCH',
-	// 		path: `/interactions/{interactionid}`,
-	// 		data: {
-	// 			body:
-	// 		},
-	// 	},
-	// 	req
-	// );
+	// if (interactionstoMerge) {
+	// 	interactionsToMerge.forEach(interaction => {
+	// 		await raisely(
+	// 			{
+	// 				method: 'PATCH',
+	// 				path: `/interactions/${interaction.uuid}`,
+	// 				// insert body here
+	// 			},
+	// 			req
+
+	// 		)
+	// 	})
 	// }
 
-	// POST request for interactions
+	// create missing interaction at targetInteractions uuid
+	// if (interactionsToCreate) {
+	// 	interactionsToCreate.forEach(obj => {
+	// 		await raisely(
+	// 				{
+	// 					method: 'POST',
+	// 					path: `/interactions/{interaction.uuid}`,
+	// 				},
+	// 				req
+	// 			);
+	// 	})
+	// }
 
-	// 	// let deleteInteractions = await raisely(
-	// 	// 	{
-	// 	// 		method: 'DELETE',
-	// 	// 		path: `/interactions/${uuid}`,
-	// 	//
-	// 	// 	},
-	// 	// 	req
-	// 	// );
+	// delete all the source interactions
+	// sourceInteractions.data.forEach(interaction => {
+	// 		await raisely(
+	// 		{
+	// 			method: 'DELETE',
+	// 			path: `/interactions/${interaction.uuid}`,
+
+	// 		},
+	// 		req
+	// 	);
+	// })
+
 
 	// check which rsvps to move?
 	// only if the rsvps doesnt exist in the conversationToKeep
