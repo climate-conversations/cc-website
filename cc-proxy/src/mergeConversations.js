@@ -178,7 +178,7 @@ async function mergeConversations(req) {
 
 	let targetPairsUnique = unique(targetPairs, ['userUuid', 'categoryUuid']);
 	let sourcePairsUnique = unique(sourcePairs, ['userUuid', 'categoryUuid']);
-	console.log(targetPairsUnique.slice(0, 3));
+
 	// *** there 2 types of interactions
 	// delete the rest the interactions at the source
 
@@ -196,12 +196,15 @@ async function mergeConversations(req) {
 	let interactionsToMerge;
 	if (overlappingPairs) {
 		interactionsToMerge = overlappingPairs.map((overlappingPair) => {
-			return sourceInteractions.data.filter((interaction) => {
+			let overlap = sourceInteractions.data.filter((interaction) => {
 				return (
 					interaction.userUuid === overlappingPair.userUuid &&
 					interaction.categoryUuid === overlappingPair.categoryUuid
 				);
-			});
+			})
+
+			if (overlap.length > 0) return overlap[0];
+
 		});
 	}
 
@@ -223,12 +226,15 @@ async function mergeConversations(req) {
 	let interactionsToCreate = [];
 	if (missingPairs) {
 		interactionsToCreate = missingPairs.map((missingPair) => {
-			return sourceInteractions.data.filter((interaction) => {
+
+			let missing = sourceInteractions.data.filter((interaction) => {
 				return (
 					interaction.userUuid === missingPair.userUuid &&
 					interaction.categoryUuid === missingPair.categoryUuid
 				);
 			});
+
+			if (missing.length > 0) return missing[0];
 		});
 	}
 
