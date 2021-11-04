@@ -53,12 +53,11 @@ describe('assignRecord', () => {
 				results.res = new MockResponse();
 				clearNocks();
 				nockAuth();
-				nockCheckAssignment(true);
+				nockCheckAssignment();
 				nockAssignment();
 				return assignRecord(results.req, results.res);
 			});
 			statusOk(results);
-			itCheckedAssignment();
 			itAssignsUser();
 		});
 		describe('WHEN NOT assigned record', () => {
@@ -66,14 +65,11 @@ describe('assignRecord', () => {
 				results.res = new MockResponse();
 				clearNocks();
 				nockAuth();
-				nockCheckAssignment(false);
+				nockAssignment();
 				return assignRecord(results.req, results.res);
 			});
-			it('status 403', () => {
-				expect(results.res.statusCode).to.eq(403);
-			});
-			itCheckedAssignment();
-			itAssignsUser(false);
+			statusOk(results);
+			itAssignsUser();
 		});
 	});
 });
