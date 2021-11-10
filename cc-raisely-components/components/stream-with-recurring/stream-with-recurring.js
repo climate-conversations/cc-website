@@ -2,22 +2,22 @@
 	const { api, Link } = RaiselyComponents;
 	const { dayjs, get, isProfileOwnedByUser } = RaiselyComponents.Common;
 	const DonationTile = RaiselyComponents.import(
-		"donation-tile-with-recurring"
+		'donation-tile-with-recurring'
 	);
 	const { Fragment } = React;
 	const { Pagination, SelfContained } = RaiselyComponents.Modules;
 
-	const validDirections = ["vertical", "horizontal", "grid"];
-	const validSort = ["createdAt", "amount"];
-	const validOrder = ["desc", "asc"];
+	const validDirections = ['vertical', 'horizontal', 'grid'];
+	const validSort = ['createdAt', 'amount'];
+	const validOrder = ['desc', 'asc'];
 
 	const donationStreamClass = (direction, isPaginated, customClass) => {
 		return `donation-stream donation-stream--direction-${direction} ${
-			isPaginated ? "donation-stream--paginated " : ""
+			isPaginated ? 'donation-stream--paginated ' : ''
 		}${customClass}`;
 	};
 
-	const mockResponse = obj =>
+	const mockResponse = (obj) =>
 		Promise.resolve({
 			body() {
 				return {
@@ -25,14 +25,14 @@
 						return {
 							data: obj,
 							pagination: { total: obj.length },
-							mock: true
+							mock: true,
 						};
-					}
+					},
 				};
 			},
 			result() {
 				return obj;
-			}
+			},
 		});
 
 	/**
@@ -41,10 +41,8 @@
 	 * @return {Object} Resolved values of the optional query parameters
 	 */
 	const resolveQueryParams = (props = {}, offset = 0, returnHighest) => {
-		const profileIsOwnedByLoggedInUser = isProfileOwnedByUser(
-			props.user,
-			props.profile
-		);
+		const profileIsOwnedByLoggedInUser =
+			props.user && isProfileOwnedByUser(props.user, props.profile);
 
 		const query = {
 			offset,
@@ -56,8 +54,8 @@
 			highlight: props.highlight,
 			includePrivate:
 				props.displayThanksForm && profileIsOwnedByLoggedInUser
-					? "thankyou"
-					: undefined
+					? 'thankyou'
+					: undefined,
 		};
 
 		if (!returnHighest) return query;
@@ -66,30 +64,30 @@
 			...query,
 			// override set values for limit and order - always show top
 			limit: 1,
-			sort: "amount",
-			order: "desc"
+			sort: 'amount',
+			order: 'desc',
 		};
 	};
 
-	const mockDonations = length => {
+	const mockDonations = (length) => {
 		const result = Array.from(Array(parseInt(length))).map(
 			(item, index) => ({
-				uuid: "aa-index",
+				uuid: 'aa-index',
 				amount: 1000,
-				firstName: "Example",
-				lastName: "Donor",
-				fullName: "Example Donor",
-				preferredName: "Example",
-				processing: !!(index % 2) ? "RECURRING" : "ONCE",
-				currency: "AUD",
+				firstName: 'Example',
+				lastName: 'Donor',
+				fullName: 'Example Donor',
+				preferredName: 'Example',
+				processing: !!(index % 2) ? 'RECURRING' : 'ONCE',
+				currency: 'AUD',
 				profile: {
 					// TODO: mock this profile page or make it 404 correctly
-					name: "Team Incredible",
-					path: "team-incredible"
+					name: 'Team Incredible',
+					path: 'team-incredible',
 				},
 				createdAt: dayjs()
-					.subtract(5 * index, "minutes")
-					.format()
+					.subtract(5 * index, 'minutes')
+					.format(),
 			})
 		);
 
@@ -99,6 +97,7 @@
 	const pollingMethod = async (props, offset, returnHighest = false) => {
 		const { campaign, profile } = props;
 
+		console.log('props', props);
 		if (campaign.mock) {
 			const value = mockResponse(mockDonations(props.limit));
 			return value;
@@ -109,7 +108,7 @@
 				props.isUser &&
 				props.global &&
 				props.global.user &&
-				props.user.uuid === props.global.user.uuid
+				props.user.uuid === props.global.user.uuid,
 		};
 
 		if (props.isUser) {
@@ -125,8 +124,8 @@
 			id: props.profile.uuid,
 			query: {
 				...query,
-				...resolveQueryParams(props, offset, returnHighest)
-			}
+				...resolveQueryParams(props, offset, returnHighest),
+			},
 		});
 		return result;
 	};
@@ -149,7 +148,7 @@
 						donation={donation}
 						campaign={rest.campaign}
 						showAsLoading={rest.showAsLoading}
-						detail={rest.direction === "grid" ? "tile" : "basic"}
+						detail={rest.direction === 'grid' ? 'tile' : 'basic'}
 						user={rest.user}
 						showFullName={rest.showFullName}
 						displayThanks={rest.displayThanks}
@@ -169,18 +168,18 @@
 
 		const streamDirection = validDirections.includes(values.direction)
 			? values.direction
-			: "horizontal";
+			: 'horizontal';
 
 		// change presentation layer depending if paginated
 		const Presenter =
-			values.direction === "vertical" ? Pagination : SelfContained;
+			values.direction === 'vertical' ? Pagination : SelfContained;
 
 		// allow custom donation renderer
-		const hasCustomRender = typeof props.renderDonation === "function";
+		const hasCustomRender = typeof props.renderDonation === 'function';
 
 		const profile =
-			get(props.global, "current.profile") ||
-			get(props.global, "campaign.profile");
+			get(props.global, 'current.profile') ||
+			get(props.global, 'campaign.profile');
 
 		return (
 			<div
@@ -206,9 +205,10 @@
 					}
 				>
 					{(donations, { isLoading }) => {
+						console.log('Donation stream', donations);
 						return donations && donations.length ? (
 							<Fragment>
-								{streamDirection === "horizontal" &&
+								{streamDirection === 'horizontal' &&
 								donations.length > 2 ? (
 									<Fragment>
 										<div
@@ -216,7 +216,7 @@
 												donations.length
 											}`}
 										>
-											{donations.map(donation => (
+											{donations.map((donation) => (
 												<DonationStreamItem
 													key={
 														donation
@@ -232,7 +232,7 @@
 												/>
 											))}
 											<div className="donation-stream__track__loop">
-												{donations.map(donation => (
+												{donations.map((donation) => (
 													<DonationStreamItem
 														key={
 															donation
@@ -255,7 +255,7 @@
 									</Fragment>
 								) : (
 									<Fragment>
-										{donations.map(donation => (
+										{donations.map((donation) => (
 											<DonationStreamItem
 												key={
 													donation
