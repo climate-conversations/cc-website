@@ -33,19 +33,22 @@ async function paginateRaisely(url, callback) {
 		const records = body.data;
 		console.log('nextUrl will be', next);
 
-		await pMap(records, async (record, i) => {
-			if (error) return;
-			try {
-				await callback(records[i], i + offset)
-			} catch(e) {
+		await pMap(
+			records,
+			async (record, i) => {
+				if (error) return;
+				try {
+					await callback(records[i], i + offset);
+				} catch (e) {
 					console.log(e);
 					error = e;
-			}
-		}, { concurrency: CONCURRENCY });
+				}
+			},
+			{ concurrency: CONCURRENCY }
+		);
 		offset += limit;
 
 		if (error) throw error;
-
 	} while (next);
 	await Promise.all(promises);
 	if (error) throw error;
@@ -57,15 +60,19 @@ async function syncRaiselyDonorsToMailchimp() {
 	return paginateRaisely('/donations?private=1', async (donation, i) => {
 		if (donation.mode === 'TEST') return;
 		if (donorUuids.includes(donation.user.uuid)) {
-			console.log('Recurring donor has already been added, nothing to do');
+			console.log(
+				'Recurring donor has already been added, nothing to do'
+			);
 			return;
 		}
 		donorUuids.push(donation.user.uuid);
 		const data = {
 			type: 'donation.created',
 			data: donation,
-		}
-		console.log(`**** Syncing donor ${i} ${donation.user.uuid} ${donation.email} ****`);
+		};
+		console.log(
+			`**** Syncing donor ${i} ${donation.user.uuid} ${donation.email} ****`
+		);
 		return controller.process({ data });
 	});
 }
@@ -75,19 +82,21 @@ async function syncRaiselyToMailchimp() {
 		const data = {
 			type: 'user.updated',
 			data: user,
-		}
+		};
 		console.log(`**** Syncing person ${i} ${user.uuid} ${user.email} ****`);
 		await controller.process({ data });
-		await controller.process({ data: {
-			type: 'donation.updated',
-			data: { user },
-		} });
+		await controller.process({
+			data: {
+				type: 'donation.updated',
+				data: { user },
+			},
+		});
 	});
 }
 
 async function doAll() {
-	// await syncRaiselyDonorsToMailchimp();
-	await syncRaiselyToMailchimp();
+	await syncRaiselyDonorsToMailchimp();
+	// await syncRaiselyToMailchimp();
 }
 
 doAll().catch(console.error);
