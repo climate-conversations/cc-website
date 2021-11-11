@@ -159,10 +159,11 @@
 
 		return {
 			raised:
-				((parseInt(alreadyRaised) || 0) + amounts.raisedAmount) /
+				((parseInt(alreadyRaised) || 0) + amounts.raisedAmount / 100) /
 				parseInt(costPerUnit),
 			goal:
-				((parseInt(alreadyRaised) || 0) + goal) / parseInt(costPerUnit),
+				((parseInt(alreadyRaised) || 0) + goal / 100) /
+				parseInt(costPerUnit),
 		};
 	}
 
