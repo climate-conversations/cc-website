@@ -191,6 +191,7 @@
 			const { host } = this.props;
 			const messageCategories =
 				'meeting,personal.message,personal.email,phone';
+
 			this.setState({ loading: true });
 
 			try {
@@ -214,7 +215,6 @@
 				} catch (error) {}
 				// In case the other failed
 				await initStepsPromise;
-				console.log('messages: ', messages);
 				this.setState({ messages }, this.checkCompleteSteps);
 			} catch (error) {
 				console.error(error);
@@ -771,7 +771,6 @@
 		};
 
 		save = async (values, formToData) => {
-
 			const data = formToData(values);
 			if (!UserSaveHelper) UserSaveHelper = UserSaveHelperRef().html;
 			let { host } = this.state;
@@ -787,7 +786,10 @@
 
 			// reassign user
 			const facilitatorUuid = get(this.props, 'global.user.uuid');
-			const result = await UserSaveHelper.assignUser(facilitatorUuid , host.uuid); // await
+			const result = await UserSaveHelper.assignUser(
+				facilitatorUuid,
+				host.uuid
+			); // await
 			let { interaction: oldInteraction } = this.state;
 
 			let newInteraction = get(data, 'interaction.host-interest', {});
