@@ -39,7 +39,7 @@
 
 	const proxyHost = {
 		production:
-			'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net',
+			'https://us-central1-climate-conversations-sg-2019.cloudfunctions.net',
 		staging: 'https://us-central1-cc-website-staging.cloudfunctions.net',
 		development: 'http://localhost:3501',
 	}[mode];
