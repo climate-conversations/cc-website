@@ -281,7 +281,6 @@
 					) : ''}
 					<ul className="conversation--checklist">
 						{checklist.map(item => {
-							console.log(item)
 							return (
 							<CheckListItem item={item} />
 						)})}
