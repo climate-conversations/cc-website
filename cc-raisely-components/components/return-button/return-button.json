@@ -3,7 +3,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 63
+            "value": 82
         },
         "backLabel": {
             "id": "backLabel",

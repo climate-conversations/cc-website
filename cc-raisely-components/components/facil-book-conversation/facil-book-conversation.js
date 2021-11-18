@@ -331,6 +331,7 @@
 		}
 
 		save = async (values, formToData) => {
+			console.log("save is clicked")
 			const data = formToData(values);
 			// Save the campaign uuid
 			if (!data.event) data.event = {};
@@ -410,14 +411,19 @@
 			}
 
 			// Check rsvp for equality either by id or value
-			const sameRsvp = (a, b) =>
+			const sameRsvp = (a, b) => {
+				// console.log("a: ", a);
+				// console.log("b: ", b);
 				a.uuid === b.uuid ||
 				(a.type === b.type &&
 					a.userUuid === b.userUuid &&
-					a.eventUuid === b.eventUuid);
+					a.eventUuid === b.eventUuid)};
 
+			console.log("all the rsvps: ",rsvps )
+			console.log("the old rsvps: ", oldRsvps)
 			// Queue new rsvps to add
 			rsvps.forEach(rsvp => {
+				console.log("rsvp inside loop: ", rsvp)
 				if (rsvp.userUuid) {
 					if (!oldRsvps.find(r => sameRsvp(r, rsvp))) {
 						toInsert.push({
@@ -428,12 +434,15 @@
 					}
 				}
 			});
+
+			console.log("to insert: ", toInsert);
 			// Delete rsvps that are not present in the new list
 			oldRsvps.forEach(rsvp => {
 				if (!rsvps.find(r => sameRsvp(r, rsvp))) {
 					toDelete.push(rsvp);
 				}
 			});
+			console.log("to delete: ", toDelete);
 
 			const toAssign = toInsert.filter(rsvp =>
 				["host", "co-host"].includes(rsvp.type)
