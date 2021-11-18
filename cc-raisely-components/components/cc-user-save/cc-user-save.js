@@ -37,13 +37,13 @@
 		? 'development'
 		: 'staging';
 
-	// const proxyHost = {
-	// 	production:
-	// 		'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net',
-	// 	staging:
-	// 		'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
-	// 	development: 'http://localhost:3501',
-	// }[mode];
+	const proxyHost = {
+		production:
+			'https://asia-northeast1-climate-conversations-sg-2019.cloudfunctions.net',
+		staging:
+			'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
+		development: 'http://localhost:3501',
+	}[mode];
 
 	const syncHost = {
 		production:
@@ -53,7 +53,7 @@
 		development: 'http://localhost:3500',
 	}[mode];
 
-	const proxyHost = 'http://localhost:3501';
+	// const proxyHost = 'http://localhost:3501';
 	// const syncHost = 'http://localhost:5555';
 
 	const portalHost =
