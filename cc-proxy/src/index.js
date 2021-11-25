@@ -6,6 +6,7 @@ const { setupVolunteer, resetEmail } = require('./setupVolunteer');
 const { hostReport, facilReport } = require('./reports');
 const proxy = require('./proxy');
 const { assignRecordRequest: assignRecord } = require('./assignRecord');
+const { mergeConversations } = require('./mergeConversations');
 
 const logger = require('./config/logging');
 
@@ -138,6 +139,7 @@ const functions = {
 	hostReport,
 	facilReport,
 	resetEmail,
+	mergeConversations,
 };
 
 const proxiedFunctions = {};

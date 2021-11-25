@@ -68,7 +68,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 59
+            "value": 68
         },
         "className": {
             "id": "className",
