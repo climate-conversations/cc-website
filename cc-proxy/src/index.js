@@ -41,7 +41,7 @@ function setCORS(req, res) {
 
 	if (req.method === 'OPTIONS') {
 		// Send response to OPTIONS requests
-		res.set('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH');
+		res.set('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE');
 		res.set(
 			'Access-Control-Allow-Headers',
 			'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization'
