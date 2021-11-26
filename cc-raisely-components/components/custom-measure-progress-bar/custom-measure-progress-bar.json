@@ -1,114 +1,114 @@
 {
-	"fields": {
-		"size": {
-			"id": "size",
-			"type": "select",
-			"label": "Size",
-			"value": "medium",
-			"options": [
-				{
-					"label": "small",
-					"value": "small"
-				},
-				{
-					"label": "medium",
-					"value": "medium"
-				},
-				{
-					"label": "large",
-					"value": "large"
-				}
-			],
-			"singular": null
-		},
-		"style": {
-			"id": "style",
-			"type": "select",
-			"label": "Style",
-			"value": "rounded",
-			"options": [
-				{
-					"label": "standard",
-					"value": "standard"
-				},
-				{
-					"label": "hollow",
-					"value": "hollow"
-				},
-				{
-					"label": "rounded",
-					"value": "rounded"
-				}
-			],
-			"singular": null
-		},
-		"version": {
-			"type": "number",
-			"label": "Current Version of Component",
-			"value": 1
-		},
-		"statPosition": {
-			"id": "statPosition",
-			"type": "select",
-			"label": "Show values",
-			"value": "top",
-			"options": [
-				{
-					"label": "on top",
-					"value": "top"
-				},
-				{
-					"label": "below",
-					"value": "bottom"
-				},
-				{
-					"label": "not at all",
-					"value": "hidden"
-				}
-			],
-			"singular": null
-		},
-		"showGoal": {
-			"id": "showGoal",
-			"type": "boolean",
-			"label": "Show Goal",
-			"value": true
-		},
-		"showRaised": {
-			"id": "showRaised",
-			"help": "Total of donations, matching and committed recurring",
-			"type": "boolean",
-			"label": "Show total raised",
-			"value": true
-		},
-		"commitmentMonths": {
-			"id": "commitmentMonths",
-			"help": "Number of months to multiply subscriptions by",
-			"type": "number",
-			"label": "Months of commitment",
-			"value": 12
-		},
-		"amountDescription": {
-			"id": "amountDescription",
-			"help": "Description append to amount raised",
-			"type": "text",
-			"label": "Label for amount",
-			"value": "months funded"
-		},
-		"costPerUnit": {
-			"id": "costPerUnit",
-			"help": "Amount raised will be divided by this",
-			"type": "number",
-			"label": "Cost per Unit",
-			"value": 4000
-		},
-		"alreadyRaised": {
-			"id": "alreadyRaised",
-			"help": "Start the progress bar at this point (in $ raised)",
-			"type": "number",
-			"label": "Amount already raised",
-			"value": 4000
-		}
-	},
-	"uuid": "d2a713f0-4337-11ec-87f7-f50430e35b3b"
+    "fields": {
+        "size": {
+            "id": "size",
+            "type": "select",
+            "label": "Size",
+            "value": "medium",
+            "options": [
+                {
+                    "label": "small",
+                    "value": "small"
+                },
+                {
+                    "label": "medium",
+                    "value": "medium"
+                },
+                {
+                    "label": "large",
+                    "value": "large"
+                }
+            ],
+            "singular": null
+        },
+        "style": {
+            "id": "style",
+            "type": "select",
+            "label": "Style",
+            "value": "rounded",
+            "options": [
+                {
+                    "label": "standard",
+                    "value": "standard"
+                },
+                {
+                    "label": "hollow",
+                    "value": "hollow"
+                },
+                {
+                    "label": "rounded",
+                    "value": "rounded"
+                }
+            ],
+            "singular": null
+        },
+        "version": {
+            "type": "number",
+            "label": "Current Version of Component",
+            "value": 23
+        },
+        "showGoal": {
+            "id": "showGoal",
+            "type": "boolean",
+            "label": "Show Goal",
+            "value": true
+        },
+        "showRaised": {
+            "id": "showRaised",
+            "help": "Total of donations, matching and committed recurring",
+            "type": "boolean",
+            "label": "Show total raised",
+            "value": true
+        },
+        "costPerUnit": {
+            "id": "costPerUnit",
+            "help": "Amount raised will be divided by this",
+            "type": "number",
+            "label": "Cost per Unit",
+            "value": 4000
+        },
+        "statPosition": {
+            "id": "statPosition",
+            "type": "select",
+            "label": "Show values",
+            "value": "top",
+            "options": [
+                {
+                    "label": "on top",
+                    "value": "top"
+                },
+                {
+                    "label": "below",
+                    "value": "bottom"
+                },
+                {
+                    "label": "not at all",
+                    "value": "hidden"
+                }
+            ],
+            "singular": null
+        },
+        "alreadyRaised": {
+            "id": "alreadyRaised",
+            "help": "Start the progress bar at this point (in $ raised)",
+            "type": "number",
+            "label": "Amount already raised",
+            "value": 4000
+        },
+        "commitmentMonths": {
+            "id": "commitmentMonths",
+            "help": "Number of months to multiply subscriptions by",
+            "type": "number",
+            "label": "Months of commitment",
+            "value": 12
+        },
+        "amountDescription": {
+            "id": "amountDescription",
+            "help": "Description append to amount raised",
+            "type": "text",
+            "label": "Label for amount",
+            "value": "months funded"
+        }
+    },
+    "uuid": "d2a713f0-4337-11ec-87f7-f50430e35b3b"
 }

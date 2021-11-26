@@ -14,7 +14,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 13
+            "value": 39
         },
         "message1": {
             "id": "message1",

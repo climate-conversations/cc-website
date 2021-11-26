@@ -26,7 +26,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 63
+            "value": 85
         },
         "headerTag": {
             "id": "headerTag",

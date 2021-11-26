@@ -14,7 +14,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 60
+            "value": 79
         },
         "redirect": {
             "id": "redirect",
