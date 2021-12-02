@@ -29,7 +29,7 @@
 			? donation.fullName ||
 			  `${donation.firstName} ${donation.lastName || ""}`
 			: donation.firstName;
-		const donorName = donation.anonymous ? "Anonymous" : donorDisplayName;
+		const donorName = donation.anonymous || !donation.firstName ? "Anonymous" : donorDisplayName;
 
 		return (
 			<p className="donation-tile__content__activity">
