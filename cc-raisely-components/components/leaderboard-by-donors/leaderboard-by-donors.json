@@ -1,159 +1,159 @@
 {
-    "fields": {
-        "list": {
-            "id": "list",
-            "type": "select",
-            "label": "Display which profiles?",
-            "value": "all",
-            "options": [
-                {
-                    "label": "All",
-                    "value": "all"
-                },
-                {
-                    "label": "Direct Members of a Profile",
-                    "value": "members"
-                }
-            ],
-            "singular": null
-        },
-        "size": {
-            "id": "size",
-            "type": "select",
-            "label": "Progress Bar Size",
-            "value": "medium",
-            "options": [
-                {
-                    "label": "small",
-                    "value": "small"
-                },
-                {
-                    "label": "medium",
-                    "value": "medium"
-                },
-                {
-                    "label": "large",
-                    "value": "large"
-                }
-            ],
-            "singular": null
-        },
-        "style": {
-            "id": "style",
-            "type": "select",
-            "label": "Progress Bar Style",
-            "value": "rounded",
-            "options": [
-                {
-                    "label": "standard",
-                    "value": "standard"
-                },
-                {
-                    "label": "hollow",
-                    "value": "hollow"
-                },
-                {
-                    "label": "rounded",
-                    "value": "rounded"
-                }
-            ],
-            "singular": null
-        },
-        "header": {
-            "id": "header",
-            "type": "text",
-            "label": "Header Text",
-            "value": "Top Fundraisers",
-            "singular": null
-        },
-        "version": {
-            "type": "number",
-            "label": "Current Version of Component",
-            "value": 29
-        },
-        "showRank": {
-            "id": "showRank",
-            "type": "checkbox",
-            "label": "Show Rank",
-            "value": true,
-            "singular": null
-        },
-        "headerTag": {
-            "id": "headerTag",
-            "type": "text",
-            "label": "Header Tag",
-            "value": "h3",
-            "singular": null
-        },
-        "showTotal": {
-            "id": "showTotal",
-            "type": "checkbox",
-            "label": "Display the total as a number",
-            "value": true,
-            "singular": null
-        },
-        "parentFrom": {
-            "id": "parentFrom",
-            "type": "select",
-            "label": "Parent profile taken from",
-            "value": "campaign",
-            "options": [
-                {
-                    "label": "The Campaign Profile",
-                    "value": "campaign"
-                },
-                {
-                    "label": "The current page",
-                    "value": "page"
-                }
-            ],
-            "singular": null
-        },
-        "totalLabel": {
-            "id": "totalLabel",
-            "type": "text",
-            "label": "Label to append to total",
-            "value": "donors",
-            "singular": null
-        },
-        "profileType": {
-            "id": "profileType",
-            "type": "select",
-            "label": "Display profiles of type",
-            "value": "individual",
-            "options": [
-                {
-                    "label": "Individual",
-                    "value": "individual"
-                },
-                {
-                    "label": "Group",
-                    "value": "group"
-                }
-            ],
-            "singular": null
-        },
-        "statPosition": {
-            "id": "statPosition",
-            "type": "select",
-            "label": "Progress bar value position",
-            "value": "top",
-            "options": [
-                {
-                    "label": "on top",
-                    "value": "top"
-                },
-                {
-                    "label": "below",
-                    "value": "bottom"
-                },
-                {
-                    "label": "not at all",
-                    "value": "hidden"
-                }
-            ],
-            "singular": null
-        }
-    },
-    "uuid": "bbfc83f0-4829-11ec-b149-8dfd69aafb62"
+	"fields": {
+		"version": {
+			"type": "number",
+			"label": "Current Version of Component",
+			"value": 1
+		},
+		"size": {
+			"id": "size",
+			"type": "select",
+			"label": "Progress Bar Size",
+			"value": "medium",
+			"options": [
+				{
+					"label": "small",
+					"value": "small"
+				},
+				{
+					"label": "medium",
+					"value": "medium"
+				},
+				{
+					"label": "large",
+					"value": "large"
+				}
+			],
+			"singular": null
+		},
+		"style": {
+			"id": "style",
+			"type": "select",
+			"label": "Progress Bar Style",
+			"value": "rounded",
+			"options": [
+				{
+					"label": "standard",
+					"value": "standard"
+				},
+				{
+					"label": "hollow",
+					"value": "hollow"
+				},
+				{
+					"label": "rounded",
+					"value": "rounded"
+				}
+			],
+			"singular": null
+		},
+		"statPosition": {
+			"id": "statPosition",
+			"type": "select",
+			"label": "Progress bar value position",
+			"value": "top",
+			"options": [
+				{
+					"label": "on top",
+					"value": "top"
+				},
+				{
+					"label": "below",
+					"value": "bottom"
+				},
+				{
+					"label": "not at all",
+					"value": "hidden"
+				}
+			],
+			"singular": null
+		},
+		"showRank": {
+			"id": "showRank",
+			"type": "checkbox",
+			"label": "Show Rank",
+			"value": true,
+			"singular": null
+		},
+		"showTotal": {
+			"id": "showTotal",
+			"type": "checkbox",
+			"label": "Display the total as a number",
+			"value": true,
+			"singular": null
+		},
+		"totalLabel": {
+			"id": "totalLabel",
+			"type": "text",
+			"label": "Label to append to total",
+			"value": "donors",
+			"singular": null
+		},
+		"profileType": {
+			"id": "profileType",
+			"type": "select",
+			"label": "Display profiles of type",
+			"value": "individual",
+			"options": [
+				{
+					"label": "Individual",
+					"value": "individual"
+				},
+				{
+					"label": "Group",
+					"value": "group"
+				}
+			],
+			"singular": null
+		},
+		"list": {
+			"id": "list",
+			"type": "select",
+			"label": "Display which profiles?",
+			"value": "all",
+			"options": [
+				{
+					"label": "All",
+					"value": "all"
+				},
+				{
+					"label": "Direct Members of a Profile",
+					"value": "members"
+				}
+			],
+			"singular": null
+		},
+		"parentFrom": {
+			"id": "parentFrom",
+			"type": "select",
+			"label": "Parent profile taken from",
+			"value": "campaign",
+			"options": [
+				{
+					"label": "The Campaign Profile",
+					"value": "campaign"
+				},
+				{
+					"label": "The current page",
+					"value": "page"
+				}
+			],
+			"singular": null
+		},
+		"header": {
+			"id": "header",
+			"type": "text",
+			"label": "Header Text",
+			"value": "Top Fundraisers",
+			"singular": null
+		},
+		"headerTag": {
+			"id": "headerTag",
+			"type": "text",
+			"label": "Header Tag",
+			"value": "h3",
+			"singular": null
+		}
+	},
+	"uuid": "bbfc83f0-4829-11ec-b149-8dfd69aafb62"
 }
