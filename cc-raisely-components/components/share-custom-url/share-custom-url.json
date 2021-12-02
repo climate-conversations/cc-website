@@ -41,7 +41,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 42
+            "value": 24
         },
         "hashtags": {
             "id": "hashtags",

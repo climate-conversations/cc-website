@@ -17,7 +17,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 66
+            "value": 47
         },
         "showIcon": {
             "id": "title",

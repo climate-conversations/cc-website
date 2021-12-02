@@ -53,9 +53,6 @@
 		development: 'http://localhost:3500',
 	}[mode];
 
-	// const proxyHost = 'http://localhost:3501';
-	// const syncHost = 'http://localhost:5555';
-
 	const portalHost =
 		mode === 'production'
 			? 'https://p.climate.sg'
@@ -67,7 +64,6 @@
 	const setupFacilUrl = `${proxyHost}/setupVolunteer`;
 	const makeAdminUrl = `${proxyHost}/makeAdmin`;
 	const assignUserUrl = `${proxyHost}/assignRecord`;
-	const mergeConversationsUrl = `${proxyHost}/mergeConversations`;
 
 	const cachedRequests = [];
 	const requestBucket = [];
@@ -312,24 +308,6 @@
 			const url = `${proxyHost}/resetEmail`;
 			await this.doFetch(url, {
 				method: 'post',
-				body: { data },
-			});
-		}
-
-		static async mergeConversations(conversationUuid1, conversationUuid2) {
-			// const conversationUuids = { conversationUuid1, conversationUuid2 };
-			const data = {
-				conversationUuid1,
-				conversationUuid2,
-			};
-
-			// let test = await this.doFetch(mergeConversationsUrl, {
-			// 	method: 'POST',
-			// 	body: { data: conversationUuids },
-			// });
-			// console.log(test);
-			return this.doFetch(mergeConversationsUrl, {
-				method: 'POST',
 				body: { data },
 			});
 		}
