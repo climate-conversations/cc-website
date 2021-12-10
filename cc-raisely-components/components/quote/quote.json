@@ -87,7 +87,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 32
+            "value": 55
         },
         "photoUrl": {
             "id": "photoUrl",

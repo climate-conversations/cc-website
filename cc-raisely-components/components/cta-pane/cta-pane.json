@@ -28,7 +28,7 @@
         "version": {
             "type": "number",
             "label": "Current Version of Component",
-            "value": 29
+            "value": 59
         },
         "buttonUrl": {
             "id": "buttonUrl",
