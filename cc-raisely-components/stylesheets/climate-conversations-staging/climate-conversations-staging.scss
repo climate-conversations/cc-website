@@ -1011,6 +1011,7 @@ min-height: 5em;
 .donation-form {
   background: none;
   box-shadow: none;
+  border: none;
 
   .form-field {
     border-color: $accentBlue;
@@ -1201,6 +1202,10 @@ min-height: 5em;
       }
     }
   }
+}
+
+.monthly-gift .donation-form__amount-value::after {
+    content: " / month";
 }
 
 //* DONATION TILE *//
