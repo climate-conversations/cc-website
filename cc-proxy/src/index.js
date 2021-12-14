@@ -20,7 +20,6 @@ const loadConfig = require('./config');
  */
 function setCORS(req, res) {
 	// Set CORS headers for preflight requests
-	// add addiitonal comment
 	res.set('Access-Control-Allow-Credentials', 'true');
 
 	const validOrigins = [
