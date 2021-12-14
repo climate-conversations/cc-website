@@ -74,7 +74,6 @@ jobs:
 
             ## temporary step to run deployment on own branch
             - name: Setup custom environment
-              if: github.ref == 'refs/heads/staging'
               run: |
                   echo ${GCLOUD_AUTH} | base64 --decode > gcloud-service-account.json
                   echo "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com" >> $GITHUB_ENV
