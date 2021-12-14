@@ -20,6 +20,7 @@ const loadConfig = require('./config');
  */
 function setCORS(req, res) {
 	// Set CORS headers for preflight requests
+	// add addiitonal comment
 	res.set('Access-Control-Allow-Credentials', 'true');
 
 	const validOrigins = [
@@ -41,7 +42,10 @@ function setCORS(req, res) {
 
 	if (req.method === 'OPTIONS') {
 		// Send response to OPTIONS requests
-		res.set('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE');
+		res.set(
+			'Access-Control-Allow-Methods',
+			'GET,HEAD,POST,PUT,PATCH,DELETE'
+		);
 		res.set(
 			'Access-Control-Allow-Headers',
 			'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization'
