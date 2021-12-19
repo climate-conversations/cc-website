@@ -46,9 +46,9 @@
 
 	const syncHost = {
 		production:
-			'https://asia-northeast1-climate-conversations-sync.cloudfunctions.net',
+			'https://us-central1-climate-conversations-sync.cloudfunctions.net',
 		staging:
-			'https://asia-northeast1-cc-website-staging.cloudfunctions.net',
+			'https://us-central1-cc-website-staging.cloudfunctions.net',
 		development: 'http://localhost:3500',
 	}[mode];
 
