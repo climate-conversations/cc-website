@@ -20,56 +20,40 @@ async function uniqueDonors(req) {
 			{
 				method: 'GET',
 				path: `/donations?campaign=${campaignUuid}&profile=${uuid}`,
+				query: { private: 1 },
+				escalate: true,
 			},
 			req
 		);
 
 		// list of objects. each object is a donation
-		// console.log("success!" + JSON.stringify(donationData.data))
+		console.log('success!: ' + JSON.stringify(donationData.data));
 
 		// TODO:
-		// who is cadence?
-		// donation amount seems to be wrong
 		// 1. exclude donations from same email address (no email address in)
-		// 2. self donation (how to check that?)
+		// 2. self donation (same email address)
 
 		const totalDonationsToProfile = donationData.data.length;
-		console.log('total Donations: ', totalDonationsToProfile);
 
-		// 3.update donorCount in profile with patch request
-		// https://developers.raisely.com/reference#patch_profiles-path
-		// data.public.uniqueDonors
-
-		// patch request is not working
 		let patchProfileDonorCount = await raisely(
 			{
 				method: 'PATCH',
-				path: `/profiles/${uuid}?partial=true`,
+				path: `/profiles/${uuid}?campaign=${campaignUuid}`,
 				body: {
 					data: {
 						public: {
-							uniqueDonors: totalDonationsToProfile.toString(),
+							uniqueDonors: totalDonationsToProfile,
 						},
 					},
-					overwriteCustomFields: true
+					overwriteCustomFields: true,
 				},
+				escalate: true,
 			},
 			req
 		);
-
-		console.log('patched');
-
-		let profile = await raisely(
-			{
-				method: 'GET',
-				path: `/profiles/${uuid}`,
-			},
-			req
-		);
-
-		console.log(profile.data.public);
-	} catch {
+	} catch (error) {
 		console.log('unable to fetch all donations');
+		console.log(error.error);
 	}
 	return {
 		status: 200,
