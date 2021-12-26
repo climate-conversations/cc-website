@@ -45,11 +45,9 @@
 				const { mock } = this.props.global.campaign;
 				if (mock) {
 					stats = this.mockResponse(teamMode);
-					console.log(stats)
 				} else {
 					const userUuid = await this.getUserUuids();
 					stats = await (teamMode ? this.loadTeam(userUuid) : this.loadFacil(userUuid));
-					console.log(stats)
 				}
 
 				const labelledStats = labels
@@ -91,11 +89,11 @@
 				campaignUuid,
 				userUuid
 			);
+
 			const stats = {
-				complete: conversations.filter(c => get(c, 'private.status' === 'complete')).length,
-				booked: conversations.filter(c => get(c, 'private.status' === 'booked')).length,
+				complete: conversations.filter(c => get(c, 'private.status') === 'complete').length,
+				booked: conversations.filter(c => get(c, 'private.status')  === 'booked').length,
 			};
-			console.log('team stats', stats)
 			return stats;
 		}
 
