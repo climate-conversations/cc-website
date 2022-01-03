@@ -6,8 +6,8 @@
 	"scripts": {
 		"dev": "node dev",
 		"test": "mocha --timeout 10000 test/**/*.test.js",
-		"deploy": "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com REGION=asia-northeast1 GCLOUD_PROJECT=cc-website-staging npm run deploy:all",
-		"deploy:ci": "REGION=asia-northeast1 npm run deploy:all",
+		"deploy": "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com REGION=us-central1 GCLOUD_PROJECT=cc-website-staging npm run deploy:all",
+		"deploy:ci": "REGION=us-central1 npm run deploy:all",
 		"deploy:scheduler": "",
 		"deploy:backendReport": "gcloud functions deploy backendReportProcess --max-instances=1 --trigger-resource BackendReport --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-event google.pubsub.topic.publish && gcloud functions deploy backendReport --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-http && gcloud functions deploy backendReportRetry --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-http",
 		"deploy:donationSpreadsheet": "gcloud functions deploy donationSpreadsheetProcess --max-instances=1 --trigger-resource DonationSpreadsheet --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-event google.pubsub.topic.publish && gcloud functions deploy donationSpreadsheet --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-http && gcloud functions deploy donationSpreadsheetRetry --memory 256MB --runtime nodejs10 --project $GCLOUD_PROJECT --service-account=${SERVICE_ACCOUNT} --region $REGION --trigger-http",
