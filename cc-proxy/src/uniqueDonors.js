@@ -13,6 +13,20 @@ async function uniqueDonors(req) {
 	let { campaignUuid } = req.body.data.data;
 	let { uuid } = req.body.data.data.profile;
 
+	if (!campaignUuid) {
+		throw new RestError({
+			message: 'Request malformed. CampaignUuid does not exist',
+			status: 400,
+		});
+	}
+
+	if (!uuid) {
+		throw new RestError({
+			message: 'Request malformed. ProfileUuid does not exist',
+			status: 400,
+		});
+	}
+
 	try {
 		// get all donations to profile
 		let allDonations = await raisely(
