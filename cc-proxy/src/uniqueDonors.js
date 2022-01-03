@@ -42,7 +42,6 @@ async function uniqueDonors(req) {
 							uniqueDonors: countedEmails.length,
 						},
 					},
-					overwriteCustomFields: true,
 				},
 				escalate: true,
 			},
