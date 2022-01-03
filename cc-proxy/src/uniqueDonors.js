@@ -35,7 +35,7 @@ async function uniqueDonors(req) {
 		let patchProfileDonorCount = await raisely(
 			{
 				method: 'PATCH',
-				path: `/profiles/${uuid}?campaign=${campaignUuid}`,
+				path: `/profiles/${uuid}`,
 				body: {
 					data: {
 						public: {
