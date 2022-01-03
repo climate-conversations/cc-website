@@ -62,8 +62,11 @@ async function uniqueDonors(req) {
 			req
 		);
 	} catch (error) {
-		console.log('unable to update donations');
-		console.log(error.error);
+		const statusCode = error.status || error.statusCode || 500;
+		console.error(
+			`Patch request failed with status ${statusCode}:`,
+			error.error
+		);
 	}
 	return {
 		status: 200,
