@@ -27,25 +27,25 @@ async function uniqueDonors(req) {
 		});
 	}
 
+	// get all donations to profile
+	let allDonations = await raisely(
+		{
+			method: 'GET',
+			path: `/donations?campaign=${campaignUuid}&profile=${uuid}`,
+			query: { private: 1 },
+			escalate: true,
+		},
+		req
+	);
+
+	let profileUserEmail = allDonations[0].user.email;
+	let allEmails = allDonations.map((donations) => donations.email);
+	let uniqueEmails = Array.from(new Set(allEmails));
+	let countedEmails = uniqueEmails.filter(
+		(email) => email !== profileUserEmail
+	);
+
 	try {
-		// get all donations to profile
-		let allDonations = await raisely(
-			{
-				method: 'GET',
-				path: `/donations?campaign=${campaignUuid}&profile=${uuid}`,
-				query: { private: 1 },
-				escalate: true,
-			},
-			req
-		);
-
-		let profileUserEmail = allDonations[0].user.email;
-		let allEmails = allDonations.map((donations) => donations.email);
-		let uniqueEmails = Array.from(new Set(allEmails));
-		let countedEmails = uniqueEmails.filter(
-			(email) => email !== profileUserEmail
-		);
-
 		let patchProfileDonorCount = await raisely(
 			{
 				method: 'PATCH',
