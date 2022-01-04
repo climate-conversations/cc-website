@@ -15,6 +15,7 @@
 
 		componentDidMount() {
 			this.buildSteps();
+			document.title = this.props.event.name;
 		}
 
 		componentDidUpdate() {
