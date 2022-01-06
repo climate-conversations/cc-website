@@ -702,9 +702,12 @@
 		const { onClose, to, messageMeta } = props;
 
 		function inner(closeModal) {
-			// temporary hack
+
 			// if the inner content function of the modal called, the modal is open
-			setIsOpen(true);
+			if (launchButtonLabel) {
+				setIsOpen(true);
+			}
+
 			return <ContactForm {...props} closeModal={closeModal} />;
 		}
 
