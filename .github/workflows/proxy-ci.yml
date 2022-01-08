@@ -8,7 +8,6 @@ on:
         branches:
             - main
             - staging
-            - Cloud-function-to-set-unique-donors-on-profile
 
 jobs:
     deploy:
@@ -63,7 +62,7 @@ jobs:
                   GCLOUD_PROJECT: climate-conversations-sg-2019
 
             - name: Setup staging environment
-              #   if: github.ref == 'refs/heads/staging'
+              if: github.ref == 'refs/heads/staging'
               run: |
                   echo ${GCLOUD_AUTH} | base64 --decode > gcloud-service-account.json
                   echo "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com" >> $GITHUB_ENV
@@ -80,4 +79,4 @@ jobs:
             - name: Deploy Cloud Functions
               working-directory: ./cc-proxy
               run: |
-                  npm run deploy:uniqueDonors
+                  npm run deploy:ci
