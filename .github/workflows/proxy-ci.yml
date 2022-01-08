@@ -8,6 +8,7 @@ on:
         branches:
             - main
             - staging
+            - Cloud-function-to-set-unique-donors-on-profile
 
 jobs:
     deploy:
@@ -79,4 +80,4 @@ jobs:
             - name: Deploy Cloud Functions
               working-directory: ./cc-proxy
               run: |
-                  npm run deploy:ci
+                  npm run deploy:uniqueDonors
