@@ -38,8 +38,8 @@ async function uniqueDonors(req) {
 		req
 	);
 
-	let profileUserEmail = allDonations[0].user.email;
-	let allEmails = allDonations.map((donations) => donations.email);
+	let profileUserEmail = allDonations.data[0].user.email;
+	let allEmails = allDonations.data.map((donations) => donations.email);
 	let uniqueEmails = Array.from(new Set(allEmails));
 	let countedEmails = uniqueEmails.filter(
 		(email) => email !== profileUserEmail
