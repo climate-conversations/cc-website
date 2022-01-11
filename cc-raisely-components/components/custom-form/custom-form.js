@@ -478,6 +478,7 @@
 					this.setState({ isSaving: true });
 					// Clear any previous error message
 					this.setState({ error: false });
+					await this.updateNumberOfGuests();
 					await save(this.state.values, this.formToData);
 				} catch (e) {
 					console.error(e);
@@ -573,6 +574,15 @@
 			builtSteps.push(lastPanel);
 
 			return builtSteps;
+		}
+
+		// updates number of guests to 1 if user accidentally enters 0
+		updateNumberOfGuests = async () => {
+
+			if (this.state.values[0].guests === "0") {
+				this.setState({values: [{...this.state.values[0], guests: "1"}]})
+			}
+			return
 		}
 
 		render() {
