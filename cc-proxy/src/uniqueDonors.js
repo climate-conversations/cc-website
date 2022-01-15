@@ -65,7 +65,7 @@ async function uniqueDonors(req) {
 		const statusCode = error.status || error.statusCode || 500;
 		console.error(
 			`Patch request failed with status ${statusCode}:`,
-			error.error
+error.error || error.message
 		);
 	}
 	return {
