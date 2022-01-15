@@ -478,8 +478,9 @@
 					this.setState({ isSaving: true });
 					// Clear any previous error message
 					this.setState({ error: false });
-					await this.updateNumberOfGuests();
-					await save(this.state.values, this.formToData);
+					let formData = this.state.values;
+					if (formData[0].guests === "0") formData[0].guests = "1"
+					await save(formData, this.formToData);
 				} catch (e) {
 					console.error(e);
 					const message = errorMessage(e);
