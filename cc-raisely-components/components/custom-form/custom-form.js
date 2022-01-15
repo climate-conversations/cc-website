@@ -577,15 +577,6 @@
 			return builtSteps;
 		}
 
-		// updates number of guests to 1 if user accidentally enters 0
-		updateNumberOfGuests = async () => {
-
-			if (this.state.values[0].guests === "0") {
-				this.setState({values: [{...this.state.values[0], guests: "1"}]})
-			}
-			return
-		}
-
 		render() {
 			if (!this.state.loaded) {
 				const { loadingText } = this.props;
