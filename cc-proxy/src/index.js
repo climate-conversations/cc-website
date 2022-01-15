@@ -6,7 +6,7 @@ const { setupVolunteer, resetEmail } = require('./setupVolunteer');
 const { hostReport, facilReport } = require('./reports');
 const proxy = require('./proxy');
 const { assignRecordRequest: assignRecord } = require('./assignRecord');
-
+const { birthdayFundraiseReminder } = require('./birthdayFundraiseReminder');
 const logger = require('./config/logging');
 
 const loadConfig = require('./config');
@@ -41,7 +41,10 @@ function setCORS(req, res) {
 
 	if (req.method === 'OPTIONS') {
 		// Send response to OPTIONS requests
-		res.set('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE');
+		res.set(
+			'Access-Control-Allow-Methods',
+			'GET,HEAD,POST,PUT,PATCH,DELETE'
+		);
 		res.set(
 			'Access-Control-Allow-Headers',
 			'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization'
@@ -138,6 +141,7 @@ const functions = {
 	hostReport,
 	facilReport,
 	resetEmail,
+	birthdayFundraiseReminder,
 };
 
 const proxiedFunctions = {};
