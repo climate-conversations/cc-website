@@ -61,16 +61,21 @@ async function uniqueDonors(req) {
 			},
 			req
 		);
+
+		return {
+			status: 200,
+			patchProfileDonorCount
+		};
 	} catch (error) {
 		const statusCode = error.status || error.statusCode || 500;
 		console.error(
 			`Patch request failed with status ${statusCode}:`,
 			error.error || error.message
 		);
+		return {
+			status: statusCode
+		}
 	}
-	return {
-		status: 200,
-	};
 }
 
 module.exports = { uniqueDonors };
