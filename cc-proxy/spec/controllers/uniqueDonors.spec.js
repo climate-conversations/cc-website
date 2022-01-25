@@ -18,8 +18,10 @@ describe('wrong campaignUuid', () => {
 	});
 });
 
-// nock request to pass into uniqueDonors
-// how should i test the internal raisely functions?
+// create mock request to pass into uniqueDonors
+// to nock:
+// get all donations
+// patchProfileDonorCount
 // expect response to be equal to the mock response
 
 // test cases:
@@ -28,4 +30,6 @@ describe('wrong campaignUuid', () => {
 // single donor
 // multiple donors
 // multiple donors with repeated emails
+
 // what should i be testing exactly? x.x
+// the objective is to make sure that the uniqueDonors are updated, but the patch request is already validated
