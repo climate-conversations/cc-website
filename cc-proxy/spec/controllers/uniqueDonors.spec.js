@@ -26,7 +26,24 @@ describe('unique donors', () => {
 			.reply((uri, requestBody) => {
 				console.log('uri: ', uri);
 				console.log('requestBody: ', requestBody);
-				return [200, {}];
+				return [
+					200,
+					{
+						data: [
+							{
+								user: {
+									email: 'angkj.nicholas@gmail.com',
+								},
+							},
+							{
+								email: 'ok@gmail.com',
+							},
+							{
+								email: 'hello@gmail.com',
+							},
+						],
+					},
+				];
 			});
 
 		const request = prepareUniqueDonorsRequest();

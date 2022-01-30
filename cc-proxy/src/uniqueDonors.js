@@ -46,25 +46,25 @@ async function uniqueDonors(req) {
 	);
 
 	try {
-		let patchProfileDonorCount = await raisely(
-			{
-				method: 'PATCH',
-				path: `/profiles/${uuid}`,
-				body: {
-					data: {
-						public: {
-							uniqueDonors: countedEmails.length,
-						},
-					},
-				},
-				escalate: true,
-			},
-			req
-		);
+		// let patchProfileDonorCount = await raisely(
+		// 	{
+		// 		method: 'PATCH',
+		// 		path: `/profiles/${uuid}`,
+		// 		body: {
+		// 			data: {
+		// 				public: {
+		// 					uniqueDonors: countedEmails.length,
+		// 				},
+		// 			},
+		// 		},
+		// 		escalate: true,
+		// 	},
+		// 	req
+		// );
 
 		return {
 			status: 200,
-			patchProfileDonorCount
+			patchProfileDonorCount,
 		};
 	} catch (error) {
 		const statusCode = error.status || error.statusCode || 500;
@@ -73,8 +73,8 @@ async function uniqueDonors(req) {
 			error.error || error.message
 		);
 		return {
-			status: statusCode
-		}
+			status: statusCode,
+		};
 	}
 }
 
