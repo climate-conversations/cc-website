@@ -1,59 +1,86 @@
 const chai = require('chai');
 const nock = require('nock');
-const request = require('request-promise-cache');
 const _ = require('lodash');
 
 require('../spec.env.js');
 
-const MockResponse = require('../utils/mockResponse');
 const MockRequest = require('../utils/mockRequest');
 const { uniqueDonors } = require('../../src/uniqueDonors');
 const { expect } = chai;
-// before block to sets off the nocks
-// several it statements to check:
-// wrong campaignUuid
-// wrong uuid
-// check for the right respons
 
 describe('unique donors', () => {
-	let patchBody;
-	before(() => {
-		nock.cleanAll();
-		nock('https://api.raisely.com')
-			.get(
-				'/v3/donations?campaign=campaignUuid&profile=profileUuid&private=1'
-			)
-			.reply((uri, requestBody) => {
-				console.log('uri: ', uri);
-				console.log('requestBody: ', requestBody);
-				return [
-					200,
-					{
-						data: [
-							{
-								user: {
-									email: 'angkj.nicholas@gmail.com',
-								},
-							},
-							{
-								email: 'ok@gmail.com',
-							},
-							{
-								email: 'hello@gmail.com',
-							},
-						],
-					},
-				];
-			});
+	describe('single donor', () => {
+		let patchBody;
 
-		const request = prepareUniqueDonorsRequest();
-		return uniqueDonors(request);
+		before(() => {
+			nock.cleanAll();
+			nock('https://api.raisely.com')
+				.get(
+					'/v3/donations?campaign=campaignUuid&profile=profileUuid&private=1'
+				)
+				.reply(200, singleDonorResponse);
+
+			nock('https://api.raisely.com')
+				.patch('/v3/profiles/profileUuid')
+				.reply((uri, requestBody) => {
+					patchBody = requestBody;
+					return [200];
+				});
+			const request = prepareUniqueDonorsRequest();
+			return uniqueDonors(request);
+		});
+
+		it('multiple donors', () => {
+			expect(patchBody.data.public.uniqueDonors).to.eq(2);
+		});
 	});
-	// some filler code
-	it('it works', () => {
-		// uniqueDonors(request);
-		const a = 1;
-		expect(a).to.eq(1);
+
+	describe('multiple donors', () => {
+		before(() => {
+			nock.cleanAll();
+			nock('https://api.raisely.com')
+				.get(
+					'/v3/donations?campaign=campaignUuid&profile=profileUuid&private=1'
+				)
+				.reply(200, multipleDonorsResponse);
+
+			nock('https://api.raisely.com')
+				.patch('/v3/profiles/profileUuid')
+				.reply((uri, requestBody) => {
+					patchBody = requestBody;
+					return [200];
+				});
+			const request = prepareUniqueDonorsRequest();
+			return uniqueDonors(request);
+		});
+
+		it('multiple donors', () => {
+			expect(patchBody.data.public.uniqueDonors).to.eq(3);
+		});
+	});
+
+	describe('muliple donors with repeated emails', () => {
+		before(() => {
+			nock.cleanAll();
+			nock('https://api.raisely.com')
+				.get(
+					'/v3/donations?campaign=campaignUuid&profile=profileUuid&private=1'
+				)
+				.reply(200, multipleDonorsWithRepeatedEmailsResponse);
+
+			nock('https://api.raisely.com')
+				.patch('/v3/profiles/profileUuid')
+				.reply((uri, requestBody) => {
+					patchBody = requestBody;
+					return [200];
+				});
+			const request = prepareUniqueDonorsRequest();
+			return uniqueDonors(request);
+		});
+
+		it('multiple donors', () => {
+			expect(patchBody.data.public.uniqueDonors).to.eq(4);
+		});
 	});
 });
 
@@ -77,6 +104,61 @@ const prepareUniqueDonorsRequest = () => {
 	});
 };
 
+const singleDonorResponse = {
+	data: [
+		{
+			user: {
+				email: 'angkj.nicholas@gmail.com',
+			},
+		},
+		{
+			email: 'ok@gmail.com',
+		},
+	],
+};
+
+const multipleDonorsResponse = {
+	data: [
+		{
+			user: {
+				email: 'angkj.nicholas@gmail.com',
+			},
+		},
+		{
+			email: 'ok@gmail.com',
+		},
+		{
+			email: 'hello@gmail.com',
+		},
+	],
+};
+const multipleDonorsWithRepeatedEmailsResponse = {
+	data: [
+		{
+			user: {
+				email: 'angkj.nicholas@gmail.com',
+			},
+		},
+		{
+			email: 'ok@gmail.com',
+		},
+		{
+			email: 'ok@gmail.com',
+		},
+		{
+			email: 'ok@gmail.com',
+		},
+		{
+			email: 'hello@gmail.com',
+		},
+		{
+			email: 'hello@gmail.com',
+		},
+		{
+			email: 'test@gmail.com',
+		},
+	],
+};
 // mock request first
 // should mock the muliple data
 // nock the 2 api calls
@@ -97,6 +179,3 @@ const prepareUniqueDonorsRequest = () => {
 // single donor
 // multiple donors
 // multiple donors with repeated emails
-
-// what should i be testing exactly? x.x
-// the objective is to make sure that the uniqueDonors are updated, but the patch request is already validated
