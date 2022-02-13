@@ -120,18 +120,3 @@
 		);
 	};
 };
-// class AdminLogin extends React.Component {
-// 	render() {
-// 		if (!document.body.classList.contains('components-loaded')) {
-// 			document.body.classList.add('components-loaded');
-// 		}
-
-// 		const LoginForm = window.CustomComponentRaiselyLoginForm.html;
-
-// 		return (
-// 			<div>
-// 				<LoginForm requestAdminToken {...this.props} />
-// 			</div>
-// 		);
-// 	}
-// };
