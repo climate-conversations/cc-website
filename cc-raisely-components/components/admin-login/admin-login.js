@@ -34,21 +34,16 @@
 					password: passwordState,
 					requestAdminToken: true,
 					organisationUuid: '8c179990-dbe6-11eb-b7e8-d9f47d73a6a0',
-					otp: '',
 				}),
 			};
 
-			const response = await fetch(
+			return await fetch(
 				'https://api.raisely.com/v3/login?campaign=00f6ba70-dbe7-11eb-b7e8-d9f47d73a6a0',
 				options
 			)
 				.then((response) => response.json())
 				.then((response) => console.log(response))
 				.catch((err) => console.error(err));
-
-			console.log('response is: ' + response.json());
-
-			return response.json();
 		};
 
 		let LoginForm = window.CustomComponentRaiselyLoginForm.html;
@@ -76,7 +71,6 @@
 								</label>
 								<input
 									name="username"
-									id="username"
 									type="email"
 									value={emailState}
 									onChange={(e) =>
