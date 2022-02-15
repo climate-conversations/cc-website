@@ -11,7 +11,7 @@
 		const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 		const [passcode2FaState, setPasscode2FaState] = useState('');
 
-		const handleChange = (e, updateState) => {
+		const handleInputChange = (e, updateState) => {
 			updateState(e.target.value);
 		};
 
@@ -21,11 +21,45 @@
 			}
 		});
 
+		const login = async () => {
+			const options = {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					email: '',
+					username: emailState,
+					password: passwordState,
+					requestAdminToken: true,
+					organisationUuid: '8c179990-dbe6-11eb-b7e8-d9f47d73a6a0',
+					otp: '',
+				}),
+			};
+
+			const response = await fetch(
+				'https://api.raisely.com/v3/login?campaign=00f6ba70-dbe7-11eb-b7e8-d9f47d73a6a0',
+				options
+			)
+				.then((response) => response.json())
+				.then((response) => console.log(response))
+				.catch((err) => console.error(err));
+
+			console.log('response is: ' + response.json());
+			s;
+
+			return response.json();
+		};
+
 		let LoginForm = window.CustomComponentRaiselyLoginForm.html;
 		return (
 			<div>
 				<div id="my-unique-form" className="raisely-login">
-					<form data-form-uuid="5bb97550-28ee-4d42-b10f-5ac494b0a1b1">
+					<form
+						data-form-uuid="5bb97550-28ee-4d42-b10f-5ac494b0a1b1"
+						onSubmit={login}
+					>
 						<div class="field-wrapper field-wrapper--username">
 							<div class="form-field form-field--text form-field--empty form-field--valid">
 								<div class="form-field__required">
@@ -47,7 +81,7 @@
 									type="email"
 									value={emailState}
 									onChange={(e) =>
-										handleChange(e, setEmailState)
+										handleInputChange(e, setEmailState)
 									}
 								/>
 							</div>
@@ -74,7 +108,7 @@
 									}
 									value={passwordState}
 									onChange={(e) =>
-										handleChange(e, setPasswordState)
+										handleInputChange(e, setPasswordState)
 									}
 								/>
 								<button
