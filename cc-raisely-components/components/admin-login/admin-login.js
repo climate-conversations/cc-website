@@ -47,7 +47,6 @@
 				.catch((err) => console.error(err));
 
 			console.log('response is: ' + response.json());
-			s;
 
 			return response.json();
 		};
