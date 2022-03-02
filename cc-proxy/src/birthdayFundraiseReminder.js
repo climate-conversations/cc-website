@@ -5,97 +5,48 @@ const daysAfterBirthday = 7; // set birthday time range to 7 days
 
 async function birthdayFundraiseReminder(req, res) {
 	const token = process.env.APP_TOKEN;
-	const fundraiseUuid = process.env.FUNDRAISE_UUID;
-	const birthdayTriggerUrl = `https://communications.raisely.com/v1/triggers/${fundraiseUuid}`;
-	const usersBirthdayUrl = 'https://api.raisely.com/v3/users';
+	const usersUrl = 'https://api.raisely.com/v3/users?private=true';
 
-	const triggerResponse = await fetch(birthdayTriggerUrl, {
+	const allUsersResponse = await fetch(usersUrl, {
 		headers: {
 			'content-type': 'application/json',
 			'User-Agent': 'Climate Conversations Proxy',
-			'authorization': `Bearer raisely:${token}`,
+			'authorization': `Bearer ${token}`,
 		},
 		method: 'GET',
 	});
 
-	const trigger = await triggerResponse.json();
-	const intervalData = trigger.data.condition[1].value;
-	const numberOfMonths = intervalData.split(' ')[0];
+	const allUsers = await allUsersResponse.json();
 
-	let birthdayRangeStart = dayjs()
-		.add(numberOfMonths, 'months')
-		.toISOString();
-	const birthdayRangeEnd = dayjs(birthdayRangeStart)
-		.add(daysAfterBirthday, 'days')
-		.toISOString();
-
-	console.log(birthdayRangeStart);
-	console.log(birthdayRangeEnd);
-
-	let queryParams = {
-		'private.dateOfBirthLT': '2002-12-11T16:00:00.000Z',
-		'private.dateOfBirthGTE': ' 2002-06-07T16:00:00.000Z',
-		'private': 1,
-	};
-
-	const userResponse = await fetch(
-		usersBirthdayUrl + '?' + new URLSearchParams(queryParams),
-		{
-			headers: {
-				'content-type': 'application/json',
-				'User-Agent': 'Climate Conversations Proxy',
-				'authorization': `Bearer ${token}`,
-			},
-			method: 'GET',
+	console.log('number of users: ', allUsers.data.length);
+	let userBirthdayInfo = [];
+	allUsers.data.forEach((user) => {
+		if (user?.private?.dateOfBirth) {
+			userBirthdayInfo.push({
+				uuid: user.uuid,
+				dateOfBirth: user?.private?.dateOfBirth,
+				nextBirthday: user?.private?.nextBirthday,
+			});
 		}
-	);
+	});
 
-	const users = await userResponse.json();
+	console.log(userBirthdayInfo);
 
-	console.log('interval Data', intervalData);
-	console.log('total number of users:', users.data.length);
+	// loop through the array
 
-	// TODO: skip null, [anonymised] users and empty strings
-	if (users.data.length > 0) {
-		users.data.forEach((user) => {
-			// just test a name
-			if (user.preferredName == 'crystle') {
-				console.log(user);
+	// check if dateofbirth is a proper date
+	// if next birthday is undefined -> check current birthday has passed.
+	// if passed, update next birthday with next year, else update next birthday with current year
+	// if next birthday is defined -> check whether birthday has passed
+	// if passed, update next birthday with next year, else do nothing
 
-				const testing = fetch(
-					'https://communications.raisely.com/v1/events',
-					{
-						type: 'custom',
-						source: `39cc6df0-4838-11ec-9af8-b786e9ac2af4`, //campaignuuid for "Fundraise for Climate Conversations [Staging]"
-						data: {
-							custom: {
-								birthday: intervalData, // 3 months
-								type: 'birthday',
-							},
-							user,
-						},
-					}
-				).then(console.log);
-			}
-		});
-	}
 	res.status(200);
 }
 
 module.exports = { birthdayFundraiseReminder };
 
-// if (users.length) {
-// 	users.forEach(user =>
-// 	await request('https://communications.raisely.com/v1/events', {
-// 		type: 'custom',
-// 		source: `campaign:`, //campaignuuid need to check this
-// 		version: 1,
-// 		data: {
-// 			custom: {
-// 				birthday: interval,
-// 				type: 'birthday'
-// 			},
-// 			user,
-// 		}
-// 	}));
-// }
+// nextBirthdayAt:
+// cloud function to check the current birthday field and update the nextBirthdayAt, make sure that it is always up to date
+// update nextBirthdayAt after their birthday has past, trigger function weekly
+// tricky part -> finding  empty records, raisely does not support
+// need to account for first time users where their birthday has not passed this year ->
