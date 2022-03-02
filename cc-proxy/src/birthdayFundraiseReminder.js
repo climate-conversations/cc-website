@@ -2,7 +2,14 @@ const fetch = require('node-fetch');
 const dayjs = require('dayjs');
 
 const daysAfterBirthday = 7; // set birthday time range to 7 days
+const checkBirthdayPassed = (dateOfBirth) => {
+	let currentYear = dayjs().year();
+	let birthday = dayjs(dateOfBirth)
+		.set('year', currentYear)
+		.toISOString();
 
+	return dayjs().diff(birthday) > 0;
+};
 async function birthdayFundraiseReminder(req, res) {
 	const token = process.env.APP_TOKEN;
 	const usersUrl = 'https://api.raisely.com/v3/users?private=true';
@@ -19,10 +26,11 @@ async function birthdayFundraiseReminder(req, res) {
 	const allUsers = await allUsersResponse.json();
 
 	console.log('number of users: ', allUsers.data.length);
-	let userBirthdayInfo = [];
+	// console.log('look here: ', dayjs().diff('2022-01-06T16:00:00.000Z'));
+	let usersBirthdayInfo = [];
 	allUsers.data.forEach((user) => {
 		if (user?.private?.dateOfBirth) {
-			userBirthdayInfo.push({
+			usersBirthdayInfo.push({
 				uuid: user.uuid,
 				dateOfBirth: user?.private?.dateOfBirth,
 				nextBirthday: user?.private?.nextBirthday,
@@ -30,16 +38,28 @@ async function birthdayFundraiseReminder(req, res) {
 		}
 	});
 
-	console.log(userBirthdayInfo);
+	console.log(usersBirthdayInfo);
 
 	// loop through the array
+	usersBirthdayInfo.forEach((userBirthdayInfo) => {
+		// check if dateofbirth is a proper date
+		if (typeof userBirthdayInfo.dateOfBirth !== 'string') return;
 
-	// check if dateofbirth is a proper date
-	// if next birthday is undefined -> check current birthday has passed.
-	// if passed, update next birthday with next year, else update next birthday with current year
-	// if next birthday is defined -> check whether birthday has passed
-	// if passed, update next birthday with next year, else do nothing
+		if (userBirthdayInfo.nextBirthday) {
+			// if next birthday is defined -> check whether birthday has passed
+			// if passed, update next birthday with next year, else do nothing
+		} else {
+			// if next birthday is undefined -> check current birthday has passed.
 
+			if (checkBirthdayPassed(userBirthdayInfo.dateOfBirth)) {
+				console.log('date of birth is: ', dateOfBirth);
+				console.log('birthday has passed, updating next birthday');
+			} else {
+				console.log('birthday not passed, do nothing');
+			}
+			// if passed, update next birthday with next year, else update next birthday with current year
+		}
+	});
 	res.status(200);
 }
 
