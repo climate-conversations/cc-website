@@ -25,8 +25,6 @@ async function birthdayFundraiseReminder(req, res) {
 
 	const allUsers = await allUsersResponse.json();
 
-	console.log('number of users: ', allUsers.data.length);
-	// console.log('look here: ', dayjs().diff('2022-01-06T16:00:00.000Z'));
 	let usersBirthdayInfo = [];
 	allUsers.data.forEach((user) => {
 		if (user?.private?.dateOfBirth) {
@@ -38,22 +36,29 @@ async function birthdayFundraiseReminder(req, res) {
 		}
 	});
 
-	console.log(usersBirthdayInfo);
-
 	// loop through the array
 	usersBirthdayInfo.forEach((userBirthdayInfo) => {
 		// check if dateofbirth is a proper date
 		if (typeof userBirthdayInfo.dateOfBirth !== 'string') return;
 
+		// if next birthday is exists -> check whether birthday has passed
 		if (userBirthdayInfo.nextBirthday) {
-			// if next birthday is defined -> check whether birthday has passed
-			// if passed, update next birthday with next year, else do nothing
-		} else {
-			// if next birthday is undefined -> check current birthday has passed.
+			console.log('user has next birthday here');
 
+			if (checkBirthdayPassed(userBirthdayInfo.nextBirthday)) {
+				console.log('birthday has passed, will update next birthday');
+				// add one year to the birthday and patch
+			} else {
+				// if passed, update next birthday with next year, else do nothing
+				console.log('birthday not passed, do nothing');
+			}
+		} else {
+			/// should i just update next birthday? no need all these logic
+
+			// for new users: if next birthday is undefined -> check current birthday has passed.
 			if (checkBirthdayPassed(userBirthdayInfo.dateOfBirth)) {
-				console.log('date of birth is: ', dateOfBirth);
 				console.log('birthday has passed, updating next birthday');
+				// add data to the next birthday
 			} else {
 				console.log('birthday not passed, do nothing');
 			}
