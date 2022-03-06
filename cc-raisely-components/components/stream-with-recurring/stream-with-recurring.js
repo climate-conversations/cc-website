@@ -115,7 +115,7 @@
 			query.user = props.user.uuid;
 		} else {
 			query.campaign = campaign.uuid;
-			if (profile) {
+			if (profile && profile.uuid !== campaign.profile.uuid) {
 				query.profile = props.profile.uuid;
 			}
 		}
