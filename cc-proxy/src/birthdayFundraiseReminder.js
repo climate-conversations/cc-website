@@ -1,7 +1,6 @@
 const fetch = require('node-fetch');
 const dayjs = require('dayjs');
 
-const daysAfterBirthday = 7; // set birthday time range to 7 days
 const checkBirthdayPassed = (dateOfBirth) => {
 	let currentYear = dayjs().year();
 	let birthday = dayjs(dateOfBirth)
@@ -12,9 +11,12 @@ const checkBirthdayPassed = (dateOfBirth) => {
 };
 async function birthdayFundraiseReminder(req, res) {
 	const token = process.env.APP_TOKEN;
-	const usersUrl = 'https://api.raisely.com/v3/users?private=true';
+	let today = new Date().toISOString();
 
-	const allUsersResponse = await fetch(usersUrl, {
+	// get users whose next birthday that have passed
+	const usersBirthdayPassedUrl = `https://api.raisely.com/v3/users?private=true&private.nextBirthdayLTE=${today}`;
+
+	const usersBirthdayPassedResponse = await fetch(usersBirthdayPassedUrl, {
 		headers: {
 			'content-type': 'application/json',
 			'User-Agent': 'Climate Conversations Proxy',
@@ -23,48 +25,18 @@ async function birthdayFundraiseReminder(req, res) {
 		method: 'GET',
 	});
 
-	const allUsers = await allUsersResponse.json();
+	const usersBirthdayPassed = await usersBirthdayPassedResponse.json();
 
-	let usersBirthdayInfo = [];
-	allUsers.data.forEach((user) => {
-		if (user?.private?.dateOfBirth) {
-			usersBirthdayInfo.push({
-				uuid: user.uuid,
-				dateOfBirth: user?.private?.dateOfBirth,
-				nextBirthday: user?.private?.nextBirthday,
-			});
-		}
+	usersBirthdayPassed.forEach((user) => {
+		// update next birthday
+		const nextBirthday = user.private.nextBirthday;
+		const userid = user.uuid;
 	});
 
-	// loop through the array
-	usersBirthdayInfo.forEach((userBirthdayInfo) => {
-		// check if dateofbirth is a proper date
-		if (typeof userBirthdayInfo.dateOfBirth !== 'string') return;
+	// TODO:
+	// request to grab users with empty next birthday data + birthday is present
+	// to update next birthday
 
-		// if next birthday is exists -> check whether birthday has passed
-		if (userBirthdayInfo.nextBirthday) {
-			console.log('user has next birthday here');
-
-			if (checkBirthdayPassed(userBirthdayInfo.nextBirthday)) {
-				console.log('birthday has passed, will update next birthday');
-				// add one year to the birthday and patch
-			} else {
-				// if passed, update next birthday with next year, else do nothing
-				console.log('birthday not passed, do nothing');
-			}
-		} else {
-			/// should i just update next birthday? no need all these logic
-
-			// for new users: if next birthday is undefined -> check current birthday has passed.
-			if (checkBirthdayPassed(userBirthdayInfo.dateOfBirth)) {
-				console.log('birthday has passed, updating next birthday');
-				// add data to the next birthday
-			} else {
-				console.log('birthday not passed, do nothing');
-			}
-			// if passed, update next birthday with next year, else update next birthday with current year
-		}
-	});
 	res.status(200);
 }
 
