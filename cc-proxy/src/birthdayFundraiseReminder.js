@@ -7,7 +7,7 @@ async function birthdayFundraiseReminder(req, res) {
 
 	// get users whose next birthday that have passed
 	const usersBirthdayPassedUrl = `https://api.raisely.com/v3/users?private=true&private.nextBirthdayLTE=${today}`;
-	const usersNextBirthdayAbsentUrl = `https://api.raisely.com/v3/users?private=1&private.nextBirthdayAbsent=1`;
+	const usersNextBirthdayAbsentUrl = `https://api.raisely.com/v3/users?private=1&nextBirthdayAbsent=1&dateOfBirthPresent=1`;
 
 	const usersBirthdayPassedResponse = await fetch(usersBirthdayPassedUrl, {
 		headers: {
@@ -75,7 +75,7 @@ async function birthdayFundraiseReminder(req, res) {
 	}
 
 	usersBirthdayAbsent.data.forEach((user) => {
-		const currentBirthday = user.private.DateOfBirth;
+		const currentBirthday = user.private.dateOfBirth;
 		const currentYear = dayjs().get('year');
 		const userid = user.uuid;
 		const nextBirthdayUpdateValue = dayjs(currentBirthday)
