@@ -1,17 +1,9 @@
 const fetch = require('node-fetch');
 const dayjs = require('dayjs');
 
-const checkBirthdayPassed = (dateOfBirth) => {
-	let currentYear = dayjs().year();
-	let birthday = dayjs(dateOfBirth)
-		.set('year', currentYear)
-		.toISOString();
-
-	return dayjs().diff(birthday) > 0;
-};
 async function birthdayFundraiseReminder(req, res) {
 	const token = process.env.APP_TOKEN;
-	let today = new Date().toISOString();
+	const today = dayjs().toISOString();
 
 	// get users whose next birthday that have passed
 	const usersBirthdayPassedUrl = `https://api.raisely.com/v3/users?private=true&private.nextBirthdayLTE=${today}`;
@@ -27,10 +19,34 @@ async function birthdayFundraiseReminder(req, res) {
 
 	const usersBirthdayPassed = await usersBirthdayPassedResponse.json();
 
-	usersBirthdayPassed.forEach((user) => {
-		// update next birthday
-		const nextBirthday = user.private.nextBirthday;
+	if (usersBirthdayPassed.data.length == 0) {
+		console.log('No users with birthdays found');
+	}
+
+	usersBirthdayPassed.data.forEach((user) => {
+		const nextBirthdayCurrentValue = user.private.nextBirthday;
 		const userid = user.uuid;
+		const nextBirthdayUpdateValue = dayjs(nextBirthdayCurrentValue)
+			.add(1, 'year')
+			.toISOString();
+
+		// patch request to update next birthday
+		const options = {
+			method: 'PATCH',
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json',
+				'authorization': `Bearer ${token}`,
+			},
+			body: JSON.stringify({
+				data: { private: { nextBirthday: nextBirthdayUpdateValue } },
+			}),
+		};
+
+		fetch(`https://api.raisely.com/v3/users/${userid}`, options)
+			.then((response) => response.json())
+			.then((response) => console.log(response))
+			.catch((err) => console.error(err));
 	});
 
 	// TODO:
