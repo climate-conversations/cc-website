@@ -57,9 +57,3 @@ async function birthdayFundraiseReminder(req, res) {
 }
 
 module.exports = { birthdayFundraiseReminder };
-
-// nextBirthdayAt:
-// cloud function to check the current birthday field and update the nextBirthdayAt, make sure that it is always up to date
-// update nextBirthdayAt after their birthday has past, trigger function weekly
-// tricky part -> finding  empty records, raisely does not support
-// need to account for first time users where their birthday has not passed this year ->
