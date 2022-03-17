@@ -3,6 +3,7 @@ const raiselyEvents = {
 	'user.updated': ['mailchimp'],
 	'user.forgotten': ['mailchimp'],
 	'donation.created': ['donorFacilMatch', 'mailchimp'],
+	'donation.succeeded': ['donorFacilMatch', 'mailchimp'],
 	'guest.created': ['backendReport'],
 	'conversation.photoUploaded': ['savePhoto'],
 	'conversation.donationReportUploaded': ['saveDonationPhotos'],
