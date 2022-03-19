@@ -24,9 +24,7 @@ async function birthdayFundraiseReminder(req, res) {
 	);
 
 	const usersBirthdayAbsent = await usersNextBirthdayAbsentResponse.json();
-
-	console.log(usersBirthdayAbsent);
-
+	//TODO: check if dateOfBirth is a valid type
 	if (usersBirthdayAbsent.data.length == 0) {
 		console.log('No users with absent next birthdays found');
 	}
@@ -51,7 +49,6 @@ async function birthdayFundraiseReminder(req, res) {
 				data: { private: { nextBirthday: nextBirthdayUpdateValue } },
 			}),
 		};
-
 		fetch(`https://api.raisely.com/v3/users/${userid}`, options)
 			.then((response) => response.json())
 			.then((response) => console.log(response))
