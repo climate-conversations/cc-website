@@ -4,6 +4,8 @@ const dayjs = require('dayjs');
 async function birthdayFundraiseReminder(req, res) {
 	const token = process.env.APP_TOKEN;
 	const today = dayjs().toISOString();
+	let nextBirthdayUpdated = [];
+	let nextBirthdayPassedUpdated = [];
 
 	// get users whose next birthday that have passed
 	const usersBirthdayPassedUrl = `https://api.raisely.com/v3/users?private=true&private.nextBirthdayLTE=${today}`;
@@ -50,8 +52,7 @@ async function birthdayFundraiseReminder(req, res) {
 			}),
 		};
 		fetch(`https://api.raisely.com/v3/users/${userid}`, options)
-			.then((response) => response.json())
-			.then((response) => console.log(response))
+			.then((response) => nextBirthdayUpdated.append(response.json()))
 			.catch((err) => console.error(err));
 	});
 
@@ -91,12 +92,13 @@ async function birthdayFundraiseReminder(req, res) {
 		};
 
 		fetch(`https://api.raisely.com/v3/users/${userid}`, options)
-			.then((response) => response.json())
-			.then((response) => console.log(response))
+			.then((response) =>
+				nextBirthdayPassedUpdated.append(response.json())
+			)
 			.catch((err) => console.error(err));
 	});
 
-	res.status(200);
+	res.status(200).send({ nextBirthdayUpdated, nextBirthdayPassedUpdated });
 }
 
 module.exports = { birthdayFundraiseReminder };
