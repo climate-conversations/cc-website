@@ -4,8 +4,8 @@ const dayjs = require('dayjs');
 async function birthdayFundraiseReminder(req, res) {
 	const token = process.env.APP_TOKEN;
 	const today = dayjs().toISOString();
-	let nextBirthdayUpdated = [];
-	let nextBirthdayPassedUpdated = [];
+	var nextBirthdayUpdated = [];
+	var nextBirthdayPassedUpdated = [];
 
 	// get users whose next birthday that have passed
 	const usersBirthdayPassedUrl = `https://api.raisely.com/v3/users?private=true&private.nextBirthdayLTE=${today}`;
@@ -26,12 +26,17 @@ async function birthdayFundraiseReminder(req, res) {
 	);
 
 	const usersBirthdayAbsent = await usersNextBirthdayAbsentResponse.json();
-	//TODO: check if dateOfBirth is a valid type
+
 	if (usersBirthdayAbsent.data.length == 0) {
 		console.log('No users with absent next birthdays found');
 	}
 
-	usersBirthdayAbsent.data.forEach((user) => {
+	// remove invalid birthdays
+	const usersBirthdayAbsentValidated = usersBirthdayAbsent.data.filter(
+		(user) => dayjs(user.private.dateOfBirth).isValid()
+	);
+
+	usersBirthdayAbsentValidated.forEach((user) => {
 		const currentBirthday = user.private.dateOfBirth;
 		const currentYear = dayjs().get('year');
 		const userid = user.uuid;
@@ -52,7 +57,8 @@ async function birthdayFundraiseReminder(req, res) {
 			}),
 		};
 		fetch(`https://api.raisely.com/v3/users/${userid}`, options)
-			.then((response) => nextBirthdayUpdated.append(response.json()))
+			.then((response) => response.json())
+			.then((response) => nextBirthdayUpdated.push(response))
 			.catch((err) => console.error(err));
 	});
 
@@ -71,7 +77,11 @@ async function birthdayFundraiseReminder(req, res) {
 		console.log('No users with birthdays found');
 	}
 
-	usersBirthdayPassed.data.forEach((user) => {
+	const usersBirthdayPassedValidated = usersBirthdayPassed.data.filter(
+		(user) => dayjs(user.private.nextBirthday).isValid()
+	);
+
+	usersBirthdayPassedValidated.forEach((user) => {
 		const nextBirthdayCurrentValue = user.private.nextBirthday;
 		const userid = user.uuid;
 		const nextBirthdayUpdateValue = dayjs(nextBirthdayCurrentValue)
@@ -92,9 +102,8 @@ async function birthdayFundraiseReminder(req, res) {
 		};
 
 		fetch(`https://api.raisely.com/v3/users/${userid}`, options)
-			.then((response) =>
-				nextBirthdayPassedUpdated.append(response.json())
-			)
+			.then((response) => response.json())
+			.then((response) => nextBirthdayPassedUpdated.push(response))
 			.catch((err) => console.error(err));
 	});
 
