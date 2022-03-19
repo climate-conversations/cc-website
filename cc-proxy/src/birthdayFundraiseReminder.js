@@ -50,7 +50,6 @@ async function birthdayFundraiseReminder(req, res) {
 			.catch((err) => console.error(err));
 	});
 
-	// TODO:
 	// request to grab users with empty next birthday data + birthday is present
 	// to update next birthday
 
