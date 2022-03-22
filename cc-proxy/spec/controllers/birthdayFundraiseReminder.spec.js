@@ -69,7 +69,7 @@ describe('fundraise reminder', () => {
 						{
 							uuid: 1,
 							private: {
-								dateOfBirth: '1995-05-03T00:00:00.000Z',
+								dateOfBirth: '2022-05-03T00:00:00.000Z',
 							},
 						}
 					);
@@ -84,7 +84,7 @@ describe('fundraise reminder', () => {
 					{
 						uuid: 1,
 						private: {
-							dateOfBirth: '1995-05-03T00:00:00.000Z',
+							dateOfBirth: '2022-05-03T00:00:00.000Z',
 						},
 					},
 				],
@@ -93,7 +93,6 @@ describe('fundraise reminder', () => {
 		});
 
 		it('expects patch body to be updated correctly', () => {
-			console.log('adaf', patchBody);
 			expect(patchBody).to.eql({
 				data: { private: { nextBirthday: '2022-05-03T00:00:00.000Z' } },
 			});
