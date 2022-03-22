@@ -15,39 +15,95 @@ const {
 const { expect } = chai;
 let currentYear = dayjs().get('year');
 
-describe('test', () => {
-	let patchBody;
+describe('fundraise reminder', () => {
+	describe('invalid data', () => {
+		before(() => {
+			nock.cleanAll();
 
-	before(() => {
-		nock.cleanAll();
+			nock('https://api.raisely.com')
+				.get(
+					'/v3/users?private=1&nextBirthdayAbsent=1&dateOfBirthPresent=1'
+				)
+				.reply(200, invalidDateOfBirthResponse)
+				.get(`/v3/users`)
+				.query({
+					'private': true,
+					'private.nextBirthdayLTE': /(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/,
+				})
+				.reply(200, invalidNextBirthdayResponse);
+		});
 
-		nock('https://api.raisely.com')
-			.get(
-				'/v3/users?private=1&nextBirthdayAbsent=1&dateOfBirthPresent=1'
-			)
-			.reply(200, invalidDateOfBirthResponse);
-		nock('https://api.raisely.com')
-			.get(`/v3/users`)
-			.query({
-				'private': true,
-				'private.nextBirthdayLTE': /(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/,
-			})
-			.reply(200, invalidNextBirthdayResponse);
+		it('emptyResponse', async () => {
+			let mockResponse = new MockResponse();
+			await birthdayFundraiseReminder(new MockRequest(), mockResponse);
+			expect(mockResponse.body).to.eql({
+				nextBirthdayUpdated: [],
+				nextBirthdayPassedUpdated: [],
+			});
+		});
 	});
 
-	it('emptyResponse', async () => {
-		let mockResponse = new MockResponse();
-		await birthdayFundraiseReminder(new MockRequest(), mockResponse);
-		expect(mockResponse.body).to.eql({
-			nextBirthdayUpdated: [],
-			nextBirthdayPassedUpdated: [],
+	describe('valid data', () => {
+		let patchBody;
+		before(() => {
+			nock.cleanAll();
+
+			nock('https://api.raisely.com')
+				.get(
+					'/v3/users?private=1&nextBirthdayAbsent=1&dateOfBirthPresent=1'
+				)
+				.reply(200, validDateOfBirthResponse)
+				.get(`/v3/users`)
+				.query({
+					'private': true,
+					'private.nextBirthdayLTE': /(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/,
+				})
+				.reply(200, invalidNextBirthdayResponse);
+
+			nock('https://api.raisely.com')
+				.patch('/v3/users/1')
+				.reply((uri, requestBody) => {
+					patchBody = requestBody;
+					return (
+						200,
+						{
+							uuid: 1,
+							private: {
+								dateOfBirth: '1995-05-03T00:00:00.000Z',
+							},
+						}
+					);
+				});
+		});
+
+		it('expects nextBirthdayUpdated field to be updated', async () => {
+			let mockResponse = new MockResponse();
+			await birthdayFundraiseReminder(new MockRequest(), mockResponse);
+			expect(mockResponse.body).to.eql({
+				nextBirthdayUpdated: [
+					{
+						uuid: 1,
+						private: {
+							dateOfBirth: '1995-05-03T00:00:00.000Z',
+						},
+					},
+				],
+				nextBirthdayPassedUpdated: [],
+			});
+		});
+
+		it('expects patch body to be updated correctly', () => {
+			console.log('adaf', patchBody);
+			expect(patchBody).to.eql({
+				data: { private: { nextBirthday: '2022-05-03T00:00:00.000Z' } },
+			});
 		});
 	});
 });
 
 // update nextBirthday only
 // update nextBirthdayUpdate only
-// both
+// bothv
 // invalid dateOfBirth
 // invalid nextBirthday
 
@@ -59,6 +115,7 @@ const emptyResponse = {
 const validDateOfBirthResponse = {
 	data: [
 		{
+			uuid: 1,
 			private: {
 				dateOfBirth: '1995-05-03T00:00:00.000Z',
 			},
@@ -69,6 +126,7 @@ const validDateOfBirthResponse = {
 const invalidDateOfBirthResponse = {
 	data: [
 		{
+			uuid: 1,
 			private: {
 				dateOfBirth: 'invalid date',
 			},
@@ -79,6 +137,7 @@ const invalidDateOfBirthResponse = {
 const validNextBirthdayResponse = {
 	data: [
 		{
+			uuid: 1,
 			private: {
 				nextBirthday: dayjs('1995-05-03T00:00:00.000Z')
 					.set('year', currentYear)
@@ -91,6 +150,7 @@ const validNextBirthdayResponse = {
 const invalidNextBirthdayResponse = {
 	data: [
 		{
+			uuid: 1,
 			private: {
 				nextBirthday: 'invalid date',
 			},
