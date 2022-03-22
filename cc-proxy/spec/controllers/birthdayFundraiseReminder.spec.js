@@ -36,14 +36,11 @@ describe('fundraise reminder', () => {
 		it('emptyResponse', async () => {
 			let mockResponse = new MockResponse();
 			await birthdayFundraiseReminder(new MockRequest(), mockResponse);
-			expect(mockResponse.body).to.eql({
-				nextBirthdayUpdated: [],
-				nextBirthdayPassedUpdated: [],
-			});
+			expect(mockResponse.body).to.eql(emptyResponse);
 		});
 	});
 
-	describe('valid data', () => {
+	describe('valid birthday data', () => {
 		let patchBody;
 		before(() => {
 			nock.cleanAll();
@@ -98,6 +95,84 @@ describe('fundraise reminder', () => {
 			});
 		});
 	});
+
+	describe('valid nextBirthdayData', () => {
+		let patchBody;
+		let patchBody2;
+
+		before(() => {
+			nock.cleanAll();
+
+			nock('https://api.raisely.com')
+				.get(
+					'/v3/users?private=1&nextBirthdayAbsent=1&dateOfBirthPresent=1'
+				)
+				.reply(200, validDateOfBirthResponse)
+				.get(`/v3/users`)
+				.query({
+					'private': true,
+					'private.nextBirthdayLTE': /(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/,
+				})
+				.reply(200, validNextBirthdayResponse);
+
+			nock('https://api.raisely.com')
+				.patch('/v3/users/1')
+				.reply((uri, requestBody) => {
+					patchBody = requestBody;
+					return (
+						200,
+						{
+							uuid: 1,
+							private: {
+								dateOfBirth: '2022-05-03T00:00:00.000Z',
+							},
+						}
+					);
+				})
+				.patch('/v3/users/1')
+				.reply((uri, requestBody) => {
+					patchBody2 = requestBody;
+					return (
+						200,
+						{
+							uuid: 1,
+							private: {
+								dateOfBirth: '2023-05-03T00:00:00.000Z',
+							},
+						}
+					);
+				});
+		});
+
+		it('expects boths fields to be updated', async () => {
+			let mockResponse = new MockResponse();
+			await birthdayFundraiseReminder(new MockRequest(), mockResponse);
+
+			expect(mockResponse.body).to.eql({
+				nextBirthdayUpdated: [
+					{
+						uuid: 1,
+						private: {
+							dateOfBirth: '2022-05-03T00:00:00.000Z',
+						},
+					},
+				],
+				nextBirthdayPassedUpdated: [],
+			});
+		});
+
+		it('expects patch body to be updated correctly', () => {
+			expect(patchBody).to.eql({
+				data: { private: { nextBirthday: '2022-05-03T00:00:00.000Z' } },
+			});
+		});
+
+		it('expect patch body 2 to be updated correctly', () => {
+			expect(patchBody2).to.eql({
+				data: { private: { nextBirthday: '2023-05-03T00:00:00.000Z' } },
+			});
+		});
+	});
 });
 
 const emptyResponse = {
@@ -132,7 +207,7 @@ const validNextBirthdayResponse = {
 		{
 			uuid: 1,
 			private: {
-				nextBirthday: dayjs('1995-05-03T00:00:00.000Z')
+				nextBirthday: dayjs('2022-05-03T00:00:00.000Z')
 					.set('year', currentYear)
 					.toISOString(),
 			},
