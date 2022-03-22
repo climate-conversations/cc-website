@@ -100,12 +100,6 @@ describe('fundraise reminder', () => {
 	});
 });
 
-// update nextBirthday only
-// update nextBirthdayUpdate only
-// bothv
-// invalid dateOfBirth
-// invalid nextBirthday
-
 const emptyResponse = {
 	nextBirthdayUpdated: [],
 	nextBirthdayPassedUpdated: [],
