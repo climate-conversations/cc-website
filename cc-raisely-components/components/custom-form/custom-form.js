@@ -478,7 +478,11 @@
 					this.setState({ isSaving: true });
 					// Clear any previous error message
 					this.setState({ error: false });
-					await save(this.state.values, this.formToData);
+					let formData = this.state.values;
+
+					// update number of guests to 1 if user inputs 0
+					if (formData[0].guests === "0") formData[0].guests = "1"
+					await save(formData, this.formToData);
 				} catch (e) {
 					console.error(e);
 					const message = errorMessage(e);

@@ -7,6 +7,8 @@ const { hostReport, facilReport } = require('./reports');
 const proxy = require('./proxy');
 const { assignRecordRequest: assignRecord } = require('./assignRecord');
 const { birthdayFundraiseReminder } = require('./birthdayFundraiseReminder');
+const { uniqueDonors } = require('./uniqueDonors');
+
 const logger = require('./config/logging');
 
 const loadConfig = require('./config');
@@ -142,6 +144,7 @@ const functions = {
 	facilReport,
 	resetEmail,
 	birthdayFundraiseReminder,
+	uniqueDonors,
 };
 
 const proxiedFunctions = {};
