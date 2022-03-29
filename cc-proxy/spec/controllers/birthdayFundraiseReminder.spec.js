@@ -14,6 +14,9 @@ const {
 
 const { expect } = chai;
 let currentYear = dayjs().get('year');
+let nextYear = dayjs()
+	.add(1, 'year')
+	.get('year');
 
 describe('fundraise reminder', () => {
 	describe('invalid data', () => {
@@ -66,7 +69,7 @@ describe('fundraise reminder', () => {
 						{
 							uuid: 1,
 							private: {
-								dateOfBirth: '2022-05-03T00:00:00.000Z',
+								dateOfBirth: `${currentYear}-05-03T00:00:00.000Z`, // change this to the current year
 							},
 						}
 					);
@@ -81,7 +84,7 @@ describe('fundraise reminder', () => {
 					{
 						uuid: 1,
 						private: {
-							dateOfBirth: '2022-05-03T00:00:00.000Z',
+							dateOfBirth: `${currentYear}-05-03T00:00:00.000Z`,
 						},
 					},
 				],
@@ -91,7 +94,11 @@ describe('fundraise reminder', () => {
 
 		it('expects patch body to be updated correctly', () => {
 			expect(patchBody).to.eql({
-				data: { private: { nextBirthday: '2022-05-03T00:00:00.000Z' } },
+				data: {
+					private: {
+						nextBirthday: `${currentYear}-05-03T00:00:00.000Z`,
+					},
+				},
 			});
 		});
 	});
@@ -124,7 +131,7 @@ describe('fundraise reminder', () => {
 						{
 							uuid: 1,
 							private: {
-								dateOfBirth: '2022-05-03T00:00:00.000Z',
+								dateOfBirth: `${currentYear}-05-03T00:00:00.000Z`,
 							},
 						}
 					);
@@ -137,7 +144,7 @@ describe('fundraise reminder', () => {
 						{
 							uuid: 1,
 							private: {
-								dateOfBirth: '2023-05-03T00:00:00.000Z',
+								dateOfBirth: `${nextYear}-05-03T00:00:00.000Z`,
 							},
 						}
 					);
@@ -153,7 +160,7 @@ describe('fundraise reminder', () => {
 					{
 						uuid: 1,
 						private: {
-							dateOfBirth: '2022-05-03T00:00:00.000Z',
+							dateOfBirth: `${currentYear}-05-03T00:00:00.000Z`,
 						},
 					},
 				],
@@ -163,13 +170,21 @@ describe('fundraise reminder', () => {
 
 		it('expects patch body to be updated correctly', () => {
 			expect(patchBody).to.eql({
-				data: { private: { nextBirthday: '2022-05-03T00:00:00.000Z' } },
+				data: {
+					private: {
+						nextBirthday: `${currentYear}-05-03T00:00:00.000Z`,
+					},
+				},
 			});
 		});
 
 		it('expect patch body 2 to be updated correctly', () => {
 			expect(patchBody2).to.eql({
-				data: { private: { nextBirthday: '2023-05-03T00:00:00.000Z' } },
+				data: {
+					private: {
+						nextBirthday: `${nextYear}-05-03T00:00:00.000Z`,
+					},
+				},
 			});
 		});
 	});
@@ -207,7 +222,7 @@ const validNextBirthdayResponse = {
 		{
 			uuid: 1,
 			private: {
-				nextBirthday: dayjs('2022-05-03T00:00:00.000Z')
+				nextBirthday: dayjs(`${currentYear}-05-03T00:00:00.000Z`)
 					.set('year', currentYear)
 					.toISOString(),
 			},
