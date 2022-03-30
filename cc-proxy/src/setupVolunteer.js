@@ -312,7 +312,7 @@ async function setupTagsAndRoles({ tags, roles, userUuid, req }) {
 }
 
 /**
- * Trigger an email to a volunteer to log them in
+ * Trigger an email to a volunteer to log them in.
  * @param {*} req
  */
 async function resetEmail(req) {

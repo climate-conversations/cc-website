@@ -8,6 +8,7 @@ on:
         branches:
             - main
             - staging
+            - proxy-cloud-functions-take-too-long-to-deploy
 
 jobs:
     deploy:
@@ -63,6 +64,16 @@ jobs:
 
             - name: Setup staging environment
               if: github.ref == 'refs/heads/staging'
+              run: |
+                  echo ${GCLOUD_AUTH} | base64 --decode > gcloud-service-account.json
+                  echo "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com" >> $GITHUB_ENV
+                  echo "GCLOUD_PROJECT=${GCLOUD_PROJECT}" >> $GITHUB_ENV
+              env:
+                  GCLOUD_AUTH: ${{ secrets.GCLOUDAUTH_STAGING }}
+                  GCLOUD_PROJECT: cc-website-staging
+
+            ## temporary step to run deployment on own branch
+            - name: Setup custom environment
               run: |
                   echo ${GCLOUD_AUTH} | base64 --decode > gcloud-service-account.json
                   echo "SERVICE_ACCOUNT=cloud-functions@cc-website-staging.iam.gserviceaccount.com" >> $GITHUB_ENV
